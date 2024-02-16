@@ -84,42 +84,20 @@ thickness = 1.
 []
 
 [BCs]
-
   [Pressure]
-    [front_pressure]  
-    boundary = front
-    value = 10.
-    displacements = 'vel_x vel_y vel_z'
+    [front_pressure]
+      boundary = front
+      function = applied_pressure
+      displacements = 'vel_x vel_y vel_z'
     []
-    [back_pressure]  
-    boundary = front
-    value = 10.
-    displacements = 'vel_x vel_y vel_z'
+    [back_pressure]
+      boundary = front
+      function = applied_pressure
+      displacements = 'vel_x vel_y vel_z'
     []
   []
-  # no lateral movement
-  [x_no_slip]
-    type = DirichletBC
-    variable = vel_x
-    boundary = 'top bottom left right' #front
-    value = 0.0
-  []
-  [y_no_slip]
-    type = DirichletBC
-    variable = vel_y
-    boundary = 'top bottom left right'
-    value = 0.0
-  []
-  [z_no_slip]
-    type = DirichletBC
-    variable = vel_z
-    boundary = 'top bottom left right'
-    value = 0.0
-  []
-
-  
 []
-
+  
 [Materials]
   [constant_ice]
     type = GenericConstantMaterial
@@ -164,16 +142,8 @@ thickness = 1.
 []
 
 [Functions]
-  [weight]
-    type = ParsedFunction
-    value = '917 * 9.81 * 1e-6 * (${thickness}-z)'
-  []
-[]
-
-[ICs]
-  [pressure_weight]
-    type = FunctionIC
-    variable = p
-    function = weight
+  [applied_pressure]
+    type = ConstantFunction
+    value = 1e4
   []
 []
