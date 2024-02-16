@@ -91,17 +91,17 @@ thickness = 1.
       displacements = 'vel_x vel_y vel_z'
     []
     [back_pressure]
-      boundary = front
+      boundary = back
       function = applied_pressure
       displacements = 'vel_x vel_y vel_z'
     []
   []
 []
+
   
 [Materials]
   [constant_ice]
     type = GenericConstantMaterial
-    block = 0
     prop_names = 'rho mu' 
     prop_values = '917. 3.' # kg.m-3 MPa.a
   []
