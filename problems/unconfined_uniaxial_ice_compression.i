@@ -84,24 +84,40 @@ thickness = 1.
 []
 
 [BCs]
+
+  [Pressure]
+    [front_pressure]  
+    boundary = front
+    value = 10.
+    displacements = 'vel_x vel_y vel_z'
+    []
+    [back_pressure]  
+    boundary = front
+    value = 10.
+    displacements = 'vel_x vel_y vel_z'
+    []
+  []
+  # no lateral movement
   [x_no_slip]
     type = DirichletBC
     variable = vel_x
-    boundary = 'back top bottom left right'
+    boundary = 'top bottom left right' #front
     value = 0.0
   []
   [y_no_slip]
     type = DirichletBC
     variable = vel_y
-    boundary = 'back top bottom left right'
+    boundary = 'top bottom left right'
     value = 0.0
   []
   [z_no_slip]
     type = DirichletBC
     variable = vel_z
-    boundary = 'back top bottom left right'
+    boundary = 'top bottom left right'
     value = 0.0
   []
+
+  
 []
 
 [Materials]
@@ -109,7 +125,7 @@ thickness = 1.
     type = GenericConstantMaterial
     block = 0
     prop_names = 'rho mu' 
-    prop_values = '917. 3.'
+    prop_values = '917. 3.' # kg.m-3 MPa.a
   []
 []
 
