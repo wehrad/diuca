@@ -84,20 +84,21 @@
     variable = velocity
     boundary = 'bottom'
     function_x = 0
-    function_y = 1. # m.a-1
+    function_y = 1.
   []
   [inlet2]
     type = VectorFunctionDirichletBC
     variable = velocity
     boundary = 'top'
     function_x = 0
-    function_y = -1. # m.a-1
+    function_y = -1.
   []
   [axis]
     type = ADVectorFunctionDirichletBC
     variable = velocity
     boundary = 'left'
     set_y_comp = false
+    set_x_comp = false
   []
 []
 
@@ -105,8 +106,7 @@
   [const]
     type = ADGenericConstantMaterial
     prop_names = 'rho mu'
-    # prop_values = '917. 3.' # kg.m-3 MPa.a
-    prop_values = '1. 1.' # kg.m-3 MPa.a
+    prop_values = '1. 1.'
   []
   [ins_mat]
     type = INSADTauMaterial
@@ -139,23 +139,6 @@
     type = Exodus
   []
 []
-
-# [Postprocessors]
-#   [flow_in]
-#     type = VolumetricFlowRate
-#     vel_x = vel_x
-#     vel_y = vel_y
-#     boundary = 'bottom'
-#     execute_on = 'timestep_end'
-#   []
-#   [flow_out]
-#     type = VolumetricFlowRate
-#     vel_x = vel_x
-#     vel_y = vel_y
-#     boundary = 'top'
-#     execute_on = 'timestep_end'
-#   []
-# []
 
 [Functions]
   [applied_pressure]
