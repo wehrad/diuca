@@ -139,10 +139,3 @@
     type = Exodus
   []
 []
-
-[Functions]
-  [applied_pressure]
-    type = ConstantFunction
-    value = 1e4
-  []
-[]
