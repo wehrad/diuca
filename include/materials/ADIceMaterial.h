@@ -19,18 +19,6 @@ protected:
   /// Necessary override. This is where the values of the properties are computed.
   virtual void computeQpProperties() override;
   const unsigned int _mesh_dimension;
-  
-  /// density of the fluid (rho)
-  ADMaterialProperty<Real> & _density; 
-
-  /// viscosity of the fluid (mu)
-  ADMaterialProperty<Real> & _viscosity;
-
-  // velocity gradients
-  const VariableGradient & _grad_velocity_x;
-  const VariableGradient & _grad_velocity_y;
-  const VariableGradient & _grad_velocity_z;
-  const VariableValue & _pressure;
 
   // Glen parameters
   const ADReal & _AGlen;
@@ -39,7 +27,17 @@ protected:
   // density of the fluid
   const ADReal & _rho;
 
+  // velocity gradients
+  const ADVariableGradient & _grad_velocity_x;
+  const ADVariableGradient & _grad_velocity_y;
+  const ADVariableGradient & _grad_velocity_z;
+
   // Finite strain rate parameter
   const ADReal & _II_eps_min;
+  const ADVariableValue & _pressure;
 
+  /// viscosity of the fluid (mu)
+  ADMaterialProperty<Real> & _viscosity;
+  /// density of the fluid (rho)
+  ADMaterialProperty<Real> & _density;
 };

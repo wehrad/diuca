@@ -18,18 +18,6 @@ public:
 protected:
   /// Necessary override. This is where the values of the properties are computed.
   virtual void computeQpProperties() override;
-  
-  /// density of the fluid (rho)
-  MaterialProperty<Real> & _density; 
-
-  /// viscosity of the fluid (mu)
-  MaterialProperty<Real> & _viscosity;
-
-  // velocity gradients
-  const VariableGradient & _grad_velocity_x;
-  const VariableGradient & _grad_velocity_y;
-  const VariableGradient & _grad_velocity_z;
-  const VariableValue & _pressure;
 
   // Glen parameters
   const Real & _AGlen;
@@ -38,7 +26,18 @@ protected:
   // density of the fluid
   const Real & _rho;
 
+  // velocity gradients
+  const VariableGradient & _grad_velocity_x;
+  const VariableGradient & _grad_velocity_y;
+  const VariableGradient & _grad_velocity_z;
+
   // Finite strain rate parameter
   const Real & _II_eps_min;
 
+  const VariableValue & _pressure;
+
+  /// viscosity of the fluid (mu)
+  MaterialProperty<Real> & _viscosity;
+  /// density of the fluid (rho)
+  MaterialProperty<Real> & _density;
 };

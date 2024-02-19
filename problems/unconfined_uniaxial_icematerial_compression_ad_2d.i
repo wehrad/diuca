@@ -42,6 +42,7 @@
 [Variables]
   [velocity]
     family = LAGRANGE_VEC
+    order = SECOND
   []
   [p]
   []
@@ -52,11 +53,16 @@
     type = INSADMass
     variable = p
   []
-  [mass_pspg]
-    type = INSADMassPSPG
-    variable = p
-  []
+  # Not needed as v and are p not equal order (check)
+  # [mass_pspg]
+  #   type = INSADMassPSPG
+  #   variable = p
+  # []
 
+  [momentum_time]
+    type = INSADMomentumTimeDerivative
+    variable = velocity
+  []
   [momentum_advection]
     type = INSADMomentumAdvection
     variable = velocity
@@ -65,7 +71,6 @@
     type = INSADMomentumViscous
     variable = velocity
   []
-
   [momentum_pressure]
     type = INSADMomentumPressure
     variable = velocity
@@ -79,33 +84,60 @@
 []
 
 [BCs]
-  [inlet]
-    type = VectorFunctionDirichletBC
-    variable = velocity
-    boundary = 'bottom'
-    function_x = 0
-    function_y = 1.
-  []
-  [inlet2]
-    type = VectorFunctionDirichletBC
-    variable = velocity
-    boundary = 'top'
-    function_x = 0
-    function_y = -1.
+  # Classic NS setup
+  # [inlet]
+  #   type = VectorFunctionDirichletBC
+  #   variable = velocity
+  #   boundary = 'bottom'
+  #   function_x = 0
+  #   function_y = 1.
+  # []
+  # [outlet]
+  #   type = DirichletBC
+  #   variable = p
+  #   boundary = right
+  #   value = 0
+  # []
+  # [inlet2]
+  #   type = VectorFunctionDirichletBC
+  #   variable = velocity
+  #   boundary = 'top'
+  #   function_x = 0
+  #   function_y = -1.
+  # []
+  # [axis]
+  #   type = ADVectorFunctionDirichletBC
+  #   variable = velocity
+  #   boundary = 'left'
+  #   function_x = 0.
+  #   function_y = 0.
+  #   # set_y_comp = false
+  #   # set_x_comp = false
+  # []
+
+  # Pressure on top and bottom
+  # Seems more like a mechanics setup to me
+  [outlet]
+    type = DirichletBC
+    variable = p
+    boundary = 'top bottom'
+    value = 1
   []
   [axis]
     type = ADVectorFunctionDirichletBC
     variable = velocity
     boundary = 'left'
-    set_y_comp = false
-    set_x_comp = false
+    function_x = 0.
+    function_y = 0.
+    # set_y_comp = false
+    # set_x_comp = false
   []
 []
 
 [Materials]
   # [constant_ice]
   #   type = ADGenericConstantMaterial
-  #   prop_names = 'rho mu' 
+  #   prop_names = 'rho mu'
   #   prop_values = '0.917 0.3' # kg.m-3 MPa.a
   # []
   [ice]
@@ -130,13 +162,21 @@
 []
 
 [Executioner]
-  type = Steady
+  type = Transient
+  num_steps = 10
 
-  petsc_options_iname = '-pc_type -sub_pc_type -sub_pc_factor_levels'
-  petsc_options_value = 'bjacobi  ilu          4'
+  # petsc_options_iname = '-pc_type -pc_factor_shift -pc_mat_solve_package'
+  # petsc_options_value = 'lu       NONZERO mumps'
+  petsc_options = '-pc_svd_monitor'
+  petsc_options_iname = '-pc_type'
+  petsc_options_value = 'svd'
 
-  nl_rel_tol = 1e-12
-  nl_max_its = 6
+  nl_rel_tol = 1e-08
+  nl_abs_tol = 1e-13
+  nl_max_its = 40
+  line_search = none
+
+  automatic_scaling = true
 []
 
 [Outputs]
