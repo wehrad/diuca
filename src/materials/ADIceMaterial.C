@@ -1,4 +1,5 @@
 #include "ADIceMaterial.h"
+#include "MooseMesh.h"
 
 registerMooseObject("diuca", ADIceMaterial);
 
@@ -9,8 +10,8 @@ ADIceMaterial::validParams()
 
   // Get velocity gradients to compute viscosity based on the effective strain rate
   params.addRequiredCoupledVar("velocity_x", "Velocity in x dimension");
-  params.addRequiredCoupledVar("velocity_y", "Velocity in y dimension");
-  params.addRequiredCoupledVar("velocity_z", "Velocity in z dimension");
+  params.addCoupledVar("velocity_y", "Velocity in y dimension");
+  params.addCoupledVar("velocity_z", "Velocity in z dimension");
 
   // Mean pressure
   params.addRequiredCoupledVar("pressure", "Mean stress");
@@ -30,6 +31,9 @@ ADIceMaterial::validParams()
 ADIceMaterial::ADIceMaterial(const InputParameters & parameters)
   : ADMaterial(parameters),
 
+    // Mesh dimension
+    _mesh_dimension(_mesh.dimension()),
+    
     // Glen parameters
     _AGlen(getParam<ADReal>("AGlen")),
     _nGlen(getParam<ADReal>("nGlen")),
@@ -39,8 +43,9 @@ ADIceMaterial::ADIceMaterial(const InputParameters & parameters)
     
     // Velocity gradients
     _grad_velocity_x(coupledGradient("velocity_x")),
-    _grad_velocity_y(coupledGradient("velocity_y")),
-    _grad_velocity_z(coupledGradient("velocity_z")),
+    _grad_velocity_y(_mesh_dimension >= 2 ? coupledGradient("velocity_y") : _grad_zero),
+    _grad_velocity_z(_mesh_dimension == 3 ? coupledGradient("velocity_z") : _grad_zero),
+    
 
     // Finite strain rate parameter
     _II_eps_min(getParam<ADReal>("II_eps_min")),
@@ -59,27 +64,27 @@ ADIceMaterial::computeQpProperties()
 {
 
   // Wrap term with Glen's fluidity parameter for clarity
-  Real ApGlen  = pow(_AGlen, -1./ _nGlen);
+  ADReal ApGlen  = pow(_AGlen, -1./ _nGlen);
 
   // Get current velocity gradients at quadrature point
-  Real u_x = _grad_velocity_x[_qp](0);
-  Real u_y = _grad_velocity_x[_qp](1);
-  Real u_z = _grad_velocity_x[_qp](2);
+  ADReal u_x = _grad_velocity_x[_qp](0);
+  ADReal u_y = _grad_velocity_x[_qp](1);
+  ADReal u_z = _grad_velocity_x[_qp](2);
   
-  Real v_x = _grad_velocity_y[_qp](0);
-  Real v_y = _grad_velocity_y[_qp](1);
-  Real v_z = _grad_velocity_y[_qp](2);
+  ADReal v_x = _grad_velocity_y[_qp](0);
+  ADReal v_y = _grad_velocity_y[_qp](1);
+  ADReal v_z = _grad_velocity_y[_qp](2);
 
-  Real w_x = _grad_velocity_z[_qp](0);
-  Real w_y = _grad_velocity_z[_qp](1);
-  Real w_z = _grad_velocity_z[_qp](2);
+  ADReal w_x = _grad_velocity_z[_qp](0);
+  ADReal w_y = _grad_velocity_z[_qp](1);
+  ADReal w_z = _grad_velocity_z[_qp](2);
 
-  Real eps_xy = 0.5 * (u_y + v_x);                                             
-  Real eps_xz = 0.5 * (u_z + w_x);
-  Real eps_yz = 0.5 * (v_z + w_y); 
+  ADReal eps_xy = 0.5 * (u_y + v_x);                                             
+  ADReal eps_xz = 0.5 * (u_z + w_x);
+  ADReal eps_yz = 0.5 * (v_z + w_y); 
 
   // Compute effective strain rate (3D)
-  Real II_eps = 0.5*( u_x*u_x + v_y*v_y + w_z*w_z +
+  ADReal II_eps = 0.5*( u_x*u_x + v_y*v_y + w_z*w_z +
 		      2. * (eps_xy*eps_xy + eps_xz*eps_xz + eps_yz*eps_yz) );
 
   // Finite strain rate parameter included to avoid infinite viscosity at low stresses

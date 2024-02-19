@@ -18,6 +18,7 @@ public:
 protected:
   /// Necessary override. This is where the values of the properties are computed.
   virtual void computeQpProperties() override;
+  const unsigned int _mesh_dimension;
   
   /// density of the fluid (rho)
   ADMaterialProperty<Real> & _density; 
