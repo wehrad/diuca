@@ -103,10 +103,16 @@
 []
 
 [Materials]
-  [const]
-    type = ADGenericConstantMaterial
-    prop_names = 'rho mu'
-    prop_values = '917. 0.3' # kg.m-3 MPa.a
+  # [constant_ice]
+  #   type = ADGenericConstantMaterial
+  #   prop_names = 'rho mu' 
+  #   prop_values = '0.917 0.3' # kg.m-3 MPa.a
+  # []
+  [ice]
+    type = ADIceMaterial
+    velocity_x = "vel_x"
+    velocity_y = "vel_y"
+    pressure = "p"
   []
   [ins_mat]
     type = INSADTauMaterial

@@ -1,7 +1,7 @@
 #include "ADIceMaterial.h"
 #include "MooseMesh.h"
 
-registerMooseObject("diuca", ADIceMaterial);
+registerMooseObject("diucaApp", ADIceMaterial);
 
 InputParameters
 ADIceMaterial::validParams()
