@@ -2,7 +2,8 @@
 
 [Mesh]
   type = FileMesh
-  file = mesh_ac_lowres_flat.e
+  file = mesh_icestream_flat.e
+  file = mesh_icestream.e
   second_order = true
 []
 
