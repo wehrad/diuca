@@ -2,13 +2,8 @@
 
 [Mesh]
   type = FileMesh
-  file = mesh_ac_lowerres_flat.e
+  file = mesh_ac_lowres_flat.e
   second_order = true
-[]
-
-[GlobalParams]
-  order = FIRST
-  integrate_p_by_parts = true
 []
 
 [AuxVariables]
@@ -86,19 +81,21 @@
 
 [BCs]
 
-  [Pressure]
-    [downstream_pressure]  
-    boundary = downstream
+  # hydrostatic pressure at the glacier front
+  [frontpressure]
+    type = ADFunctionDirichletBC
+    variable = p
+    boundary = 'downstream'
     function = ocean_pressure
-    displacements = 'vel_x vel_y vel_z'
-    []
-    [sediment_downstream_pressure]  
-    boundary = downstream_sediment
-    function = ocean_pressure
-    displacements = 'vel_x vel_y vel_z'
-    []
   []
-
+  [sedimentfrontpressure]
+    type = ADFunctionDirichletBC
+    variable = p
+    boundary = 'downstream_sediment'
+    function = ocean_pressure
+  []
+  
+  # ice influx at the back of the glacier
   [inlet]
     type = ADVectorFunctionDirichletBC
     variable = velocity
@@ -106,8 +103,6 @@
     function_x = 100.
     function_y = 0.
     function_z = 0.
-    # set_y_comp = false
-    # set_x_comp = false
   []
   [sedimentinlet]
     type = ADVectorFunctionDirichletBC
@@ -117,7 +112,8 @@
     function_y = 0.
     function_z = 0.
   []
-  
+
+  # no slip at the glacier base nor on the sides
   [basenoslip]
     type = ADVectorFunctionDirichletBC
     variable = velocity
@@ -168,6 +164,7 @@
     block = 'eleblock1 eleblock2 eleblock3'
     velocity_x = "vel_x"
     velocity_y = "vel_y"
+    velocity_z = "vel_z"
     pressure = "p"
   []
   [ins_mat]
