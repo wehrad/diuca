@@ -12,18 +12,10 @@ gravity_y = ${fparse
               } 
 
 # geometry of the ice slab
-length = 1000
-thickness = 500
-# width = 200
-
-# inlet_amplitude = 1
+length = 200
+thickness = 100
 
 # ------------------------
-
-# [GlobalParams]
-  
-#   # integrate_p_by_parts = true
-# []
 
 [Mesh]
   type = GeneratedMesh
@@ -122,11 +114,9 @@ thickness = 500
   # [inlet]
   #   type = ADVectorFunctionDirichletBC
   #   variable = velocity
-  #   boundary = 'right'
-  #   function_x = 100.
+  #   boundary = 'left'
+  #   function_x = 0.
   #   function_y = 0.
-  #   # set_y_comp = false
-  #   # set_x_comp = false
   # []
   [noslip]
     type = ADVectorFunctionDirichletBC
