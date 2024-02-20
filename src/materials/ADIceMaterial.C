@@ -96,4 +96,7 @@ ADIceMaterial::computeQpProperties()
 
   // Constant density
   _density[_qp] = _rho;
+
+  // std::cout << "p=" << _pressure[_qp] << "   mu=" << _viscosity[_qp] << "  v_y=" <<  v_y << std::endl;
+  
 }

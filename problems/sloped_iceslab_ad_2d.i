@@ -1,20 +1,46 @@
-# based on modules/navier_stokes/test/tests/finite_element/ins/RZ_cone/ad_rz_cone_by_parts_steady_stabilized.i
+# ------------------------ 
 
-[GlobalParams]
-  order = FIRST
-  integrate_p_by_parts = true
-[]
+# slope of the bottom boundary (in degrees)
+bed_slope = 5
+
+# change coordinate system to add a slope
+gravity_x = ${fparse
+  	      cos((90 - bed_slope) / 180 * pi) * 9.81 * 1e-6
+              } 
+gravity_y = ${fparse
+	      - cos(bed_slope / 180 * pi) * 9.81 * 1e-6
+              } 
+
+# geometry of the ice slab
+length = 1000
+thickness = 500
+# width = 200
+
+# inlet_amplitude = 1
+
+# ------------------------
+
+# [GlobalParams]
+  
+#   # integrate_p_by_parts = true
+# []
 
 [Mesh]
   type = GeneratedMesh
   dim = 2
   xmin = 0
-  xmax = 1
+  xmax = '${length}'
   ymin = 0
-  ymax = 1
-  nx = 1
-  ny = 1
+  ymax = '${thickness}'
+  nx = 10
+  ny = 5
   elem_type = QUAD9
+  
+[]
+
+[GlobalParams]
+  order = FIRST
+  integrate_p_by_parts = true
 []
 
 [AuxVariables]
@@ -53,12 +79,6 @@
     type = INSADMass
     variable = p
   []
-  # Not needed as v and are p not equal order (check)
-  # [mass_pspg]
-  #   type = INSADMassPSPG
-  #   variable = p
-  # []
-
   [momentum_time]
     type = INSADMomentumTimeDerivative
     variable = velocity
@@ -81,65 +101,43 @@
     variable = velocity
     velocity = velocity
   []
+  [gravity]
+    type = INSADGravityForce
+    variable = velocity
+    gravity = '${gravity_x} ${gravity_y} 0.'
+  []
 []
 
 [BCs]
-  # Classic NS setup
+
+  [Periodic]
+    [up_down]
+      primary = left
+      secondary = right
+      translation = '${length} 0 0'
+      variable = 'velocity'
+    []
+  []
+  
   # [inlet]
-  #   type = VectorFunctionDirichletBC
-  #   variable = velocity
-  #   boundary = 'bottom'
-  #   function_x = 0
-  #   function_y = 1.
-  # []
-  # [outlet]
-  #   type = DirichletBC
-  #   variable = p
-  #   boundary = right
-  #   value = 0
-  # []
-  # [inlet2]
-  #   type = VectorFunctionDirichletBC
-  #   variable = velocity
-  #   boundary = 'top'
-  #   function_x = 0
-  #   function_y = -1.
-  # []
-  # [axis]
   #   type = ADVectorFunctionDirichletBC
   #   variable = velocity
-  #   boundary = 'left'
-  #   function_x = 0.
+  #   boundary = 'right'
+  #   function_x = 100.
   #   function_y = 0.
   #   # set_y_comp = false
   #   # set_x_comp = false
   # []
-
-  # Pressure on top and bottom
-  # Seems more like a mechanics setup to me
-  [outlet]
-    type = DirichletBC
-    variable = p
-    boundary = 'top bottom'
-    value = 2
-  []
-  [axis]
+  [noslip]
     type = ADVectorFunctionDirichletBC
     variable = velocity
-    boundary = 'left'
+    boundary = 'bottom'
     function_x = 0.
     function_y = 0.
-    # set_y_comp = false
-    # set_x_comp = false
   []
 []
 
 [Materials]
-  # [constant_ice]
-  #   type = ADGenericConstantMaterial
-  #   prop_names = 'rho mu'
-  #   prop_values = '0.917 0.3' # kg.m-3 MPa.a
-  # []
   [ice]
     type = ADIceMaterial
     velocity_x = "vel_x"
@@ -163,7 +161,7 @@
 
 [Executioner]
   type = Transient
-  num_steps = 10
+  # num_steps = 10
 
   # petsc_options_iname = '-pc_type -pc_factor_shift -pc_mat_solve_package'
   # petsc_options_value = 'lu       NONZERO mumps'
@@ -173,10 +171,19 @@
 
   nl_rel_tol = 1e-08
   nl_abs_tol = 1e-13
+  # nl_rel_tol = 1e-06
+  # nl_abs_tol = 1e-06
   nl_max_its = 40
   line_search = none
 
   automatic_scaling = true
+
+  dt = 31536000 # one year in seconds
+  num_steps = 100
+  # steady_state_detection = true
+  # steady_state_tolerance = 1e-08
+  # check_aux = true
+  
 []
 
 [Outputs]
