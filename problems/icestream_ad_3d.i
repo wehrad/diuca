@@ -2,7 +2,7 @@
 
 [Mesh]
   type = FileMesh
-  file = mesh_icestream_flat.e
+  # file = mesh_icestream_flat.e
   file = mesh_icestream.e
   second_order = true
 []
@@ -214,11 +214,11 @@
 [Functions]
   [ocean_pressure]
     type = ParsedFunction
-    value = 'if(z < 0, -1028 * 9.81 * z * 1e-6, 0)'
+    expression = 'if(z < 0, -1028 * 9.81 * z * 1e-6, 0)'
   []
   [weight]
     type = ParsedFunction
-    value = '917 * 9.81 * (100-z)  * 1e-6'
+    expression = '917 * 9.81 * (100-z)  * 1e-6'
   []
 []
 

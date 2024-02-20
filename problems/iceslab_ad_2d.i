@@ -159,20 +159,21 @@ thickness = 100
   petsc_options_iname = '-pc_type'
   petsc_options_value = 'svd'
 
-  nl_rel_tol = 1e-08
-  nl_abs_tol = 1e-13
-  # nl_rel_tol = 1e-06
-  # nl_abs_tol = 1e-06
+  # nl_rel_tol = 1e-08
+  # nl_abs_tol = 1e-13
+  nl_rel_tol = 1e-07
+  nl_abs_tol = 1e-07
+  
   nl_max_its = 40
   line_search = none
 
   automatic_scaling = true
 
   dt = 31536000 # one year in seconds
-  num_steps = 100
-  # steady_state_detection = true
-  # steady_state_tolerance = 1e-08
-  # check_aux = true
+  # num_steps = 100
+  steady_state_detection = true
+  steady_state_tolerance = 1e-100
+  check_aux = true
   
 []
 
