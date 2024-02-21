@@ -1,7 +1,7 @@
 # ------------------------ 
 
 # slope of the bottom boundary (in degrees)
-bed_slope = 5
+bed_slope = 10 # 5
 
 # change coordinate system to add a slope
 gravity_x = ${fparse
@@ -11,9 +11,26 @@ gravity_y = ${fparse
 	      - cos(bed_slope / 180 * pi) * 9.81 * 1e-6
               } 
 
-# geometry of the ice slab
-length = 200
-thickness = 100
+# geometry of the ice slab (converging nb_years=1)
+# length = 200
+# thickness = 100
+
+#  geometry of the ice slab (converging nb_years=1)
+length = 1000
+thickness = 200
+
+#  geometry of the ice slab (not converging)
+# length = 5000
+# thickness = 400
+
+# dt associated with rest time associated with the
+# geometry (in seconds)
+# ice has a high viscosity and hence response times
+# of years
+nb_years = 1.
+_dt = ${fparse
+       nb_years * 3600 * 24 * 365
+       }
 
 # ------------------------
 
@@ -169,7 +186,7 @@ thickness = 100
 
   automatic_scaling = true
 
-  dt = 31536000 # one year in seconds
+  dt = "${_dt}"
   # num_steps = 100
   steady_state_detection = true
   steady_state_tolerance = 1e-100
