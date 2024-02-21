@@ -175,7 +175,6 @@
     velocity_y = "vel_y"
     velocity_z = "vel_z"
     pressure = "p"
-    FrictionCoefficient=0.1
   []
   [ins_mat]
     type = INSADTauMaterial
