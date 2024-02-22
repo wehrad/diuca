@@ -1,15 +1,11 @@
-# ------------------------ 
+# ------------------------
 
 # slope of the bottom boundary (in degrees)
 bed_slope = 5. # 5
 
 # change coordinate system to add a slope
-gravity_x = ${fparse
-  	      cos((90 - bed_slope) / 180 * pi) * 9.81
-              } 
-gravity_y = ${fparse
-	      - cos(bed_slope / 180 * pi) * 9.81
-              } 
+gravity_x = '${fparse cos((90 - bed_slope) / 180 * pi) * 9.81 }'
+gravity_y = '${fparse - cos(bed_slope / 180 * pi) * 9.81}'
 
 #  geometry of the ice slab
 length = 1000.
@@ -20,9 +16,7 @@ thickness = 200.
 # ice has a high viscosity and hence response times
 # of years
 nb_years = 0.1
-_dt = ${fparse
-       nb_years * 3600 * 24 * 365
-       }
+_dt = '${fparse nb_years * 3600 * 24 * 365}'
 
 # inlet_mph = 0.01 # mh-1
 # inlet_mps = ${fparse
@@ -32,16 +26,24 @@ _dt = ${fparse
 # ------------------------
 
 [Mesh]
-  type = GeneratedMesh
-  dim = 2
-  xmin = 0
-  xmax = '${length}'
-  ymin = 0
-  ymax = '${thickness}'
-  nx = 10
-  ny = 5
-  elem_type = QUAD9
-  
+  [base_mesh]
+    type = GeneratedMeshGenerator
+    dim = 2
+    xmin = 0
+    xmax = '${length}'
+    ymin = 0
+    ymax = '${thickness}'
+    nx = 10
+    ny = 5
+    elem_type = QUAD9
+  []
+  [pin_pressure_node]
+    type = BoundingBoxNodeSetGenerator
+    input = 'base_mesh'
+    bottom_left = '-0.0001 -0.00001 0'
+    top_right = '0.000001 0.000001 0'
+    new_boundary = 'pressure_pin_node'
+  []
 []
 
 [GlobalParams]
@@ -75,6 +77,7 @@ _dt = ${fparse
   [velocity]
     family = LAGRANGE_VEC
     order = SECOND
+    scaling = 1e-8
   []
   [p]
   []
@@ -124,7 +127,15 @@ _dt = ${fparse
   #     variable = 'velocity'
   #   []
   # []
-  
+
+  # we need to pin the pressure to remove the singular value
+  [pin_pressure]
+    type = DirichletBC
+    variable = p
+    boundary = 'pressure_pin_node'
+    value = 1e5
+  []
+
   [inlet]
     type = ADVectorFunctionDirichletBC
     variable = velocity
@@ -198,17 +209,19 @@ _dt = ${fparse
   # nl_abs_tol = 1e-13
   nl_rel_tol = 1e-07
   nl_abs_tol = 1e-07
-  
+
   nl_max_its = 40
   line_search = none
 
-  automatic_scaling = true
+  # The scaling is not working as expected, makes the matrix worse
+  # This is probably due to the lack of on-diagonals in pressure
+  automatic_scaling = false
 
   dt = "${_dt}"
   steady_state_detection = true
   steady_state_tolerance = 1e-100
   check_aux = true
-  
+
 []
 
 [Outputs]
