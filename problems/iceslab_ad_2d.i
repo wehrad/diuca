@@ -27,7 +27,7 @@ thickness = 200
 # geometry (in seconds)
 # ice has a high viscosity and hence response times
 # of years
-nb_years = 1.
+nb_years = 10.
 _dt = ${fparse
        nb_years * 3600 * 24 * 365
        }
@@ -187,7 +187,6 @@ _dt = ${fparse
   automatic_scaling = true
 
   dt = "${_dt}"
-  # num_steps = 100
   steady_state_detection = true
   steady_state_tolerance = 1e-100
   check_aux = true

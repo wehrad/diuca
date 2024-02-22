@@ -121,7 +121,7 @@
     type = DirichletBC
     variable = p
     boundary = 'top bottom'
-    value = 2
+    value = 10. # MPa
   []
   [axis]
     type = ADVectorFunctionDirichletBC
@@ -161,9 +161,27 @@
   []
 []
 
+# [Executioner]
+#   type = Transient
+#   num_steps = 10
+
+#   # petsc_options_iname = '-pc_type -pc_factor_shift -pc_mat_solve_package'
+#   # petsc_options_value = 'lu       NONZERO mumps'
+#   petsc_options = '-pc_svd_monitor'
+#   petsc_options_iname = '-pc_type'
+#   petsc_options_value = 'svd'
+
+#   nl_rel_tol = 1e-08
+#   nl_abs_tol = 1e-13
+#   nl_max_its = 40
+#   line_search = none
+
+#   automatic_scaling = true
+# []
+
 [Executioner]
   type = Transient
-  num_steps = 10
+  # num_steps = 10
 
   # petsc_options_iname = '-pc_type -pc_factor_shift -pc_mat_solve_package'
   # petsc_options_value = 'lu       NONZERO mumps'
@@ -171,12 +189,23 @@
   petsc_options_iname = '-pc_type'
   petsc_options_value = 'svd'
 
-  nl_rel_tol = 1e-08
-  nl_abs_tol = 1e-13
+  # nl_rel_tol = 1e-08
+  # nl_abs_tol = 1e-13
+  nl_rel_tol = 1e-07
+  nl_abs_tol = 1e-07
+  
   nl_max_its = 40
   line_search = none
 
   automatic_scaling = true
+
+  # dt = "${_dt}"
+  dt = 0.1 # years
+  # num_steps = 100
+  steady_state_detection = true
+  steady_state_tolerance = 1e-100
+  check_aux = true
+  
 []
 
 [Outputs]
