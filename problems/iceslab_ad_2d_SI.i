@@ -24,10 +24,10 @@ _dt = ${fparse
        nb_years * 3600 * 24 * 365
        }
 
-inlet_mph = 0.01 # mh-1
-inlet_mps = ${fparse
-            inlet_mph / 3600
-            } # ms-1
+# inlet_mph = 0.01 # mh-1
+# inlet_mps = ${fparse
+#             inlet_mph / 3600
+#             } # ms-1
 
 # ------------------------
 
@@ -136,9 +136,9 @@ inlet_mps = ${fparse
     type = ADVectorFunctionDirichletBC
     variable = velocity
     boundary = 'bottom'
-    function_x = "${inlet_mps}"
-    # set_x_comp = False
+    function_x = 0. # "${inlet_mps}"
     function_y = 0.
+    # set_x_comp = False
   []
 []
 
