@@ -1,19 +1,5 @@
+# adapted from iceslab_fv_2d_SI.i
 # ------------------------
-
-# slope of the bottom boundary (in degrees)
-# bed_slope = 5. # 5
-
-# change coordinate system to add a slope
-# gravity_x = '${fparse
-#   	      cos((90 - bed_slope) / 180 * pi) * 9.81
-#               }'
-# gravity_y = '${fparse
-# 	      - cos(bed_slope / 180 * pi) * 9.81
-#               }'
-
-#  geometry of the ice slab
-length = 1000.
-thickness = 200.
 
 # dt associated with rest time associated with the
 # geometry (in seconds)
@@ -22,7 +8,8 @@ thickness = 200.
 nb_years = 0.1
 _dt = '${fparse nb_years * 3600 * 24 * 365}'
 
-inlet_mph = 0.01 # mh-1
+# upstream inlet (ice influx from the ice sheet interior)
+inlet_mph = 0.1 # mh-1
 inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
 
 # Numerical scheme parameters
@@ -33,6 +20,8 @@ vel_scaling = 1e-8
 # Material properties
 rho = 'rho'
 mu = 'mu'
+
+# ------------------------
 
 [GlobalParams]
   rhie_chow_user_object = 'rc'
@@ -45,6 +34,13 @@ mu = 'mu'
     v = vel_y
     pressure = pressure
   []
+[]
+
+[Mesh]
+  type = FileMesh
+  file = mesh_icestream_flat.e
+  # file = mesh_icestream.e
+  second_order = true
 []
 
 [Variables]
@@ -62,18 +58,6 @@ mu = 'mu'
     type = INSFVPressureVariable
     two_term_boundary_expansion = true
   []
-[]
-
-[Mesh]
-  type = GeneratedMesh
-  dim = 2
-  xmin = 0
-  xmax = '${length}'
-  ymin = 0
-  ymax = '${thickness}'
-  nx = 20
-  ny = 10
-  elem_type = QUAD8
 []
 
 [FVKernels]
@@ -111,6 +95,13 @@ mu = 'mu'
     pressure = pressure
     momentum_component = 'x'
   []
+  [u_gravity]
+    type = INSFVMomentumGravity
+    variable = vel_x
+    # rho = 'rho_mixture'
+    momentum_component = 'x'
+    gravity = '0 0 -9.81'
+  []
 
   [v_time]
     type = INSFVMomentumTimeDerivative
@@ -138,38 +129,114 @@ mu = 'mu'
     pressure = pressure
     momentum_component = 'y'
   []
+  [v_buoyant]
+    type = INSFVMomentumGravity
+    variable = vel_y
+    # rho = 'rho_mixture'
+    momentum_component = 'y'
+    gravity = '0 0 -9.81'
+  []
+
+  [w_time]
+    type = INSFVMomentumTimeDerivative
+    variable = vel_z
+    rho = ${rho}
+    momentum_component = 'z'
+  []
+  [w_advection]
+    type = INSFVMomentumAdvection
+    variable = vel_z
+    advected_interp_method = ${advected_interp_method}
+    velocity_interp_method = ${velocity_interp_method}
+    rho = ${rho}
+    momentum_component = 'z'
+  []
+  [w_viscosity]
+    type = INSFVMomentumDiffusion
+    variable = vel_z
+    mu = ${mu}
+    momentum_component = 'z'
+  []
+  [w_pressure]
+    type = INSFVMomentumPressure
+    variable = vel_z
+    pressure = pressure
+    momentum_component = 'z'
+  []
+  [w_buoyant]
+    type = INSFVMomentumGravity
+    variable = vel_z
+    # rho = 'rho_mixture'
+    momentum_component = 'z'
+    gravity = '0 0 -9.81'
+  []
 []
 
 [FVBCs]
-  [inlet_x]
+
+  # ice and sediment influx
+  [ice_inlet_x]
     type = INSFVInletVelocityBC
     variable = vel_x
-    boundary = 'left'
+    boundary = 'upstream'
     function = ${inlet_mps}
   []
-  [inlet_y]
+  [ice_inlet_y]
     type = INSFVInletVelocityBC
     variable = vel_y
-    boundary = 'left'
+    boundary = 'upstream'
     function = 0
   []
-  [walls_x]
-    type = INSFVNoSlipWallBC
+  [ice_inlet_z]
+    type = INSFVInletVelocityBC
+    variable = vel_z
+    boundary = 'upstream'
+    function = 0
+  []
+  [sediment_inlet_x]
+    type = INSFVInletVelocityBC
     variable = vel_x
-    boundary = 'bottom top'
+    boundary = 'upstream_sediment'
+    function = 0 # ${inlet_mps}
+  []
+  [sediment_inlet_y]
+    type = INSFVInletVelocityBC
+    variable = vel_y
+    boundary = 'upstream_sediment'
     function = 0
   []
-  [walls_y]
-    type = INSFVNoSlipWallBC
-    variable = vel_y
-    boundary = 'bottom top'
+  [sediment_inlet_z]
+    type = INSFVInletVelocityBC
+    variable = vel_z
+    boundary = 'upstream_sediment'
     function = 0
   []
 
+  # no slip at the glacier base nor on the sides
+  [no_slip_x]
+    type = INSFVNoSlipWallBC
+    variable = vel_x
+    boundary = 'sediment left left_sediment right right_sediment'
+    function = 0
+  []
+  [no_slip_y]
+    type = INSFVNoSlipWallBC
+    variable = vel_y
+    boundary = 'sediment left left_sediment right right_sediment'
+    function = 0
+  []
+  [no_slip_z]
+    type = INSFVNoSlipWallBC
+    variable = vel_y
+    boundary = 'sediment left left_sediment right right_sediment'
+    function = 0
+  []
+
+  # pressure outflux
   [outlet_p]
     type = INSFVOutletPressureBC
     variable = pressure
-    boundary = 'right'
+    boundary = 'downstream'
     function = 0
   []
 []
@@ -179,13 +246,13 @@ mu = 'mu'
 [Functions]
   [ocean_pressure]
     type = ParsedFunction
-    expression = '-1028 * 9.81 * y'
+    value = 'if(z < 0, -1028 * 9.81 * z, 0)'
   []
-[]
-
+  
 [FunctorMaterials]
   [ice]
     type = FVIceMaterialSI
+    block = 'eleblock1 eleblock2 eleblock3'
     velocity_x = "vel_x"
     velocity_y = "vel_y"
     velocity_z = vel_z
@@ -193,11 +260,6 @@ mu = 'mu'
     output_properties = 'mu rho'
   []
 []
-
-[AuxVariables]
-  [vel_z]
-    type = MooseVariableFVReal
-  []
 []
 
 [Preconditioning]
