@@ -25,6 +25,7 @@ ADIceMaterialSI::validParams()
   // Convergence parameters
   // params.addParam<ADReal>("II_eps_min", 1.8962455606291224e-13, "Finite strain rate parameter"); // s-1
   params.addParam<ADReal>("II_eps_min", 1e-15, "Finite strain rate parameter"); // s-1
+  
   return params;
 }
 
@@ -91,8 +92,8 @@ ADIceMaterialSI::computeQpProperties()
   // if (_dt >= 2)
   //   std::cout << "II_eps=" << II_eps << std::endl;
   
-  if (II_eps < _II_eps_min)
-    II_eps = _II_eps_min;
+  // if (II_eps < _II_eps_min)
+  //   II_eps = _II_eps_min;
 
   // Compute viscosity
   _viscosity[_qp] = (0.5 * ApGlen * std::pow(II_eps, -(1. - 1. / _nGlen) / 2.)); // Pas

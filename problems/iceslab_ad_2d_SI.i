@@ -9,7 +9,7 @@ gravity_y = '${fparse - cos(bed_slope / 180 * pi) * 9.81}'
 
 #  geometry of the ice slab
 length = 1000.
-thickness = 200.
+thickness = 100.
 
 # dt associated with rest time associated with the
 # geometry (in seconds)
@@ -151,6 +151,14 @@ _dt = '${fparse nb_years * 3600 * 24 * 365}'
     function_y = 0.
     # set_x_comp = False
   []
+
+  [oulet]
+    type = ADFunctionDirichletBC
+    variable = p
+    boundary = 'right'
+    function = ocean_pressure
+  []
+  
 []
 
 [Materials]
@@ -167,19 +175,14 @@ _dt = '${fparse nb_years * 3600 * 24 * 365}'
   []
 []
 
-# [Functions]
-#   [weight]
-#     type = ParsedFunction
-#     value = '917 * 9.81 * (${thickness}-y)'
-#   []
-# []
+[Functions]
+  [ocean_pressure]
+    type = ParsedFunction
+    value = '1028 * 9.81 * y'
+  []
+[]
 
 # [ICs]
-#   [pressureIC]
-#     type = FunctionIC
-#     variable = p
-#     function = weight
-#   []
 #   # [velocityIC]
 #   #   type = VectorFunctionIC
 #   #   variable = velocity
