@@ -178,7 +178,7 @@ _dt = '${fparse nb_years * 3600 * 24 * 365}'
 [Functions]
   [ocean_pressure]
     type = ParsedFunction
-    value = '1028 * 9.81 * y'
+    expression = '1028 * 9.81 * y'
   []
 []
 
