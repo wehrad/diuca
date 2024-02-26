@@ -1,7 +1,7 @@
 # ------------------------
 
 # slope of the bottom boundary (in degrees)
-bed_slope = 0. # 5
+bed_slope = 5.
 
 # change coordinate system to add a slope
 gravity_x = '${fparse sin(bed_slope / 180 * pi) * 9.81 }'
