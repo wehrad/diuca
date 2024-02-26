@@ -1,10 +1,10 @@
 # ------------------------
 
 # slope of the bottom boundary (in degrees)
-bed_slope = 5. # 5
+bed_slope = 0. # 5
 
 # change coordinate system to add a slope
-gravity_x = '${fparse cos((90 - bed_slope) / 180 * pi) * 9.81 }'
+gravity_x = '${fparse sin(bed_slope / 180 * pi) * 9.81 }'
 gravity_y = '${fparse - cos(bed_slope / 180 * pi) * 9.81}'
 
 #  geometry of the ice slab
@@ -18,10 +18,10 @@ thickness = 100.
 nb_years = 0.1
 _dt = '${fparse nb_years * 3600 * 24 * 365}'
 
-# inlet_mph = 0.01 # mh-1
-# inlet_mps = ${fparse
-#             inlet_mph / 3600
-#             } # ms-1
+inlet_mph = 0.01 # mh-1
+inlet_mps = ${fparse
+             inlet_mph / 3600
+            } # ms-1
 
 # ------------------------
 
@@ -76,8 +76,8 @@ _dt = '${fparse nb_years * 3600 * 24 * 365}'
 [Variables]
   [velocity]
     family = LAGRANGE_VEC
-    order = SECOND
     scaling = 1e-8
+    initial_condition = 1e-8
   []
   [p]
   []
@@ -86,6 +86,10 @@ _dt = '${fparse nb_years * 3600 * 24 * 365}'
 [Kernels]
   [mass]
     type = INSADMass
+    variable = p
+  []
+  [mass_stab]
+    type = INSADMassPSPG
     variable = p
   []
   [momentum_time]
@@ -129,18 +133,18 @@ _dt = '${fparse nb_years * 3600 * 24 * 365}'
   # []
 
   # we need to pin the pressure to remove the singular value
-  [pin_pressure]
-    type = DirichletBC
-    variable = p
-    boundary = 'pressure_pin_node'
-    value = 1e5
-  []
+  #[pin_pressure]
+  #  type = DirichletBC
+  #  variable = p
+  #  boundary = 'pressure_pin_node'
+  #  value = 1e5
+  #[]
 
   [inlet]
     type = ADVectorFunctionDirichletBC
     variable = velocity
     boundary = 'left'
-    function_x = 0. # "${inlet_mps}"
+    function_x = "${inlet_mps}"
     function_y = 0.
   []
   [noslip]
@@ -167,6 +171,8 @@ _dt = '${fparse nb_years * 3600 * 24 * 365}'
     velocity_x = "vel_x"
     velocity_y = "vel_y"
     pressure = "p"
+    output_properties = "mu"
+    outputs = "out"
   []
   [ins_mat]
     type = INSADTauMaterial
@@ -178,7 +184,9 @@ _dt = '${fparse nb_years * 3600 * 24 * 365}'
 [Functions]
   [ocean_pressure]
     type = ParsedFunction
-    expression = '1028 * 9.81 * y'
+    expression = '-1028 * 9.81 * ( (y * cos(bed_slope / 180 * pi)) + (x * sin(bed_slope / 180 * pi)))'
+    symbol_names = 'bed_slope'
+    symbol_values = '${bed_slope}'
   []
 []
 
@@ -195,6 +203,11 @@ _dt = '${fparse nb_years * 3600 * 24 * 365}'
     type = SMP
     full = true
     solve_type = 'NEWTON'
+    # petsc_options = '-pc_svd_monitor'
+    # petsc_options_iname = '-pc_type'
+    # petsc_options_value = 'svd'
+    petsc_options_iname = '-pc_type -pc_factor_shift -pc_mat_solve_package'
+    petsc_options_value = 'lu       NONZERO mumps'
   []
 []
 
@@ -202,18 +215,12 @@ _dt = '${fparse nb_years * 3600 * 24 * 365}'
   type = Transient
   # num_steps = 10
 
-  # petsc_options_iname = '-pc_type -pc_factor_shift -pc_mat_solve_package'
-  # petsc_options_value = 'lu       NONZERO mumps'
-  petsc_options = '-pc_svd_monitor'
-  petsc_options_iname = '-pc_type'
-  petsc_options_value = 'svd'
-
   # nl_rel_tol = 1e-08
   # nl_abs_tol = 1e-13
   nl_rel_tol = 1e-07
   nl_abs_tol = 1e-07
 
-  nl_max_its = 40
+  nl_max_its = 100
   line_search = none
 
   # The scaling is not working as expected, makes the matrix worse
@@ -223,8 +230,6 @@ _dt = '${fparse nb_years * 3600 * 24 * 365}'
   dt = "${_dt}"
   steady_state_detection = true
   steady_state_tolerance = 1e-100
-  check_aux = true
-
 []
 
 [Outputs]
