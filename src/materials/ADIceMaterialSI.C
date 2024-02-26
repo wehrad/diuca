@@ -22,9 +22,8 @@ ADIceMaterialSI::validParams()
   params.addParam<ADReal>("nGlen", 3., "Glen exponent");   //
   params.addParam<ADReal>("density", 917., "Ice density"); // kgm-3
 
-  // Convergence parameters
-  // params.addParam<ADReal>("II_eps_min", 1.8962455606291224e-13, "Finite strain rate parameter"); // s-1
-  params.addParam<ADReal>("II_eps_min", 1e-15, "Finite strain rate parameter"); // s-1
+  // Minimum strain rate parameter
+  params.addParam<ADReal>("II_eps_min", 1e-25, "Finite strain rate parameter"); // s-1
   
   return params;
 }
@@ -87,13 +86,9 @@ ADIceMaterialSI::computeQpProperties()
   ADReal II_eps = 0.5 * (u_x * u_x + v_y * v_y + w_z * w_z +
                          2. * (eps_xy * eps_xy + eps_xz * eps_xz + eps_yz * eps_yz));
 
-  // Finite strain rate parameter included to avoid infinite viscosity at low stresses
-
-  // if (_dt >= 2)
-  //   std::cout << "II_eps=" << II_eps << std::endl;
-  
-  // if (II_eps < _II_eps_min)
-  //   II_eps = _II_eps_min;
+  // Prevent Floating point errors (observed on Linux) by forcing non-null II_eps
+  if (II_eps < _II_eps_min)
+    II_eps = _II_eps_min;
 
   // Compute viscosity
   _viscosity[_qp] = (0.5 * ApGlen * std::pow(II_eps, -(1. - 1. / _nGlen) / 2.)); // Pas
@@ -102,7 +97,4 @@ ADIceMaterialSI::computeQpProperties()
   // Constant density
   _density[_qp] = _rho;
 
-  // if (_dt >= 2)
-  //   std::cout << "p=" << _pressure[_qp] << "   mu=" << _viscosity[_qp] << "  v_y=" <<  v_y << std::endl;
-  
 }
