@@ -9,8 +9,8 @@ FVSedimentMaterialSI::validParams()
   InputParameters params = FunctorMaterial::validParams();
 
   // Friction properties
-  _FrictionCoefficient(getParam<Real>("FrictionCoefficient"));
-
+  params.addParam<ADReal>("FrictionCoefficient", 1.0, "Sediment friction coefficient");
+  
   // Get velocity gradients to compute viscosity based on second invariant
   params.addParam<MooseFunctorName>("velocity_x", "Velocity in x dimension");
   params.addParam<MooseFunctorName>("velocity_y", "Velocity in y dimension");
@@ -39,8 +39,11 @@ FVSedimentMaterialSI::FVSedimentMaterialSI(const InputParameters & parameters)
     _vel_y(getFunctor<ADReal>("velocity_y")),
     _vel_z(getFunctor<ADReal>("velocity_z")),
 
+    // Friction properties
+    _FrictionCoefficient(getParam<ADReal>("FrictionCoefficient")),
+    
     // Pressure
-    _pressure(coupledValue("pressure")),
+    _pressure(getFunctor<ADReal>("pressure"))
 
 {
   const std::set<ExecFlagType> clearance_schedule(_execute_enum.begin(), _execute_enum.end());
@@ -74,10 +77,10 @@ FVSedimentMaterialSI::FVSedimentMaterialSI(const InputParameters & parameters)
         ADReal eps_yz = 0.5 * (v_z + w_y);
 
 	// Get pressure
-	ADReal sig_m = _pressure;
+	ADReal sig_m = _pressure(r, t);
 
 	// Get viscosity
-	AADReal eta = viscosity;
+	ADReal eta = viscosity;
   
 	ADReal sxx = 2 * eta * u_x + sig_m;
 	ADReal syy = 2 * eta * v_y + sig_m;
@@ -95,7 +98,7 @@ FVSedimentMaterialSI::FVSedimentMaterialSI(const InputParameters & parameters)
 	ADReal sig_e = std::sqrt(3./2. * (sxx_dev*sxx_dev + syy_dev*syy_dev + 2*sxy*sxy));
 	
         // Compute viscosity
-	viscosity = (_FrictionCoefficient * sig_m) / std::abs(sig_e); // MPas
+	viscosity = (_FrictionCoefficient * sig_m) / std::abs(sig_e); // Pas
 	// viscosity = 3.;
 	
 	return viscosity;
