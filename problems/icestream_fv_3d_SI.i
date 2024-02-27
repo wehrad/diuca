@@ -32,6 +32,7 @@ mu = 'mu'
     type = INSFVRhieChowInterpolator
     u = vel_x
     v = vel_y
+    w = vel_z
     pressure = pressure
   []
 []
@@ -50,6 +51,11 @@ mu = 'mu'
     scaling = ${vel_scaling}
   []
   [vel_y]
+    type = INSFVVelocityVariable
+    two_term_boundary_expansion = true
+    scaling = ${vel_scaling}
+  []
+  [vel_z]
     type = INSFVVelocityVariable
     two_term_boundary_expansion = true
     scaling = ${vel_scaling}
@@ -179,37 +185,37 @@ mu = 'mu'
     type = INSFVInletVelocityBC
     variable = vel_x
     boundary = 'upstream'
-    function = ${inlet_mps}
+    functor = ${inlet_mps}
   []
   [ice_inlet_y]
     type = INSFVInletVelocityBC
     variable = vel_y
     boundary = 'upstream'
-    function = 0
+    functor = 0
   []
   [ice_inlet_z]
     type = INSFVInletVelocityBC
     variable = vel_z
     boundary = 'upstream'
-    function = 0
+    functor = 0
   []
   [sediment_inlet_x]
     type = INSFVInletVelocityBC
     variable = vel_x
     boundary = 'upstream_sediment'
-    function = 0 # ${inlet_mps}
+    functor = 0 # ${inlet_mps}
   []
   [sediment_inlet_y]
     type = INSFVInletVelocityBC
     variable = vel_y
     boundary = 'upstream_sediment'
-    function = 0
+    functor = 0
   []
   [sediment_inlet_z]
     type = INSFVInletVelocityBC
     variable = vel_z
     boundary = 'upstream_sediment'
-    function = 0
+    functor = 0
   []
 
   # no slip at the glacier base nor on the sides
@@ -246,7 +252,7 @@ mu = 'mu'
 [Functions]
   [ocean_pressure]
     type = ParsedFunction
-    value = 'if(z < 0, -1028 * 9.81 * z, 0)'
+    expression = 'if(z < 0, -1028 * 9.81 * z, 0)'
   []
   
 [FunctorMaterials]
@@ -255,7 +261,7 @@ mu = 'mu'
     block = 'eleblock1 eleblock2 eleblock3'
     velocity_x = "vel_x"
     velocity_y = "vel_y"
-    velocity_z = vel_z
+    velocity_z = "vel_z"
     pressure = "pressure"
     output_properties = 'mu rho'
   []
