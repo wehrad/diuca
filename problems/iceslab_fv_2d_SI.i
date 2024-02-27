@@ -1,19 +1,15 @@
 # ------------------------
 
 # slope of the bottom boundary (in degrees)
-bed_slope = 5. # 5
+bed_slope = 5.
 
 # change coordinate system to add a slope
-gravity_x = '${fparse
-  	      cos((90 - bed_slope) / 180 * pi) * 9.81
-              }'
-gravity_y = '${fparse
-	      - cos(bed_slope / 180 * pi) * 9.81
-              }'
+gravity_x = '${fparse sin(bed_slope / 180 * pi) * 9.81 }'
+gravity_y = '${fparse - cos(bed_slope / 180 * pi) * 9.81}'
 
 #  geometry of the ice slab
 length = 1000.
-thickness = 200.
+thickness = 100.
 
 # dt associated with rest time associated with the
 # geometry (in seconds)
@@ -23,7 +19,11 @@ nb_years = 0.1
 _dt = '${fparse nb_years * 3600 * 24 * 365}'
 
 inlet_mph = 0.01 # mh-1
-inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
+inlet_mps = ${fparse
+             inlet_mph / 3600
+            } # ms-1
+
+# ------------------------
 
 # Numerical scheme parameters
 velocity_interp_method = 'rc'
@@ -33,6 +33,8 @@ vel_scaling = 1e-8
 # Material properties
 rho = 'rho'
 mu = 'mu'
+
+# ------------------------
 
 [GlobalParams]
   rhie_chow_user_object = 'rc'
@@ -111,6 +113,14 @@ mu = 'mu'
     pressure = pressure
     momentum_component = 'x'
   []
+  [u_gravity]
+    type = INSFVMomentumGravity
+    variable = vel_x
+    # rho = 'rho_mixture'
+    momentum_component = 'x'
+    gravity = '${gravity_x} ${gravity_y} 0.'
+  []
+
 
   [v_time]
     type = INSFVMomentumTimeDerivative
@@ -138,6 +148,13 @@ mu = 'mu'
     pressure = pressure
     momentum_component = 'y'
   []
+  [v_gravity]
+    type = INSFVMomentumGravity
+    variable = vel_y
+    # rho = 'rho_mixture'
+    momentum_component = 'y'
+    gravity = '${gravity_x} ${gravity_y} 0.'
+  []
 []
 
 [FVBCs]
@@ -145,32 +162,38 @@ mu = 'mu'
     type = INSFVInletVelocityBC
     variable = vel_x
     boundary = 'left'
-    function = ${inlet_mps}
+    functor = "${inlet_mps}"
   []
   [inlet_y]
     type = INSFVInletVelocityBC
     variable = vel_y
     boundary = 'left'
-    function = 0
+    functor = 0
   []
-  [walls_x]
+  [noslip_x]
     type = INSFVNoSlipWallBC
     variable = vel_x
-    boundary = 'bottom top'
+    boundary = 'bottom'
     function = 0
   []
-  [walls_y]
+  [noslip_y]
     type = INSFVNoSlipWallBC
     variable = vel_y
-    boundary = 'bottom top'
+    boundary = 'bottom'
     function = 0
   []
 
-  [outlet_p]
-    type = INSFVOutletPressureBC
+  # [outlet_p]
+  #   type = INSFVOutletPressureBC
+  #   variable = pressure
+  #   boundary = 'right'
+  #   functor = 0
+  # []
+  [oulet]
+    type = FVFunctionDirichletBC
     variable = pressure
     boundary = 'right'
-    function = 0
+    function = ocean_pressure
   []
 []
 
@@ -179,7 +202,9 @@ mu = 'mu'
 [Functions]
   [ocean_pressure]
     type = ParsedFunction
-    expression = '-1028 * 9.81 * y'
+    expression = '-1028 * 9.81 * ( (y * cos(bed_slope / 180 * pi)) + (x * sin(bed_slope / 180 * pi)))'
+    symbol_names = 'bed_slope'
+    symbol_values = '${bed_slope}'
   []
 []
 
@@ -190,7 +215,8 @@ mu = 'mu'
     velocity_y = "vel_y"
     velocity_z = vel_z
     pressure = "pressure"
-    output_properties = 'mu rho'
+    output_properties = "mu rho"
+    outputs = "out"
   []
 []
 
@@ -274,6 +300,10 @@ mu = 'mu'
   nl_max_its = 100
   nl_forced_its = 2
   line_search = none
+
+  # The scaling is not working as expected, makes the matrix worse
+  # This is probably due to the lack of on-diagonals in pressure
+  automatic_scaling = false
 
   dt = '${_dt}'
   steady_state_detection = true
