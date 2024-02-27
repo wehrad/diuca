@@ -1,5 +1,6 @@
 #include "FVSedimentMaterialSI.h"
 #include "MooseMesh.h"
+#include "MooseFunctorArguments.h"
 
 registerMooseObject("diucaApp", FVSedimentMaterialSI);
 
@@ -43,7 +44,10 @@ FVSedimentMaterialSI::FVSedimentMaterialSI(const InputParameters & parameters)
     _FrictionCoefficient(getParam<ADReal>("FrictionCoefficient")),
     
     // Pressure
-    _pressure(getFunctor<ADReal>("pressure"))
+    _pressure(getFunctor<ADReal>("pressure")),
+
+    // Viscosity
+    _viscosity(getFunctor<ADReal>("mu"))
 
 {
   const std::set<ExecFlagType> clearance_schedule(_execute_enum.begin(), _execute_enum.end());
@@ -80,8 +84,9 @@ FVSedimentMaterialSI::FVSedimentMaterialSI(const InputParameters & parameters)
 	ADReal sig_m = _pressure(r, t);
 
 	// Get viscosity
-	ADReal eta = viscosity;
-  
+	Moose::StateArg previous_time(1, Moose::SolutionIterationType::Time);
+	ADReal eta = _viscosity(r, previous_time);
+
 	ADReal sxx = 2 * eta * u_x + sig_m;
 	ADReal syy = 2 * eta * v_y + sig_m;
 	ADReal szz = 2 * eta * w_z + sig_m;
@@ -98,7 +103,7 @@ FVSedimentMaterialSI::FVSedimentMaterialSI(const InputParameters & parameters)
 	ADReal sig_e = std::sqrt(3./2. * (sxx_dev*sxx_dev + syy_dev*syy_dev + 2*sxy*sxy));
 	
         // Compute viscosity
-	viscosity = (_FrictionCoefficient * sig_m) / std::abs(sig_e); // Pas
+	ADReal viscosity = (_FrictionCoefficient * sig_m) / std::abs(sig_e); // Pas
 	// viscosity = 3.;
 	
 	return viscosity;
