@@ -1,12 +1,13 @@
 # ------------------------
 
 # slope of the bottom boundary (in degrees)
-bed_slope = 5.
+bed_slope = 0.
 
 # change coordinate system to add a slope
-gravity_x = '${fparse sin(bed_slope / 180 * pi) * 9.81 }'
-gravity_y = '${fparse - cos(bed_slope / 180 * pi) * 9.81}'
-
+# gravity_x = '${fparse sin(bed_slope / 180 * pi) * 9.81 }'
+# gravity_y = '${fparse - cos(bed_slope / 180 * pi) * 9.81}'
+gravity_x = 0
+gravity_y = 0
 #  geometry of the ice slab
 length = 1000.
 thickness = 100.
@@ -73,8 +74,8 @@ mu = 'mu'
   xmax = '${length}'
   ymin = 0
   ymax = '${thickness}'
-  nx = 20
-  ny = 10
+  nx = 10
+  ny = 5
   elem_type = QUAD8
 []
 
@@ -183,18 +184,18 @@ mu = 'mu'
     function = 0
   []
 
+  [outlet_p]
+    type = INSFVOutletPressureBC
+    variable = pressure
+    boundary = 'right'
+    functor = 0
+  []
   # [outlet_p]
   #   type = INSFVOutletPressureBC
   #   variable = pressure
   #   boundary = 'right'
-  #   functor = 0
+  #   functor = ocean_pressure
   # []
-  [oulet]
-    type = FVFunctionDirichletBC
-    variable = pressure
-    boundary = 'right'
-    function = ocean_pressure
-  []
 []
 
 # ------------------------
@@ -213,7 +214,7 @@ mu = 'mu'
     type = FVIceMaterialSI
     velocity_x = "vel_x"
     velocity_y = "vel_y"
-    velocity_z = vel_z
+    velocity_z = "vel_z"
     pressure = "pressure"
     output_properties = "mu rho"
     outputs = "out"
