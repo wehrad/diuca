@@ -1,4 +1,16 @@
-# adapted from iceslab_fv_2d_SI.i
+# a large glacier flowing towards the ocean (hydrostatic pressure at
+# the glacier front, i.e. downstream boundary) in the influence of the
+# driving stress (surface slope), over a flat bed.
+# The mesh includes a sediment block which is the last layer of
+# elements before the bottom boundary (where zero velocity is
+# applied): the viscosity of the sediment layer is modulating basal
+# sliding through a friction coefficient.
+# An influx of ice is applied at the top of the domain (upstream
+# boundary) to take into account the ice coming from the inner part of
+# the ice sheet.
+
+# NOTE: the sediment block is considered as ice for now
+
 # ------------------------
 
 # dt associated with rest time associated with the
@@ -233,12 +245,20 @@ mu = 'mu'
   []
   [no_slip_z]
     type = INSFVNoSlipWallBC
-    variable = vel_y
+    variable = vel_z
     boundary = 'sediment left left_sediment right right_sediment'
     function = 0
   []
 
-  # pressure outflux
+  # # pressure outflux
+  # [outlet_p]
+  #   type = INSFVOutletPressureBC
+  #   variable = pressure
+  #   boundary = 'downstream'
+  #   function = 0
+  # []
+
+  # ocean pressure at the glacier front
   [outlet_p]
     type = INSFVOutletPressureBC
     variable = pressure
@@ -247,6 +267,7 @@ mu = 'mu'
   []
 []
 
+
 # ------------------------
 
 [Functions]
@@ -254,7 +275,8 @@ mu = 'mu'
     type = ParsedFunction
     expression = 'if(z < 0, -1028 * 9.81 * z, 0)'
   []
-  
+[]
+
 [FunctorMaterials]
   [ice]
     type = FVIceMaterialSI
@@ -265,7 +287,6 @@ mu = 'mu'
     pressure = "pressure"
     output_properties = 'mu rho'
   []
-[]
 []
 
 [Preconditioning]
