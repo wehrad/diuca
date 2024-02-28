@@ -1,13 +1,12 @@
 # ------------------------
 
 # slope of the bottom boundary (in degrees)
-bed_slope = 0.
+bed_slope = 5.
 
 # change coordinate system to add a slope
-# gravity_x = '${fparse sin(bed_slope / 180 * pi) * 9.81 }'
-# gravity_y = '${fparse - cos(bed_slope / 180 * pi) * 9.81}'
-gravity_x = 0
-gravity_y = 0
+gravity_x = '${fparse sin(bed_slope / 180 * pi) * 9.81 }'
+gravity_y = '${fparse - cos(bed_slope / 180 * pi) * 9.81}'
+
 #  geometry of the ice slab
 length = 1000.
 thickness = 100.
@@ -263,7 +262,7 @@ mu = 'mu'
       petsc_options_value = 'full                            selfp                             300                1e-4      fgmres'
     []
     [u]
-      vars = 'vel_x vel_y'
+      vars = 'vel_x vel_y vel_z'
       petsc_options_iname = '-pc_type -pc_hypre_type -ksp_type -ksp_rtol -ksp_gmres_restart -ksp_pc_side'
       petsc_options_value = 'hypre    boomeramg      gmres    5e-1      300                 right'
     []
@@ -285,11 +284,11 @@ mu = 'mu'
   type = Transient
   # num_steps = 10
 
-  petsc_options_iname = '-pc_type -pc_factor_shift'
-  petsc_options_value = 'lu       NONZERO'
-  # petsc_options = '-pc_svd_monitor'
-  # petsc_options_iname = '-pc_type'
-  # petsc_options_value = 'svd'
+  # petsc_options_iname = '-pc_type -pc_factor_shift'
+  # petsc_options_value = 'lu       NONZERO'
+  petsc_options = '-pc_svd_monitor'
+  petsc_options_iname = '-pc_type'
+  petsc_options_value = 'svd'
   # petsc_options = '-pc_type fieldsplit -pc_fieldsplit_type schur -pc_fieldsplit_detect_saddle_point'
   # petsc_options = '--ksp_monitor'
 
