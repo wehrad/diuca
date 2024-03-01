@@ -1,4 +1,4 @@
-# a large gravity-loaded glacier in contact with the ocean
+# a large gravity-loaded glacier in conactt with the ocean
 # (hydrostatic pressure at the glacier front, i.e. downstream
 # boundary) sitting on top of a bedrock trough.
 
@@ -62,7 +62,7 @@
     input = "mesh_combined_interm"
     block = '4'
     refinement = '3'
-    enable_neighbor_refinement = false
+    enable_neighbor_refinement = true
   []
   [slip_zone]
     type = SubdomainBoundingBoxGenerator
@@ -75,13 +75,13 @@
     type = CombinerGenerator
     inputs = 'mesh_combined_interm slip_zone'
   []
-  [slip_face]
+  [slip_side]
     type = SideSetsAroundSubdomainGenerator
     input = 'mesh_combined'
     block = 5
-    new_boundary = 'anchor_bottom_x_slip'
+    new_boundary = 'slip_side'
     replace = true
-    # normal = '0 0 1'
+    normal = '0 0 1'
   []
 []
 
@@ -475,25 +475,24 @@
     value = 0.0
   []
 
-  # [anchor_bottom_x_slip]
-  #   type = DirichletBC
-  #   variable = disp_x
-  #   boundary = 'slip'
-  #   value = 0.0
-  # []  
-  # [anchor_botom_y_slip]
-  #   type = DirichletBC
-  #   variable = disp_y
-  #   boundary = 'slip'
-  #   value = 0.0
-  # []
-  # [anchor_bottom_z_slip]
-  #   type = DirichletBC
-  #   variable = disp_z
-  #   boundary = 'slip'
-  #   value = 0.0
-  # []
-
+  [anchor_bottom_x_slip]
+    type = DirichletBC
+    variable = disp_x
+    boundary = 'slip_side'
+    value = 0.0
+  []  
+  [anchor_botom_y_slip]
+    type = DirichletBC
+    variable = disp_y
+    boundary = 'slip_side'
+    value = 0.0
+  []
+  [anchor_bottom_z_slip]
+    type = DirichletBC
+    variable = disp_z
+    boundary = 'slip_side'
+    value = 0.0
+  []
 []
 
 [Controls]
@@ -509,14 +508,14 @@
     execute_on = 'timestep_begin timestep_end'
   []
 
-  # [bed_release]
-  #   type = TimePeriod
-  #   start_time = 0.1
-  #   end_time = 20
-  #   disable_objects = 'BCs::anchor_bottom_x_slip'
-  #   set_sync_times = true
-  #   execute_on = 'timestep_begin timestep_end'
-  # []
+  [bed_release]
+    type = TimePeriod
+    start_time = 0.1
+    end_time = 20
+    disable_objects = 'BCs::anchor_bottom_x_slip'
+    set_sync_times = true
+    execute_on = 'timestep_begin timestep_end'
+  []
 
 []
 
