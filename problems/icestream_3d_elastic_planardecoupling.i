@@ -6,10 +6,82 @@
 # propagation of an elastic deformation for the trigger zone to get to
 # a new steady state.
 
+# [Mesh]
+#   [gen]
+#     type = GeneratedMeshGenerator
+#     dim = 2
+#     xmin = -1
+#     xmax = 1
+#     ymin = -1
+#     ymax = 1
+#     nx = 16
+#     ny = 16
+#   []
+#   [left]
+#     type = SubdomainBoundingBoxGenerator
+#     input = 'gen'
+#     block_id = 1
+#     bottom_left = '-1 -1 0'
+#     top_right = '0 1 1'
+#   [] 
+#   [right]
+#     type = SubdomainBoundingBoxGenerator
+#     input = 'left'
+#     block_id = 2
+#     bottom_left = '0 -1 0'
+#     top_right = '1 1 1'
+#   []
+#   [moving_boundary]
+#     type = SideSetsAroundSubdomainGenerator
+#     input = 'right'
+#     block = 1
+#     new_boundary = 'moving_boundary'
+#     normal = '1 0 0'
+#   []
+# []
+
 [Mesh]
   [channel]      
   type = FileMeshGenerator
-  file = canyon_sloped_surface.e
+  file = mesh_icestream.e
+  []
+
+  [slip_zone_large]
+    type = SubdomainBoundingBoxGenerator
+    input = 'channel'
+    block_id = 4
+    bottom_left = '10900 5000 -2200'
+    top_right = '10600 5350 -1800'
+  []
+  [mesh_combined_interm]
+    type = CombinerGenerator
+    inputs = 'channel slip_zone_large'
+  []
+  [slip_zone_large_refined]
+    type = RefineBlockGenerator
+    input = "mesh_combined_interm"
+    block = '4'
+    refinement = '3'
+    enable_neighbor_refinement = false
+  []
+  [slip_zone]
+    type = SubdomainBoundingBoxGenerator
+    input = 'slip_zone_large_refined'
+    block_id = 5
+    bottom_left = '10800 5100 -2100'
+    top_right = '10700 5200 -2000'
+  []
+  [mesh_combined]
+    type = CombinerGenerator
+    inputs = 'mesh_combined_interm slip_zone'
+  []
+  [slip_face]
+    type = SideSetsAroundSubdomainGenerator
+    input = 'mesh_combined'
+    block = 5
+    new_boundary = 'anchor_bottom_x_slip'
+    replace = true
+    # normal = '0 0 1'
   []
 []
 
@@ -290,34 +362,97 @@
 []
 
 [BCs]
- [upstream_dirichlet]
+
+  [upstream_dirichlet_x]
     type = DirichletBC                                               
     boundary = 'upstream'
     variable = disp_x
     value    = 0.0
   []
-  [downstream_dirichlet]
+  [upstream_dirichlet_x_sediment]
+    type = DirichletBC                                               
+    boundary = 'upstream_sediment'
+    variable = disp_x
+    value    = 0.0
+  []  
+  [upstream_dirichlet_y]
+    type = DirichletBC                                               
+    boundary = 'upstream'
+    variable = disp_y
+    value    = 0.0
+  []
+  [upstream_dirichlet_y_sediment]
+    type = DirichletBC                                               
+    boundary = 'upstream_sediment'
+    variable = disp_y
+    value    = 0.0
+  []
+  [upstream_dirichlet_z]
+    type = DirichletBC                                               
+    boundary = 'upstream'
+    variable = disp_z
+    value    = 0.0
+  []
+  [upstream_dirichlet_z_sediment]
+    type = DirichletBC                                               
+    boundary = 'upstream_sediment'
+    variable = disp_z
+    value    = 0.0
+  []
+
+  [downstream_dirichlet_x]
     type = DirichletBC                                               
     boundary = 'downstream'
     variable = disp_x
     value    = 0.0
-  [] 
+  []
+  [downstream_dirichlet_x_sediment]
+    type = DirichletBC                                               
+    boundary = 'downstream_sediment'
+    variable = disp_x
+    value    = 0.0
+  []
+  [downstream_dirichlet_y]
+    type = DirichletBC                                               
+    boundary = 'downstream'
+    variable = disp_y
+    value    = 0.0
+  []
+  [downstream_dirichlet_y_sediment]
+    type = DirichletBC                                               
+    boundary = 'downstream_sediment'
+    variable = disp_y
+    value    = 0.0
+  []
+  [downstream_dirichlet_z]
+    type = DirichletBC                                               
+    boundary = 'downstream'
+    variable = disp_z
+    value    = 0.0
+  []
+  [downstream_dirichlet_z_sediment]
+    type = DirichletBC                                               
+    boundary = 'downstream_sediment'
+    variable = disp_z
+    value    = 0.0
+  []
+
   [anchor_bottom_x]
     type = DirichletBC
     variable = disp_x
-    boundary = 'bottom'
+    boundary = 'sediment'
     value = 0.0
   []  
   [anchor_botom_y]
     type = DirichletBC
     variable = disp_y
-    boundary = 'bottom'
+    boundary = 'sediment'
     value = 0.0
   []
   [anchor_bottom_z]
     type = DirichletBC
     variable = disp_z
-    boundary = 'bottom'
+    boundary = 'sediment'
     value = 0.0
   []
 
@@ -339,24 +474,25 @@
     boundary = 'left right'
     value = 0.0
   []
-  [anchor_bottom_x_slip]
-    type = DirichletBC
-    variable = disp_x
-    boundary = 'slip'
-    value = 0.0
-  []  
-  [anchor_botom_y_slip]
-    type = DirichletBC
-    variable = disp_y
-    boundary = 'slip'
-    value = 0.0
-  []
-  [anchor_bottom_z_slip]
-    type = DirichletBC
-    variable = disp_z
-    boundary = 'slip'
-    value = 0.0
-  []
+
+  # [anchor_bottom_x_slip]
+  #   type = DirichletBC
+  #   variable = disp_x
+  #   boundary = 'slip'
+  #   value = 0.0
+  # []  
+  # [anchor_botom_y_slip]
+  #   type = DirichletBC
+  #   variable = disp_y
+  #   boundary = 'slip'
+  #   value = 0.0
+  # []
+  # [anchor_bottom_z_slip]
+  #   type = DirichletBC
+  #   variable = disp_z
+  #   boundary = 'slip'
+  #   value = 0.0
+  # []
 
 []
 
@@ -373,14 +509,14 @@
     execute_on = 'timestep_begin timestep_end'
   []
 
-  [bed_release]
-    type = TimePeriod
-    start_time = 0.1
-    end_time = 20
-    disable_objects = 'BCs::anchor_bottom_x_slip'
-    set_sync_times = true
-    execute_on = 'timestep_begin timestep_end'
-  []
+  # [bed_release]
+  #   type = TimePeriod
+  #   start_time = 0.1
+  #   end_time = 20
+  #   disable_objects = 'BCs::anchor_bottom_x_slip'
+  #   set_sync_times = true
+  #   execute_on = 'timestep_begin timestep_end'
+  # []
 
 []
 
