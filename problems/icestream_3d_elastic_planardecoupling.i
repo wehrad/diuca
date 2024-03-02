@@ -535,7 +535,7 @@
   nl_rel_tol = 1e-7
   nl_abs_tol = 1e-12
   dt = 0.02
-  end_time = 1.
+  end_time = 20.
   timestep_tolerance = 1e-6
   automatic_scaling = true
   [TimeIntegrator]
@@ -561,6 +561,21 @@
     type = NodalVariableValue
     nodeid = 7294
     variable = disp_z
+  []
+  [vel_x_surface]
+    type = NodalVariableValue
+    nodeid = 7294
+    variable = vel_x
+  []
+  [vel_y_surface]
+    type = NodalVariableValue
+    nodeid = 7294
+    variable = vel_y
+  []
+  [vel_z_surface]
+    type = NodalVariableValue
+    nodeid = 7294
+    variable = vel_z
   []
 []
 
