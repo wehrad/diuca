@@ -19,16 +19,14 @@ nb_years = 0.1
 _dt = '${fparse nb_years * 3600 * 24 * 365}'
 
 inlet_mph = 0.01 # mh-1
-inlet_mps = ${fparse
-             inlet_mph / 3600
-            } # ms-1
+inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
 
 # ------------------------
 
 # Numerical scheme parameters
 velocity_interp_method = 'rc'
-advected_interp_method = 'average'
-vel_scaling = 1e-8
+advected_interp_method = 'upwind'
+vel_scaling = 1e-7
 
 # Material properties
 rho = 'rho'
@@ -75,7 +73,7 @@ mu = 'mu'
   ymax = '${thickness}'
   nx = 10
   ny = 5
-  elem_type = QUAD8
+  elem_type = QUAD4
 []
 
 [FVKernels]
@@ -116,11 +114,9 @@ mu = 'mu'
   [u_gravity]
     type = INSFVMomentumGravity
     variable = vel_x
-    # rho = 'rho_mixture'
     momentum_component = 'x'
     gravity = '${gravity_x} ${gravity_y} 0.'
   []
-
 
   [v_time]
     type = INSFVMomentumTimeDerivative
@@ -151,7 +147,6 @@ mu = 'mu'
   [v_gravity]
     type = INSFVMomentumGravity
     variable = vel_y
-    # rho = 'rho_mixture'
     momentum_component = 'y'
     gravity = '${gravity_x} ${gravity_y} 0.'
   []
@@ -162,7 +157,7 @@ mu = 'mu'
     type = INSFVInletVelocityBC
     variable = vel_x
     boundary = 'left'
-    functor = "${inlet_mps}"
+    functor = '${inlet_mps}'
   []
   [inlet_y]
     type = INSFVInletVelocityBC
@@ -182,19 +177,25 @@ mu = 'mu'
     boundary = 'bottom'
     function = 0
   []
+  [freeslip_x]
+    type = INSFVNaturalFreeSlipBC
+    variable = vel_x
+    boundary = 'top'
+    momentum_component = 'x'
+  []
+  [freeslip_y]
+    type = INSFVNaturalFreeSlipBC
+    variable = vel_y
+    boundary = 'top'
+    momentum_component = 'y'
+  []
 
   [outlet_p]
     type = INSFVOutletPressureBC
     variable = pressure
     boundary = 'right'
-    functor = 0
+    functor = ocean_pressure
   []
-  # [outlet_p]
-  #   type = INSFVOutletPressureBC
-  #   variable = pressure
-  #   boundary = 'right'
-  #   functor = ocean_pressure
-  # []
 []
 
 # ------------------------
@@ -202,7 +203,7 @@ mu = 'mu'
 [Functions]
   [ocean_pressure]
     type = ParsedFunction
-    expression = '-1028 * 9.81 * ( (y * cos(bed_slope / 180 * pi)) + (x * sin(bed_slope / 180 * pi)))'
+    expression = '-1028 * 9.81 * ( (y * cos(bed_slope / 180 * pi)) )'
     symbol_names = 'bed_slope'
     symbol_values = '${bed_slope}'
   []
@@ -217,6 +218,7 @@ mu = 'mu'
     pressure = "pressure"
     output_properties = "mu rho"
     outputs = "out"
+    II_eps_min = 1e-20
   []
 []
 
@@ -258,18 +260,25 @@ mu = 'mu'
       # (2) p = (-S)^{-1} p*
       # (3) u = Auu^{-1}(f_u-Aup*p)
       petsc_options = '-pc_fieldsplit_detect_saddle_point'
-      petsc_options_iname = '-pc_fieldsplit_schur_fact_type  -pc_fieldsplit_schur_precondition -ksp_gmres_restart -ksp_rtol -ksp_type'
-      petsc_options_value = 'full                            selfp                             300                1e-4      fgmres'
+      # petsc_options = '-ksp_monitor -ksp_view -ksp_converged_reason'
+      petsc_options_iname = '-pc_fieldsplit_schur_fact_type  -pc_fieldsplit_schur_precondition  -ksp_gmres_restart -ksp_rtol -ksp_type'
+      petsc_options_value = 'full                            selfp                              100                1e-4      fgmres'
     []
     [u]
-      vars = 'vel_x vel_y vel_z'
-      petsc_options_iname = '-pc_type -pc_hypre_type -ksp_type -ksp_rtol -ksp_gmres_restart -ksp_pc_side'
-      petsc_options_value = 'hypre    boomeramg      gmres    5e-1      300                 right'
+      vars = 'vel_x vel_y'
+      # petsc_options_iname = '-pc_type -pc_hypre_type -ksp_type -ksp_rtol -ksp_gmres_restart -ksp_pc_side'
+      # petsc_options_value = 'hypre    boomeramg      gmres    5e-5      300                 right'
+      # petsc_options = '-ksp_monitor -ksp_converged_reason -ksp_monitor_true_residual -ksp_monitor_singular_value'
+      petsc_options_iname = '-pc_type -pc_factor_shift -pc_factor_mat_solver_type -pc_factor_pivot_in_blocks'
+      petsc_options_value = 'lu       NONZERO          mumps                      true'
     []
     [p]
       vars = 'pressure'
-      petsc_options_iname = '-ksp_type -ksp_gmres_restart -ksp_rtol -pc_type -ksp_pc_side'
-      petsc_options_value = 'gmres    300                5e-1      jacobi    right'
+      # petsc_options_iname = '-ksp_type -ksp_gmres_restart -ksp_rtol -pc_type -ksp_pc_side'
+      # petsc_options_value = 'gmres    300                5e-1      jacobi    right'
+      # petsc_options = '-ksp_monitor'
+      petsc_options_iname = '-pc_type -pc_factor_shift'
+      petsc_options_value = 'lu       NONZERO'
     []
   []
   [SMP]
@@ -282,13 +291,13 @@ mu = 'mu'
 
 [Executioner]
   type = Transient
-  # num_steps = 10
+  num_steps = 10
 
-  # petsc_options_iname = '-pc_type -pc_factor_shift'
-  # petsc_options_value = 'lu       NONZERO'
-  petsc_options = '-pc_svd_monitor'
-  petsc_options_iname = '-pc_type'
-  petsc_options_value = 'svd'
+  petsc_options_iname = '-pc_type -pc_factor_shift'
+  petsc_options_value = 'lu       NONZERO'
+  # petsc_options = '-pc_svd_monitor'
+  # petsc_options_iname = '-pc_type'
+  # petsc_options_value = 'svd'
   # petsc_options = '-pc_type fieldsplit -pc_fieldsplit_type schur -pc_fieldsplit_detect_saddle_point'
   # petsc_options = '--ksp_monitor'
 
@@ -299,16 +308,17 @@ mu = 'mu'
 
   nl_max_its = 100
   nl_forced_its = 2
-  line_search = none
+  # line_search = none
 
   # The scaling is not working as expected, makes the matrix worse
   # This is probably due to the lack of on-diagonals in pressure
   automatic_scaling = false
+  # off_diagonals_in_auto_scaling = true
+  # compute_scaling_once = false
 
   dt = '${_dt}'
   steady_state_detection = true
   steady_state_tolerance = 1e-100
-  check_aux = true
 []
 
 [Outputs]
