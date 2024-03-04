@@ -28,7 +28,8 @@ FVIceMaterialSI::validParams()
   params.addParam<ADReal>("density", 917., "Ice density"); // kgm-3
 
   // Convergence parameters
-  params.addParam<Real>("II_eps_min", 1e-15, "Finite strain rate parameter"); // s-1
+  params.addParam<Real>("II_eps_min", 1e-50, "Finite strain rate parameter"); // s-1
+  
   return params;
 }
 

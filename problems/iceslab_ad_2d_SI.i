@@ -190,14 +190,6 @@ inlet_mps = ${fparse
   []
 []
 
-# [ICs]
-#   # [velocityIC]
-#   #   type = VectorFunctionIC
-#   #   variable = velocity
-#   #   function_x = 1e-5
-#   # []
-# []
-
 [Preconditioning]
   [SMP]
     type = SMP
