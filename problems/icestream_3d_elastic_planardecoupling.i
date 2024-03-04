@@ -1,3 +1,5 @@
+# ------------------------
+
 # a large gravity-loaded glacier in conactt with the ocean
 # (hydrostatic pressure at the glacier front, i.e. downstream
 # boundary) sitting on top of a bedrock trough.
@@ -6,39 +8,7 @@
 # propagation of an elastic deformation for the trigger zone to get to
 # a new steady state.
 
-# [Mesh]
-#   [gen]
-#     type = GeneratedMeshGenerator
-#     dim = 2
-#     xmin = -1
-#     xmax = 1
-#     ymin = -1
-#     ymax = 1
-#     nx = 16
-#     ny = 16
-#   []
-#   [left]
-#     type = SubdomainBoundingBoxGenerator
-#     input = 'gen'
-#     block_id = 1
-#     bottom_left = '-1 -1 0'
-#     top_right = '0 1 1'
-#   [] 
-#   [right]
-#     type = SubdomainBoundingBoxGenerator
-#     input = 'left'
-#     block_id = 2
-#     bottom_left = '0 -1 0'
-#     top_right = '1 1 1'
-#   []
-#   [moving_boundary]
-#     type = SideSetsAroundSubdomainGenerator
-#     input = 'right'
-#     block = 1
-#     new_boundary = 'moving_boundary'
-#     normal = '1 0 0'
-#   []
-# []
+# ------------------------
 
 [Mesh]
   [channel]      
@@ -534,7 +504,7 @@
   solve_type = 'NEWTON'
   nl_rel_tol = 1e-7
   nl_abs_tol = 1e-12
-  dt = 0.02
+  dt = 0.01
   end_time = 20.
   timestep_tolerance = 1e-6
   automatic_scaling = true
@@ -549,32 +519,32 @@
 [Postprocessors]
   [disp_x_surface]
     type = NodalVariableValue
-    nodeid = 7294
+    nodeid = 9912
     variable = disp_x
   []
   [disp_y_surface]
     type = NodalVariableValue
-    nodeid = 7294
+    nodeid = 9912
     variable = disp_y
   []
   [disp_z_surface]
     type = NodalVariableValue
-    nodeid = 7294
+    nodeid = 9912
     variable = disp_z
   []
   [vel_x_surface]
     type = NodalVariableValue
-    nodeid = 7294
+    nodeid = 9912
     variable = vel_x
   []
   [vel_y_surface]
     type = NodalVariableValue
-    nodeid = 7294
+    nodeid = 9912
     variable = vel_y
   []
   [vel_z_surface]
     type = NodalVariableValue
-    nodeid = 7294
+    nodeid = 9912
     variable = vel_z
   []
 []
