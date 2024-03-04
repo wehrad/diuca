@@ -184,7 +184,7 @@ inlet_mps = ${fparse
 [Functions]
   [ocean_pressure]
     type = ParsedFunction
-    expression = '-1028 * 9.81 * ( (y * cos(bed_slope / 180 * pi)) + (x * sin(bed_slope / 180 * pi)))'
+    expression = '-1028 * 9.81 * ( (y * cos(bed_slope / 180 * pi)) )'
     symbol_names = 'bed_slope'
     symbol_values = '${bed_slope}'
   []
