@@ -29,7 +29,7 @@ FVIceMaterialSI::validParams()
 
   // Convergence parameters
   params.addParam<Real>("II_eps_min", 1e-25, "Finite strain rate parameter"); // s-1
-  
+
   return params;
 }
 
@@ -55,6 +55,11 @@ FVIceMaterialSI::FVIceMaterialSI(const InputParameters & parameters)
     _II_eps_min(getParam<Real>("II_eps_min"))
 {
   const std::set<ExecFlagType> clearance_schedule(_execute_enum.begin(), _execute_enum.end());
+
+  _console << "Maximum allowed viscosity : "
+           << (0.5 * std::pow(_AGlen, -1. / _nGlen) *
+               std::pow(_II_eps_min, -(1. - 1. / _nGlen) / 2.))
+           << std::endl;
 
   addFunctorProperty<ADReal>(
       "rho", [this](const auto &, const auto &) -> ADReal { return _rho; }, clearance_schedule);
