@@ -1,10 +1,57 @@
+# a large glacier flowing towards the ocean (hydrostatic pressure at
+# the glacier front, i.e. downstream boundary) in the influence of the
+# driving stress (surface slope), over a flat bed.
+# The mesh includes a sediment block which is the last layer of
+# elements before the bottom boundary (where zero velocity is
+# applied): the viscosity of the sediment layer is modulating basal
+# sliding through a friction coefficient.
+# An influx of ice is applied at the top of the domain (upstream
+# boundary) to take into account the ice coming from the inner part of
+# the ice sheet.
+
+# NOTE: the sediment block is considered as ice for now
+
+# ------------------------
+
+# dt associated with rest time associated with the
+# geometry (in seconds)
+# ice has a high viscosity and hence response times
+# of years
+nb_years = 0.1
+_dt = '${fparse nb_years * 3600 * 24 * 365}'
+
+# upstream inlet (ice influx from the ice sheet interior)
+inlet_mph = 0.1 # 0.1 # mh-1
+inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
+
 # ------------------------
 
 [Mesh]
-  type = FileMesh
-  # file = mesh_icestream_flat.e
+
+
+  [channel]      
+  type = FileMeshGenerator
   file = mesh_icestream.e
-  second_order = true
+  []
+
+  [frontal_zone]
+    type = SubdomainBoundingBoxGenerator
+    input = 'channel'
+    block_id = 10
+    bottom_left = '20000 -1000 -3000'
+    top_right = '19000  15000 3000'
+  []
+  [refined_front]
+    type = RefineBlockGenerator
+    input = "frontal_zone"
+    block = '10'
+    refinement = '2'
+    enable_neighbor_refinement = true
+  []
+  [mesh_combined_interm]
+    type = CombinerGenerator
+    inputs = 'channel refined_front'
+  []
 []
 
 [GlobalParams]
@@ -96,7 +143,7 @@
   [inlet]
     type = ADVectorFunctionDirichletBC
     variable = velocity
-    boundary = 'upstream upstream_sediment'
+    boundary = 'upstream'
     function_x = "${inlet_mps}"
     function_y = 0.
     function_z = 0.
@@ -106,7 +153,7 @@
   [noslip]
     type = ADVectorFunctionDirichletBC
     variable = velocity
-    boundary = 'sediment left left_sediment right right_sediment'
+    boundary = 'sediment left left_sediment right right_sediment downstream_sediment upstream_sediment bottom'
     function_x = 0.
     function_y = 0.
     function_z = 0.
@@ -116,10 +163,10 @@
   [outlet_p]
     type = ADFunctionDirichletBC
     variable = p
-    boundary = 'downstream downstream_sediment'
+    boundary = 'downstream'
     function = ocean_pressure
   []
-  
+
 []
 
 [Materials]
@@ -141,7 +188,7 @@
 [Functions]
   [ocean_pressure]
     type = ParsedFunction
-    expression = 'if(z < 0, -1028 * 9.81 * z * 1e-6, 0)'
+    expression = 'if(z < 0, 1028 * 9.81 * z, 0)'
   []
 []
 
@@ -177,6 +224,15 @@
   dt = "${_dt}"
   steady_state_detection = true
   steady_state_tolerance = 1e-100
+
+  [Adaptivity]
+    interval = 1
+    refine_fraction = 0.5
+    coarsen_fraction = 0.3
+    max_h_level = 10
+    cycles_per_step = 2
+  []
+
 []
 
 [Outputs]
