@@ -162,6 +162,12 @@ inlet_mps = ${fparse
     boundary = 'right'
     function = ocean_pressure
   []
+  [freesurface]
+    type = INSADMomentumNoBCBC
+    variable = velocity
+    pressure = p
+    boundary = 'top'
+  []
   
 []
 
@@ -184,9 +190,9 @@ inlet_mps = ${fparse
 [Functions]
   [ocean_pressure]
     type = ParsedFunction
-    expression = '-1028 * 9.81 * ( (y * cos(bed_slope / 180 * pi)) )'
-    symbol_names = 'bed_slope'
-    symbol_values = '${bed_slope}'
+    expression = '-1028 * 9.81 * ( ((thickness - y) * cos(bed_slope / 180 * pi)) )'
+    symbol_names = 'bed_slope thickness'
+    symbol_values = '${bed_slope} ${thickness}'
   []
 []
 
