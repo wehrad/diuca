@@ -103,8 +103,6 @@ inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
     initial_condition = 1e-8
   []
   [p]
-    # scaling = 1e-8
-    # initial_condition = 1e-8
   []
 []
 
@@ -179,14 +177,22 @@ inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
   #   function_z = 0.
   # []
 
-  # ocean pressure at the glacier front
-  [outlet_p]
+ #  ocean pressure at the glacier front
+ [outlet_p]
     type = ADFunctionDirichletBC
     variable = p
     boundary = 'downstream'
     function = ocean_pressure
-  []
+ []
 
+  # the glacier surface is a free boundary
+  [freeslip]
+    type = INSADMomentumNoBCBC
+    variable = velocity
+    pressure = p
+    boundary = 'surface'
+    
+  []
 []
 
 [Materials]
@@ -209,6 +215,10 @@ inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
   [ocean_pressure]
     type = ParsedFunction
     expression = 'if(z < 0, 1028 * 9.81 * z, 0)'
+  []
+  [ice_weight]
+    type = ParsedFunction
+    expression = '917 * 9.81 * (100 - z)'
   []
 []
 
