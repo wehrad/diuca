@@ -50,10 +50,17 @@ mu = 'mu'
 []
 
 [Mesh]
-  type = FileMesh
-  file = mesh_icestream_flat.e
-  # file = mesh_icestream.e
-  second_order = true
+  [channel]
+    type = FileMeshGenerator
+    file = mesh_icestream.e
+  []
+
+  # delete sediment block for now (below bedrock)
+  [delete_sediment_block]
+    type = BlockDeletionGenerator
+    input = channel
+    block = '3'
+  []
 []
 
 [Variables]
@@ -211,59 +218,73 @@ mu = 'mu'
     boundary = 'upstream'
     functor = 0
   []
-  [sediment_inlet_x]
-    type = INSFVInletVelocityBC
-    variable = vel_x
-    boundary = 'upstream_sediment'
-    functor = 0 # ${inlet_mps}
-  []
-  [sediment_inlet_y]
-    type = INSFVInletVelocityBC
-    variable = vel_y
-    boundary = 'upstream_sediment'
-    functor = 0
-  []
-  [sediment_inlet_z]
-    type = INSFVInletVelocityBC
-    variable = vel_z
-    boundary = 'upstream_sediment'
-    functor = 0
-  []
+  # [sediment_inlet_x]
+  #   type = INSFVInletVelocityBC
+  #   variable = vel_x
+  #   boundary = 'upstream_sediment'
+  #   functor = 0 # ${inlet_mps}
+  # []
+  # [sediment_inlet_y]
+  #   type = INSFVInletVelocityBC
+  #   variable = vel_y
+  #   boundary = 'upstream_sediment'
+  #   functor = 0
+  # []
+  # [sediment_inlet_z]
+  #   type = INSFVInletVelocityBC
+  #   variable = vel_z
+  #   boundary = 'upstream_sediment'
+  #   functor = 0
+  # []
 
   # no slip at the glacier base nor on the sides
   [no_slip_x]
     type = INSFVNoSlipWallBC
     variable = vel_x
-    boundary = 'sediment left left_sediment right right_sediment'
+    # boundary = 'sediment left left_sediment right right_sediment'
+    boundary = 'bottom left right'
     function = 0
   []
   [no_slip_y]
     type = INSFVNoSlipWallBC
     variable = vel_y
-    boundary = 'sediment left left_sediment right right_sediment'
+    # boundary = 'sediment left left_sediment right right_sediment'
+    boundary = 'bottom left right'
     function = 0
   []
   [no_slip_z]
     type = INSFVNoSlipWallBC
     variable = vel_z
-    boundary = 'sediment left left_sediment right right_sediment'
+    # boundary = 'sediment left left_sediment right right_sediment'
+    boundary = 'bottom left right'
     function = 0
   []
-
-  # # pressure outflux
-  # [outlet_p]
-  #   type = INSFVOutletPressureBC
-  #   variable = pressure
-  #   boundary = 'downstream'
-  #   function = 0
-  # []
 
   # ocean pressure at the glacier front
   [outlet_p]
     type = INSFVOutletPressureBC
     variable = pressure
     boundary = 'downstream'
-    function = 0
+    function = ocean_pressure
+  []
+
+  [free_flow_x]
+    type = INSFVNaturalFreeSlipBC
+    boundary = 'surface'
+    variable = vel_x
+    momentum_component = 'x'
+  []
+  [free_flow_y]
+    type = INSFVNaturalFreeSlipBC
+    boundary = 'surface'
+    variable = vel_y
+    momentum_component = 'y'
+  []
+  [free_flow_z]
+    type = INSFVNaturalFreeSlipBC
+    boundary = 'surface'
+    variable = vel_z
+    momentum_component = 'z'
   []
 []
 
@@ -280,7 +301,8 @@ mu = 'mu'
 [FunctorMaterials]
   [ice]
     type = FVIceMaterialSI
-    block = 'eleblock1 eleblock2 eleblock3'
+    # block = 'eleblock1 eleblock2 eleblock3'
+    block = 'eleblock1 eleblock2'
     velocity_x = "vel_x"
     velocity_y = "vel_y"
     velocity_z = "vel_z"
