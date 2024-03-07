@@ -9,7 +9,7 @@
 # boundary) to take into account the ice coming from the inner part of
 # the ice sheet.
 
-# NOTE: the sediment block is considered as ice for now
+# NOTE: the sediment block is deleted for now (no slip boundary)
 
 # ------------------------
 
@@ -34,29 +34,36 @@ inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
   file = mesh_icestream.e
   []
 
-  [frontal_zone]
-    type = SubdomainBoundingBoxGenerator
-    input = 'channel'
-    block_id = 10
-    bottom_left = '20000 -1000 -3000'
-    top_right = '19000  15000 3000'
+  # delete sediment block for now (below bedrock)
+  [delete_sediment_block]
+    type = BlockDeletionGenerator
+    input = channel
+    block = '3'
   []
-  [refined_front]
-    type = RefineBlockGenerator
-    input = "frontal_zone"
-    block = '10'
-    refinement = '2'
-    enable_neighbor_refinement = true
-  []
-  [mesh_combined_interm]
-    type = CombinerGenerator
-    inputs = 'channel refined_front'
-  []
+  # [frontal_zone]
+  #   type = SubdomainBoundingBoxGenerator
+  #   input = 'channel'
+  #   block_id = 10
+  #   bottom_left = '20000 -1000 -3000'
+  #   top_right = '19000  15000 3000'
+  # []
+  # [refined_front]
+  #   type = RefineBlockGenerator
+  #   input = "frontal_zone"
+  #   block = '10'
+  #   refinement = '2'
+  #   enable_neighbor_refinement = true
+  # []
+  # [mesh_combined_interm]
+  #   type = CombinerGenerator
+  #   inputs = 'channel refined_front'
+  # []
+
 []
 
 [GlobalParams]
-  order = FIRST
   integrate_p_by_parts = true
+  order = FIRST
 []
 
 [AuxVariables]
@@ -96,6 +103,8 @@ inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
     initial_condition = 1e-8
   []
   [p]
+    # scaling = 1e-8
+    # initial_condition = 1e-8
   []
 []
 
@@ -153,11 +162,22 @@ inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
   [noslip]
     type = ADVectorFunctionDirichletBC
     variable = velocity
-    boundary = 'sediment left left_sediment right right_sediment downstream_sediment upstream_sediment bottom'
+    # boundary = 'bottom left left_sediment right right_sediment downstream_sediment upstream_sediment'
+    boundary = 'bottom left right'
     function_x = 0.
     function_y = 0.
     function_z = 0.
   []
+
+  # ice and sediment outflux
+  # [outlet]
+  #   type = ADVectorFunctionDirichletBC
+  #   variable = velocity
+  #   boundary = 'downstream'
+  #   function_x = "${inlet_mps}"
+  #   function_y = 0.
+  #   function_z = 0.
+  # []
 
   # ocean pressure at the glacier front
   [outlet_p]
@@ -225,13 +245,13 @@ inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
   steady_state_detection = true
   steady_state_tolerance = 1e-100
 
-  [Adaptivity]
-    interval = 1
-    refine_fraction = 0.5
-    coarsen_fraction = 0.3
-    max_h_level = 10
-    cycles_per_step = 2
-  []
+  # [Adaptivity]
+  #   interval = 1
+  #   refine_fraction = 0.5
+  #   coarsen_fraction = 0.3
+  #   max_h_level = 10
+  #   cycles_per_step = 2
+  # []
 
 []
 
