@@ -369,11 +369,11 @@ mu = 'mu'
   type = Transient
   # num_steps = 10
 
-  petsc_options_iname = '-pc_type -pc_factor_shift'
-  petsc_options_value = 'lu       NONZERO'
-  # petsc_options = '-pc_svd_monitor'
-  # petsc_options_iname = '-pc_type'
-  # petsc_options_value = 'svd'
+  # petsc_options_iname = '-pc_type -pc_factor_shift'
+  # petsc_options_value = 'lu       NONZERO'
+  petsc_options = '-pc_svd_monitor'
+  petsc_options_iname = '-pc_type'
+  petsc_options_value = 'svd'
   # petsc_options = '-pc_type fieldsplit -pc_fieldsplit_type schur -pc_fieldsplit_detect_saddle_point'
   # petsc_options = '--ksp_monitor'
 
