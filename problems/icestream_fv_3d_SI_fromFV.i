@@ -287,7 +287,7 @@ mu = 'mu'
 [Functions]
   [ocean_pressure]
     type = ParsedFunction
-    expression = 'if(z < 0, 1e5 -1028 * 9.81 * z, 1e5 -917 * 9.81 * z)'
+    expression = 'if(z < 0, 1e5 -1028 * 9.81 * z, 0)' #  1e5 -917 * 9.81 * z)'
   []
 []
 
