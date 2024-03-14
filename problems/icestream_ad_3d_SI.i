@@ -200,6 +200,7 @@ inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
     type = ADIceMaterialSI
     velocity_x = "vel_x"
     velocity_y = "vel_y"
+    velocity_z = "vel_y"
     pressure = "p"
     output_properties = "mu"
     outputs = "out"
@@ -214,7 +215,7 @@ inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
 [Functions]
   [ocean_pressure]
     type = ParsedFunction
-    expression = 'if(z < 0, 1028 * 9.81 * z, 0)'
+    expression = 'if(z < 0, -1028 * 9.81 * z, 0)'
   []
   [ice_weight]
     type = ParsedFunction
