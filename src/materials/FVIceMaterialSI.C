@@ -29,6 +29,7 @@ FVIceMaterialSI::validParams()
 
   // Convergence parameters
   params.addParam<Real>("II_eps_min", 1e-25, "Finite strain rate parameter"); // s-1
+  params.declareControllable("II_eps_min"); // s-1
 
   return params;
 }
