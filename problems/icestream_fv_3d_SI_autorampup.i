@@ -298,11 +298,12 @@ mu = 'mu'
 [Functions]
   [ocean_pressure]
     type = ParsedFunction
-    expression = 'if(z < 0, 1e5 -1028 * 9.81 * z, 1e5 -917 * 9.81 * z)'
+    expression = 'if(z < 0, 1e5 -1028 * 9.81 * z, -917 * 9.81 * z)'
   []
   [viscosity_rampup]
     type = ParsedFunction
-    expression = '1e-10 * exp(-(t-_dt) * 1e-6)'
+    # expression = '1e-10 * exp(-(t-_dt) * 1e-6)'
+    expression = '1e-08 * exp(-(t-_dt) * 1.2e-6)'
     symbol_names = '_dt'
     symbol_values = '${_dt}'
   []
