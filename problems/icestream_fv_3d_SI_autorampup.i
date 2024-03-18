@@ -57,7 +57,7 @@ mu = 'mu'
   #   # use_for_exodus_restart = true
   # []
 
-  [channel]      
+  [channel]
     type = FileMeshGenerator
     file = mesh_icestream.e
   []
@@ -69,24 +69,26 @@ mu = 'mu'
     block = '3'
   []
   
-  # [frontal_zone]
-  #   type = SubdomainBoundingBoxGenerator
-  #   input = 'delete_sediment_block'
-  #   block_id = 10
-  #   bottom_left = '20000 -1000 -3000'
-  #   top_right = '19000  15000 3000'
-  # []
-  # [refined_front]
-  #   type = RefineBlockGenerator
-  #   input = "frontal_zone"
-  #   block = '10'
-  #   refinement = '1'
-  #   enable_neighbor_refinement = true
-  # []
-  # [mesh_combined_interm]
-  #   type = CombinerGenerator
-  #   inputs = 'channel refined_front'
-  # []
+  [frontal_zone]
+    type = SubdomainBoundingBoxGenerator
+    input = 'delete_sediment_block'
+    block_id = 10
+    bottom_left = '20000 -1000 -3000'
+    top_right = '19000  15000 3000'
+  []
+  
+  [refined_front]
+    type = RefineBlockGenerator
+    input = "frontal_zone"
+    block = '10'
+    refinement = '1'
+    enable_neighbor_refinement = true
+    max_element_volume = 1e100
+  []
+  [mesh_combined_interm]
+    type = CombinerGenerator
+    inputs = 'channel refined_front'
+  []
 []
 
 [Variables]
@@ -387,7 +389,7 @@ mu = 'mu'
 
 [Executioner]
   type = Transient
-  # num_steps = 10
+  num_steps = 20
 
   petsc_options_iname = '-pc_type -pc_factor_shift'
   petsc_options_value = 'lu       NONZERO'
@@ -408,10 +410,10 @@ mu = 'mu'
   line_search = none
 
   dt = '${_dt}'
-  steady_state_detection = true
-  steady_state_tolerance = 1e-100
+  # steady_state_detection = true
+  # steady_state_tolerance = 1e-100
   check_aux = true
-
+ 
 []
 
 [Outputs]
