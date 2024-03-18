@@ -34,6 +34,8 @@ vel_scaling = 1e-6
 rho = 'rho'
 mu = 'mu'
 
+initial_II_eps_min = 1e-05
+
 # ------------------------
 
 [GlobalParams]
@@ -59,6 +61,7 @@ mu = 'mu'
 
   [channel]
     type = FileMeshGenerator
+    # file = mesh_icestream_4xd.e
     file = mesh_icestream.e
   []
 
@@ -84,10 +87,6 @@ mu = 'mu'
     refinement = '1'
     enable_neighbor_refinement = true
     max_element_volume = 1e100
-  []
-  [mesh_combined_interm]
-    type = CombinerGenerator
-    inputs = 'channel refined_front'
   []
 []
 
@@ -303,10 +302,10 @@ mu = 'mu'
   []
   [viscosity_rampup]
     type = ParsedFunction
-    expression = '1e-10 * exp(-(t-_dt) * 1e-6)'
+    expression = 'initial_II_eps_min * exp(-(t-_dt) * 1e-6)'
     # expression = '1e-08 * exp(-(t-_dt) * 1.2e-6)'
-    symbol_names = '_dt'
-    symbol_values = '${_dt}'
+    symbol_names = '_dt initial_II_eps_min'
+    symbol_values = '${_dt} ${initial_II_eps_min}'
   []
 []
 
