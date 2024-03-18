@@ -208,16 +208,6 @@ inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
     function_z = 0.
   []
 
-  # ice and sediment outflux
-  # [outlet]
-  #   type = ADVectorFunctionDirichletBC
-  #   variable = velocity
-  #   boundary = 'downstream'
-  #   function_x = "${inlet_mps}"
-  #   function_y = 0.
-  #   function_z = 0.
-  # []
-
  #  ocean pressure at the glacier front
  [outlet_p]
     type = ADFunctionDirichletBC
@@ -263,8 +253,7 @@ inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
 [Functions]
   [ocean_pressure]
     type = ParsedFunction
-    # expression = 'if(z < 0, -1028 * 9.81 * z, 1e5)'
-    expression = 'if(z < 0, 1e5 - 1028 * 9.81 * z, 1e5 - 917 * 9.81 * z)'
+    expression = 'if(z < 0, -1028 * 9.81 * z, 0)'
   []
   [ice_weight]
     type = ParsedFunction
