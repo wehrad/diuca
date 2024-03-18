@@ -160,7 +160,6 @@ inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
   [noslip]
     type = ADVectorFunctionDirichletBC
     variable = velocity
-    # boundary = 'bottom left left_sediment right right_sediment downstream_sediment upstream_sediment'
     boundary = 'bottom left right'
     function_x = 0.
     function_y = 0.
@@ -200,7 +199,7 @@ inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
     type = ADIceMaterialSI
     velocity_x = "vel_x"
     velocity_y = "vel_y"
-    velocity_z = "vel_y"
+    velocity_z = "vel_z"
     pressure = "p"
     output_properties = "mu"
     outputs = "out"
