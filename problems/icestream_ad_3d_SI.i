@@ -58,7 +58,13 @@ inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
   #   type = CombinerGenerator
   #   inputs = 'channel refined_front'
   # []
-
+  [pin_pressure_node]
+    type = BoundingBoxNodeSetGenerator
+    input = 'delete_sediment_block'
+    bottom_left = '19599.99 -0.00001 99.9999'
+    top_right = '19600.001 0.000001 100.001'
+    new_boundary = 'pressure_pin_node'
+  []
 []
 
 [GlobalParams]
@@ -72,6 +78,22 @@ inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
   [vel_y]
   []
   [vel_z]
+  []
+  [vel_x_mon]
+    type = MooseVariableFVReal
+    order = CONSTANT
+  []
+  [vel_y_mon]
+    type = MooseVariableFVReal
+    order = CONSTANT
+  []
+  [vel_z_mon]
+    type = MooseVariableFVReal
+    order = CONSTANT
+  []
+  [p_mon]
+    type = MooseVariableFVReal
+    order = CONSTANT
   []
 []
 
@@ -93,6 +115,26 @@ inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
     variable = vel_z
     vector_variable = velocity
     component = 'z'
+  []
+  [proj_x]
+    type = ProjectionAux
+    variable = 'vel_x_mon'
+    v = vel_x
+  []
+  [proj_y]
+    type = ProjectionAux
+    variable = 'vel_y_mon'
+    v = vel_y
+  []
+  [proj_z]
+    type = ProjectionAux
+    variable = 'vel_z_mon'
+    v = vel_z
+  []
+  [proj_p]
+    type = ProjectionAux
+    variable = 'p_mon'
+    v = p
   []
 []
 
@@ -184,6 +226,13 @@ inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
     function = ocean_pressure
  []
 
+ [pin_pressure]
+    type = DirichletBC
+    variable = p
+    boundary = 'pressure_pin_node'
+    value = 1e5
+ []
+
   # the glacier surface is a free boundary
   [freeslip]
     type = INSADMomentumNoBCBC
@@ -214,7 +263,8 @@ inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
 [Functions]
   [ocean_pressure]
     type = ParsedFunction
-    expression = 'if(z < 0, -1028 * 9.81 * z, 0)'
+    # expression = 'if(z < 0, -1028 * 9.81 * z, 1e5)'
+    expression = 'if(z < 0, 1e5 - 1028 * 9.81 * z, 1e5 - 917 * 9.81 * z)'
   []
   [ice_weight]
     type = ParsedFunction
