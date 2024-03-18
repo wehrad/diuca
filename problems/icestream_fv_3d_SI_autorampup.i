@@ -17,7 +17,7 @@
 # geometry (in seconds)
 # ice has a high viscosity and hence response times
 # of years
-nb_years = 0.1
+nb_years = 0.075
 mult = 1
 _dt = '${fparse nb_years * 3600 * 24 * 365 * mult}'
 
@@ -34,7 +34,7 @@ vel_scaling = 1e-6
 rho = 'rho'
 mu = 'mu'
 
-initial_II_eps_min = 1e-05
+initial_II_eps_min = 1e-03
 
 # ------------------------
 
@@ -79,7 +79,6 @@ initial_II_eps_min = 1e-05
     bottom_left = '20000 -1000 -3000'
     top_right = '19000  15000 3000'
   []
-  
   [refined_front]
     type = RefineBlockGenerator
     input = "frontal_zone"
@@ -388,7 +387,7 @@ initial_II_eps_min = 1e-05
 
 [Executioner]
   type = Transient
-  num_steps = 20
+  num_steps = 100
 
   petsc_options_iname = '-pc_type -pc_factor_shift'
   petsc_options_value = 'lu       NONZERO'
