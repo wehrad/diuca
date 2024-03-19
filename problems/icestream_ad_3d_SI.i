@@ -24,6 +24,8 @@ _dt = '${fparse nb_years * 3600 * 24 * 365}'
 inlet_mph = 0.1 # 0.1 # mh-1
 inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
 
+initial_II_eps_min = 1e-25
+
 # ------------------------
 
 [Mesh]
@@ -242,6 +244,7 @@ inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
     pressure = "p"
     output_properties = "mu"
     outputs = "out"
+    II_eps_min = 1e-25
   []
   [ins_mat]
     type = INSADTauMaterial
@@ -253,13 +256,30 @@ inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
 [Functions]
   [ocean_pressure]
     type = ParsedFunction
-    expression = 'if(z < 0, -1028 * 9.81 * z, 0)'
+    expression = 'if(z < 0, -1028 * 9.81 * z, 1e5)'
   []
   [ice_weight]
     type = ParsedFunction
     expression = '917 * 9.81 * (100 - z)'
   []
+  [viscosity_rampup]
+    type = ParsedFunction
+    expression = 'initial_II_eps_min * exp(-(t-_dt) * 1e-6)'
+    symbol_names = '_dt initial_II_eps_min'
+    symbol_values = '${_dt} ${initial_II_eps_min}'
+  []
 []
+
+
+# [Controls]
+#   [II_eps_min_control]
+#     type = RealFunctionControl
+#     parameter = 'Materials/ice/II_eps_min'
+#     function = 'viscosity_rampup'
+#     execute_on = 'initial timestep_begin'
+#   []
+# []
+
 
 [Preconditioning]
   [SMP]

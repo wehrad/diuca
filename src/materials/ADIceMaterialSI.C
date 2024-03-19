@@ -21,9 +21,10 @@ ADIceMaterialSI::validParams()
 
   params.addParam<ADReal>("nGlen", 3., "Glen exponent");   //
   params.addParam<ADReal>("density", 917., "Ice density"); // kgm-3
-
+  
   // Minimum strain rate parameter
   params.addParam<ADReal>("II_eps_min", 1e-25, "Finite strain rate parameter"); // s-1
+  params.declareControllable("II_eps_min"); // s-1
   
   return params;
 }
