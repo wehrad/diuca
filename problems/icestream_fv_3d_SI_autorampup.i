@@ -22,7 +22,7 @@ mult = 1
 _dt = '${fparse nb_years * 3600 * 24 * 365 * mult}'
 
 # upstream inlet (ice influx from the ice sheet interior)
-inlet_mph = 0.1 # mh-1
+inlet_mph = 0.5 # mh-1
 inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
 
 # Numerical scheme parameters
@@ -50,6 +50,20 @@ initial_II_eps_min = 1e-03
     w = vel_z
     pressure = pressure
   []
+  # [pin_pressure]
+  #   type = NSPressurePin
+  #   variable = pressure
+  #   pin_type = point-value
+  #   phi0 = 1e5
+  #   point = '19600 0 100'
+  # []
+  # [pin_pressure2]
+  #   type = NSPressurePin
+  #   variable = pressure
+  #   pin_type = point-value
+  #   phi0 = 1e5
+  #   point = '0 0 433.2' # 433.2
+  # []
 []
 
 [Mesh]
@@ -247,7 +261,7 @@ initial_II_eps_min = 1e-03
   [no_slip_x]
     type = INSFVNoSlipWallBC
     variable = vel_x
-    boundary = 'left right bottom'
+    boundary = 'left right' # bottom
     function = 0
   []
   [no_slip_y]
