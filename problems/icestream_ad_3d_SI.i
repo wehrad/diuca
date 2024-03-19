@@ -244,7 +244,6 @@ initial_II_eps_min = 1e-25
     pressure = "p"
     output_properties = "mu"
     outputs = "out"
-    II_eps_min = 1e-25
   []
   [ins_mat]
     type = INSADTauMaterial
@@ -271,14 +270,14 @@ initial_II_eps_min = 1e-25
 []
 
 
-# [Controls]
-#   [II_eps_min_control]
-#     type = RealFunctionControl
-#     parameter = 'Materials/ice/II_eps_min'
-#     function = 'viscosity_rampup'
-#     execute_on = 'initial timestep_begin'
-#   []
-# []
+[Controls]
+  [II_eps_min_control]
+    type = RealFunctionControl
+    parameter = 'Materials/ice/II_eps_min'
+    function = 'viscosity_rampup'
+    execute_on = 'initial timestep_begin'
+  []
+[]
 
 
 [Preconditioning]
