@@ -22,7 +22,7 @@ mult = 1
 _dt = '${fparse nb_years * 3600 * 24 * 365 * mult}'
 
 # upstream inlet (ice influx from the ice sheet interior)
-inlet_mph = 0.5 # mh-1
+inlet_mph = 0.1 # mh-1
 inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
 
 # Numerical scheme parameters
@@ -91,7 +91,7 @@ initial_II_eps_min = 1e-03
     input = 'delete_sediment_block'
     block_id = 10
     bottom_left = '20000 -1000 -3000'
-    top_right = '19000  15000 3000'
+    top_right = '19000 15000 3000'
   []
   [refined_front]
     type = RefineBlockGenerator
@@ -261,7 +261,7 @@ initial_II_eps_min = 1e-03
   [no_slip_x]
     type = INSFVNoSlipWallBC
     variable = vel_x
-    boundary = 'left right' # bottom
+    boundary = 'left right bottom'
     function = 0
   []
   [no_slip_y]
