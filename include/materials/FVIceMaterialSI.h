@@ -31,5 +31,6 @@ protected:
   const Moose::Functor<ADReal> & _vel_z;
 
   // Finite strain rate parameter
-  const Real _II_eps_min;
+  const Real & _II_eps_min;
+
 };

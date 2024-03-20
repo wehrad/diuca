@@ -17,11 +17,9 @@
 # geometry (in seconds)
 # ice has a high viscosity and hence response times
 # of years
-nb_years = 0.1
+nb_years = 0.075
 mult = 1
 _dt = '${fparse nb_years * 3600 * 24 * 365 * mult}'
-II_eps_min = 1e-20
-initial_file = 'save_1e-19.e'
 
 # upstream inlet (ice influx from the ice sheet interior)
 inlet_mph = 0.1 # mh-1
@@ -35,6 +33,8 @@ vel_scaling = 1e-6
 # Material properties
 rho = 'rho'
 mu = 'mu'
+
+initial_II_eps_min = 1e-03
 
 # ------------------------
 
@@ -50,21 +50,57 @@ mu = 'mu'
     w = vel_z
     pressure = pressure
   []
+  # [pin_pressure]
+  #   type = NSPressurePin
+  #   variable = pressure
+  #   pin_type = point-value
+  #   phi0 = 1e5
+  #   point = '19600 0 100'
+  # []
+  # [pin_pressure2]
+  #   type = NSPressurePin
+  #   variable = pressure
+  #   pin_type = point-value
+  #   phi0 = 1e5
+  #   point = '0 0 433.2' # 433.2
+  # []
 []
 
 [Mesh]
+  # [channel]
+  #   type = FileMeshGenerator
+  #   # file = ${initial_file}
+  #   # use_for_exodus_restart = true
+  # []
+
   [channel]
     type = FileMeshGenerator
-    file = ${initial_file}
-    use_for_exodus_restart = true
+    # file = mesh_icestream_4xd.e
+    file = mesh_icestream.e
   []
 
   # delete sediment block for now (below bedrock)
-  # [delete_sediment_block]
-  #   type = BlockDeletionGenerator
-  #   input = channel
-  #   block = '3'
-  # []
+  [delete_sediment_block]
+    type = BlockDeletionGenerator
+    input = channel
+    block = '3'
+  []
+  
+  [frontal_zone]
+    type = SubdomainBoundingBoxGenerator
+    input = 'delete_sediment_block'
+    block_id = 10
+    bottom_left = '20000 -1000 -3000'
+    top_right = '19000 15000 3000'
+  []
+  [refined_front]
+    type = RefineBlockGenerator
+    input = "frontal_zone"
+    block = '10'
+    refinement = '1'
+    enable_neighbor_refinement = true
+    max_element_volume = 1e100
+  []
 []
 
 [Variables]
@@ -72,24 +108,20 @@ mu = 'mu'
     type = INSFVVelocityVariable
     two_term_boundary_expansion = true
     scaling = ${vel_scaling}
-    initial_from_file_var = 'vel_x'
   []
   [vel_y]
     type = INSFVVelocityVariable
     two_term_boundary_expansion = true
     scaling = ${vel_scaling}
-    initial_from_file_var = 'vel_y'
   []
   [vel_z]
     type = INSFVVelocityVariable
     two_term_boundary_expansion = true
     scaling = ${vel_scaling}
-    initial_from_file_var = 'vel_z'
   []
   [pressure]
     type = INSFVPressureVariable
     two_term_boundary_expansion = true
-    initial_from_file_var = 'pressure'
   []
 []
 
@@ -108,14 +140,14 @@ mu = 'mu'
     rho = ${rho}
     momentum_component = 'x'
   []
-  # [u_advection]
-  #   type = INSFVMomentumAdvection
-  #   variable = vel_x
-  #   advected_interp_method = ${advected_interp_method}
-  #   velocity_interp_method = ${velocity_interp_method}
-  #   rho = ${rho}
-  #   momentum_component = 'x'
-  # []
+  [u_advection]
+    type = INSFVMomentumAdvection
+    variable = vel_x
+    advected_interp_method = ${advected_interp_method}
+    velocity_interp_method = ${velocity_interp_method}
+    rho = ${rho}
+    momentum_component = 'x'
+  []
   [u_viscosity]
     type = INSFVMomentumDiffusion
     variable = vel_x
@@ -141,14 +173,14 @@ mu = 'mu'
     rho = ${rho}
     momentum_component = 'y'
   []
-  # [v_advection]
-  #   type = INSFVMomentumAdvection
-  #   variable = vel_y
-  #   advected_interp_method = ${advected_interp_method}
-  #   velocity_interp_method = ${velocity_interp_method}
-  #   rho = ${rho}
-  #   momentum_component = 'y'
-  # []
+  [v_advection]
+    type = INSFVMomentumAdvection
+    variable = vel_y
+    advected_interp_method = ${advected_interp_method}
+    velocity_interp_method = ${velocity_interp_method}
+    rho = ${rho}
+    momentum_component = 'y'
+  []
   [v_viscosity]
     type = INSFVMomentumDiffusion
     variable = vel_y
@@ -175,14 +207,14 @@ mu = 'mu'
     rho = ${rho}
     momentum_component = 'z'
   []
-  # [w_advection]
-  #   type = INSFVMomentumAdvection
-  #   variable = vel_z
-  #   advected_interp_method = ${advected_interp_method}
-  #   velocity_interp_method = ${velocity_interp_method}
-  #   rho = ${rho}
-  #   momentum_component = 'z'
-  # []
+  [w_advection]
+    type = INSFVMomentumAdvection
+    variable = vel_z
+    advected_interp_method = ${advected_interp_method}
+    velocity_interp_method = ${velocity_interp_method}
+    rho = ${rho}
+    momentum_component = 'z'
+  []
   [w_viscosity]
     type = INSFVMomentumDiffusion
     variable = vel_z
@@ -265,14 +297,6 @@ mu = 'mu'
     boundary = 'surface'
   []
 
-  # # pressure outflux
-  # [outlet_p]
-  #   type = INSFVOutletPressureBC
-  #   variable = pressure
-  #   boundary = 'downstream'
-  #   function = 0
-  # []
-
   # ocean pressure at the glacier front
   [outlet_p]
     type = INSFVOutletPressureBC
@@ -287,9 +311,26 @@ mu = 'mu'
 [Functions]
   [ocean_pressure]
     type = ParsedFunction
-    expression = 'if(z < 0, 1e5 -1028 * 9.81 * z, 0)' #  1e5 -917 * 9.81 * z)'
+    expression = 'if(z < 0, 1e5 -1028 * 9.81 * z, 1e5)' # -1e5 * 9.81 * z)'
+  []
+  [viscosity_rampup]
+    type = ParsedFunction
+    expression = 'initial_II_eps_min * exp(-(t-_dt) * 1e-6)'
+    # expression = '1e-08 * exp(-(t-_dt) * 1.2e-6)'
+    symbol_names = '_dt initial_II_eps_min'
+    symbol_values = '${_dt} ${initial_II_eps_min}'
   []
 []
+
+[Controls]
+  [II_eps_min_control]
+    type = RealFunctionControl
+    parameter = 'FunctorMaterials/ice/II_eps_min'
+    function = 'viscosity_rampup'
+    execute_on = 'initial timestep_begin'
+  []
+[]
+
 
 [FunctorMaterials]
   [ice]
@@ -300,7 +341,7 @@ mu = 'mu'
     velocity_z = "vel_z"
     pressure = "pressure"
     output_properties = 'mu rho'
-    II_eps_min = ${II_eps_min}
+    # II_eps_min = 1e-10
   []
 []
 
@@ -360,7 +401,7 @@ mu = 'mu'
 
 [Executioner]
   type = Transient
-  # num_steps = 10
+  num_steps = 100
 
   petsc_options_iname = '-pc_type -pc_factor_shift'
   petsc_options_value = 'lu       NONZERO'
@@ -381,9 +422,10 @@ mu = 'mu'
   line_search = none
 
   dt = '${_dt}'
-  steady_state_detection = true
-  steady_state_tolerance = 1e-100
+  # steady_state_detection = true
+  # steady_state_tolerance = 1e-100
   check_aux = true
+ 
 []
 
 [Outputs]

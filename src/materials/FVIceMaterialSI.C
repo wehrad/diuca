@@ -29,6 +29,7 @@ FVIceMaterialSI::validParams()
 
   // Convergence parameters
   params.addParam<Real>("II_eps_min", 1e-25, "Finite strain rate parameter"); // s-1
+  params.declareControllable("II_eps_min"); // s-1
 
   return params;
 }
@@ -99,6 +100,8 @@ FVIceMaterialSI::FVIceMaterialSI(const InputParameters & parameters)
         if (II_eps < _II_eps_min)
           II_eps = _II_eps_min;
 
+	// std::cout << _II_eps_min << std::endl;
+	
         // Compute viscosity
         ADReal viscosity = (0.5 * ApGlen * std::pow(II_eps, -(1. - 1. / _nGlen) / 2.)); // Pas
         return std::max(viscosity, 3.153600e09);
