@@ -10,8 +10,9 @@ FVSedimentMaterialSI::validParams()
   InputParameters params = FunctorMaterial::validParams();
 
   // Friction properties
-  params.addParam<ADReal>("FrictionCoefficient", 1.0, "Sediment friction coefficient");
-  
+  params.addParam<Real>("FrictionCoefficient", 1.0, "Sediment friction coefficient");
+  params.declareControllable("FrictionCoefficient");
+    
   // Get velocity gradients to compute viscosity based on second invariant
   params.addParam<MooseFunctorName>("velocity_x", "Velocity in x dimension");
   params.addParam<MooseFunctorName>("velocity_y", "Velocity in y dimension");
@@ -41,7 +42,7 @@ FVSedimentMaterialSI::FVSedimentMaterialSI(const InputParameters & parameters)
     _vel_z(getFunctor<ADReal>("velocity_z")),
 
     // Friction properties
-    _FrictionCoefficient(getParam<ADReal>("FrictionCoefficient")),
+    _FrictionCoefficient(getParam<Real>("FrictionCoefficient")),
     
     // Pressure
     _pressure(getFunctor<ADReal>("pressure")),

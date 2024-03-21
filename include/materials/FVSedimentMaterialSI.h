@@ -27,7 +27,7 @@ protected:
   const Moose::Functor<ADReal> & _vel_z;
 
   // Sediment friction parameter
-  const ADReal & _FrictionCoefficient;
+  const Real & _FrictionCoefficient;
 
   // pressure
   const Moose::Functor<ADReal> & _pressure;
