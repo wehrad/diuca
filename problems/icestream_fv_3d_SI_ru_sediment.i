@@ -28,13 +28,14 @@ inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
 # Numerical scheme parameters
 velocity_interp_method = 'rc'
 advected_interp_method = 'upwind'
+
 vel_scaling = 1e-6
 
 # Material properties
-rho = 'rho'
-mu = 'mu'
+rho = 'rho_combined'
+mu = 'mu_combined'
 
-initial_II_eps_min = 1e-3
+initial_II_eps_min = 1e-03
 
 # ------------------------
 
@@ -151,6 +152,7 @@ initial_II_eps_min = 1e-3
   [u_gravity]
     type = INSFVMomentumGravity
     variable = vel_x
+    rho = ${rho}
     momentum_component = 'x'
     gravity = '0 0 -9.81'
   []
@@ -184,7 +186,7 @@ initial_II_eps_min = 1e-3
   [v_buoyant]
     type = INSFVMomentumGravity
     variable = vel_y
-    # rho = 'rho_mixture'
+    rho = ${rho}
     momentum_component = 'y'
     gravity = '0 0 -9.81'
   []
@@ -218,6 +220,7 @@ initial_II_eps_min = 1e-3
   [w_buoyant]
     type = INSFVMomentumGravity
     variable = vel_z
+    rho = ${rho}
     momentum_component = 'z'
     gravity = '0 0 -9.81'
   []
@@ -321,21 +324,40 @@ initial_II_eps_min = 1e-3
 [FunctorMaterials]
   [ice]
     type = FVIceMaterialSI
-    block = 'eleblock1 eleblock2 10 eleblock3'
+    block = 'eleblock1 eleblock2 10'
     velocity_x = "vel_x"
     velocity_y = "vel_y"
     velocity_z = "vel_z"
     pressure = "pressure"
-    output_properties = 'mu rho'
+    output_properties = 'mu_ice rho_ice'
     # II_eps_min = 1e-10
   []
   [sediment]
     type = FVConstantMaterial
     block = 'eleblock3'
-    viscosity = 1e10
+    viscosity = 1e8
     density = 1850.
-    # output_properties = 'mu rho'
+    output_properties = 'mu_material rho_material'
   []
+
+  [mu_combined]
+    type = ADPiecewiseByBlockFunctorMaterial
+    prop_name = 'mu_combined'
+    subdomain_to_prop_value = 'eleblock1 mu_ice
+                               eleblock2 mu_ice
+                               10  mu_ice
+                               eleblock3 mu_material'
+  []
+
+  [rho_combined]
+    type = ADPiecewiseByBlockFunctorMaterial
+    prop_name = 'rho_combined'
+    subdomain_to_prop_value = 'eleblock1 rho_ice
+                               eleblock2 rho_ice
+                               10  rho_ice
+                               eleblock3 rho_material'
+  []
+
 []
 
 [Preconditioning]
@@ -407,8 +429,12 @@ initial_II_eps_min = 1e-3
   # nl_rel_tol = 1e-08
   # nl_abs_tol = 1e-13
   # nl_rel_tol = 1e-07
-  nl_abs_tol = 2e-06
-  l_tol = 1e-6
+
+  # nl_abs_tol = 2e-06
+  nl_abs_tol = 2e-04
+
+  # l_tol = 1e-6
+  l_tol = 1e-4
 
   nl_max_its = 100
   nl_forced_its = 3
