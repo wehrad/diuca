@@ -30,9 +30,9 @@ FVConstantMaterial::FVConstantMaterial(const InputParameters & parameters)
 {
   const std::set<ExecFlagType> clearance_schedule(_execute_enum.begin(), _execute_enum.end());
 
-  addFunctorProperty<ADReal>(
+  addFunctorProperty<Real>(
       "rho", [this](const auto &, const auto &) -> Real { return _rho; }, clearance_schedule);
 
-  addFunctorProperty<ADReal>(
+  addFunctorProperty<Real>(
       "mu", [this](const auto &, const auto &) -> Real { return _mu; }, clearance_schedule);
 }
