@@ -19,7 +19,7 @@ protected:
   const unsigned int _mesh_dimension;
 
   // density of the fluid
-  const ADReal & _rho;
+  const Real & _rho;
 
   // velocity
   const Moose::Functor<ADReal> & _vel_x;
@@ -34,4 +34,5 @@ protected:
 
   // viscosity
   const Moose::Functor<ADReal> & _viscosity;
+  
 };

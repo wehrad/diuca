@@ -39,6 +39,12 @@ initial_II_eps_min = 1e-03
 
 # ------------------------
 
+[Problem]
+  type = FEProblem
+  near_null_space_dimension = 2
+  null_space_dimension = 2
+  transpose_null_space_dimension = 2
+[]
 [GlobalParams]
   rhie_chow_user_object = 'rc'
 []
@@ -74,22 +80,22 @@ initial_II_eps_min = 1e-03
     file = mesh_icestream.e
   []
 
-  [frontal_zone]
-    type = SubdomainBoundingBoxGenerator
-    input = 'channel'
-    block_id = "10"
-    bottom_left = '20000 -1000 -3000'
-    top_right = '19000 15000 3000'
-    restricted_subdomains = 'eleblock1 eleblock2'
-  []
-  [refined_front]
-    type = RefineBlockGenerator
-    input = "frontal_zone"
-    block = "10"
-    refinement = '1'
-    enable_neighbor_refinement = true
-    max_element_volume = 1e100
-  []
+  # [frontal_zone]
+  #   type = SubdomainBoundingBoxGenerator
+  #   input = 'channel'
+  #   block_id = "10"
+  #   bottom_left = '20000 -1000 -3000'
+  #   top_right = '19000 15000 3000'
+  #   restricted_subdomains = 'eleblock1 eleblock2'
+  # []
+  # [refined_front]
+  #   type = RefineBlockGenerator
+  #   input = "frontal_zone"
+  #   block = "10"
+  #   refinement = '1'
+  #   enable_neighbor_refinement = true
+  #   max_element_volume = 1e100
+  # []
 []
 
 [Variables]
@@ -190,6 +196,16 @@ initial_II_eps_min = 1e-03
     momentum_component = 'y'
     gravity = '0 0 -9.81'
   []
+  # [v_friction]
+  #   type = PINSFVMomentumFriction
+  #   variable = 'vel_y'
+  #   Darcy_name = "Darcy_coefficient"
+  #   # Forchheimer_name = 1e10
+  #   block = "3"
+  #   rho = ${rho}
+  #   mu = ${mu}
+  #   momentum_component = 'y'
+  # []
 
   [w_time]
     type = INSFVMomentumTimeDerivative
@@ -224,6 +240,16 @@ initial_II_eps_min = 1e-03
     momentum_component = 'z'
     gravity = '0 0 -9.81'
   []
+  # [w_friction]
+  #   type = PINSFVMomentumFriction
+  #   variable = 'vel_z'
+  #   Darcy_name = "Darcy_coefficient"
+  #   # Forchheimer_name = "Forchheimer_coefficient"
+  #   block = "3"
+  #   rho = ${rho}
+  #   mu = ${mu}
+  #   momentum_component = 'z'
+  # []
 []
 
 [FVBCs]
@@ -232,19 +258,19 @@ initial_II_eps_min = 1e-03
   [ice_inlet_x]
     type = INSFVInletVelocityBC
     variable = vel_x
-    boundary = 'upstream upstream_sediment'
+    boundary = 'upstream'
     functor = ${inlet_mps}
   []
   [ice_inlet_y]
     type = INSFVInletVelocityBC
     variable = vel_y
-    boundary = 'upstream upstream_sediment'
+    boundary = 'upstream'
     functor = 0
   []
   [ice_inlet_z]
     type = INSFVInletVelocityBC
     variable = vel_z
-    boundary = 'upstream upstream_sediment'
+    boundary = 'upstream'
     functor = 0
   []
 
@@ -252,19 +278,19 @@ initial_II_eps_min = 1e-03
   [no_slip_x]
     type = INSFVNoSlipWallBC
     variable = vel_x
-    boundary = 'left left_sediment right right_sediment sediment downstream_sediment'
+    boundary = 'left left_sediment right right_sediment sediment'
     function = 0
   []
   [no_slip_y]
     type = INSFVNoSlipWallBC
     variable = vel_y
-    boundary = 'left left_sediment right right_sediment sediment downstream_sediment'
+    boundary = 'left left_sediment right right_sediment sediment'
     function = 0
   []
   [no_slip_z]
     type = INSFVNoSlipWallBC
     variable = vel_z
-    boundary = 'left left_sediment right right_sediment sediment downstream_sediment'
+    boundary = 'left left_sediment right right_sediment sediment'
     function = 0
   []
 
@@ -324,7 +350,7 @@ initial_II_eps_min = 1e-03
 [FunctorMaterials]
   [ice]
     type = FVIceMaterialSI
-    block = 'eleblock1 eleblock2 10'
+    block = 'eleblock1 eleblock2' #  10
     velocity_x = "vel_x"
     velocity_y = "vel_y"
     velocity_z = "vel_z"
@@ -332,32 +358,45 @@ initial_II_eps_min = 1e-03
     output_properties = 'mu_ice rho_ice'
     # II_eps_min = 1e-10
   []
-  [sediment]
-    type = FVConstantMaterial
-    block = 'eleblock3'
-    viscosity = 1e8
-    density = 1850.
-    output_properties = 'mu_material rho_material'
-  []
+  # [sediment]
+  #   type = FVConstantMaterial
+  #   block = 'eleblock3'
+  #   viscosity = 1e10
+  #   density = 1850.
+  #   output_properties = 'mu_material rho_material'
+  # []
 
+  [sediment]
+    type = FVSedimentMaterialSI
+    block = 'eleblock3'
+    velocity_x = "vel_x"
+    velocity_y = "vel_y"
+    velocity_z = "vel_z"
+    pressure = "pressure"
+    output_properties = 'mu_sediment rho_sediment'
+    density  = 1850.
+    FrictionCoefficient = 0.5
+    # II_eps_min = 1e-10
+  []
   [mu_combined]
     type = ADPiecewiseByBlockFunctorMaterial
     prop_name = 'mu_combined'
     subdomain_to_prop_value = 'eleblock1 mu_ice
                                eleblock2 mu_ice
-                               10  mu_ice
-                               eleblock3 mu_material'
+                               eleblock3 mu_sediment' # 10  mu_ice
   []
-
   [rho_combined]
     type = ADPiecewiseByBlockFunctorMaterial
     prop_name = 'rho_combined'
     subdomain_to_prop_value = 'eleblock1 rho_ice
                                eleblock2 rho_ice
-                               10  rho_ice
-                               eleblock3 rho_material'
+                               eleblock3 rho_sediment' # 10  rho_ice
   []
-
+  # [darcy]
+  #   type = ADGenericVectorFunctorMaterial
+  #   prop_names = 'Darcy_coefficient Forchheimer_coefficient'
+  #   prop_values = '1e20 1e20 1e20 1e20 1e20 1e20'
+  # []
 []
 
 [Preconditioning]
@@ -431,10 +470,10 @@ initial_II_eps_min = 1e-03
   # nl_rel_tol = 1e-07
 
   # nl_abs_tol = 2e-06
-  nl_abs_tol = 2e-04
+  nl_abs_tol = 2e-05
 
   # l_tol = 1e-6
-  l_tol = 1e-4
+  l_tol = 1e-5
 
   nl_max_its = 100
   nl_forced_its = 3
