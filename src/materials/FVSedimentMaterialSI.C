@@ -85,10 +85,19 @@ FVSedimentMaterialSI::FVSedimentMaterialSI(const InputParameters & parameters)
 	// Get pressure
 	ADReal sig_m = _pressure(r, t);
 
+	ADReal eta = 0;
+	
 	// Get viscosity
-	Moose::StateArg previous_time(1, Moose::SolutionIterationType::Time);
-	ADReal eta = _viscosity(r, previous_time);
-
+	if (_dt < 2)
+	  {
+	    ADReal eta = 1e10;
+	  }
+	else
+	  {
+	    Moose::StateArg previous_time(1, Moose::SolutionIterationType::Time);
+	    ADReal eta = _viscosity(r, previous_time);
+	  }
+	
 	ADReal sxx = 2 * eta * u_x + sig_m;
 	ADReal syy = 2 * eta * v_y + sig_m;
 	ADReal szz = 2 * eta * w_z + sig_m;
