@@ -378,6 +378,7 @@ initial_II_eps_min = 1e-03
     FrictionCoefficient = 0.5
     # II_eps_min = 1e-10
   []
+
   [mu_combined]
     type = ADPiecewiseByBlockFunctorMaterial
     prop_name = 'mu_combined'
