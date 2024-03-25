@@ -97,10 +97,11 @@ FVSedimentMaterialSI::FVSedimentMaterialSI(const InputParameters & parameters)
           II_eps = _II_eps_min;
 
 	ADReal eps_e = std::sqrt(II_eps);
-	  
+	
         // Compute viscosity
 	ADReal viscosity = (_FrictionCoefficient * sig_m) / std::abs(eps_e); // Pas
 
+        // std::cout << viscosity << std::endl;
 	return viscosity;
       },
       clearance_schedule);

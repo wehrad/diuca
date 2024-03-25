@@ -104,6 +104,7 @@ FVIceMaterialSI::FVIceMaterialSI(const InputParameters & parameters)
 	
         // Compute viscosity
         ADReal viscosity = (0.5 * ApGlen * std::pow(II_eps, -(1. - 1. / _nGlen) / 2.)); // Pas
+	
         return std::max(viscosity, 3.153600e09);
       },
       clearance_schedule);

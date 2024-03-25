@@ -57,20 +57,6 @@ initial_II_eps_min = 1e-03
     w = vel_z
     pressure = pressure
   []
-  # [pin_pressure]
-  #   type = NSPressurePin
-  #   variable = pressure
-  #   pin_type = point-value
-  #   phi0 = 1e5
-  #   point = '19600 0 100'
-  # []
-  # [pin_pressure2]
-  #   type = NSPressurePin
-  #   variable = pressure
-  #   pin_type = point-value
-  #   phi0 = 1e5
-  #   point = '0 0 433.2' # 433.2
-  # []
 []
 
 [Mesh]
@@ -80,6 +66,7 @@ initial_II_eps_min = 1e-03
     file = mesh_icestream.e
   []
 
+  
   # [frontal_zone]
   #   type = SubdomainBoundingBoxGenerator
   #   input = 'channel'
@@ -356,7 +343,7 @@ initial_II_eps_min = 1e-03
     velocity_z = "vel_z"
     pressure = "pressure"
     output_properties = 'mu_ice rho_ice'
-    # II_eps_min = 1e-10
+    outputs = "out"
   []
   # [sediment]
   #   type = FVConstantMaterial
@@ -375,8 +362,7 @@ initial_II_eps_min = 1e-03
     pressure = "pressure"
     output_properties = 'mu_sediment rho_sediment'
     density  = 1850.
-    FrictionCoefficient = 0.5
-    # II_eps_min = 1e-10
+    FrictionCoefficient = 0.1
   []
 
   [mu_combined]
