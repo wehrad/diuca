@@ -24,7 +24,11 @@ FVSedimentMaterialSI::validParams()
   // Sediment density (https://tc.copernicus.org/articles/14/261/2020/)
   params.addParam<Real>("density", 1850., "Ice density"); // kgm-3
   params.declareControllable("density"); // kgm-3
-  
+
+  // Convergence parameters
+  params.addParam<Real>("II_eps_min", 1e-25, "Finite strain rate parameter"); // s-1
+  params.declareControllable("II_eps_min"); // s-1
+
   return params;
 }
 
@@ -48,9 +52,8 @@ FVSedimentMaterialSI::FVSedimentMaterialSI(const InputParameters & parameters)
     // Pressure
     _pressure(getFunctor<ADReal>("pressure")),
 
-    // Viscosity
-    _viscosity(getFunctor<ADReal>("mu_sediment"))
-
+    // Finite strain rate parameter
+    _II_eps_min(getParam<Real>("II_eps_min"))
 {
   const std::set<ExecFlagType> clearance_schedule(_execute_enum.begin(), _execute_enum.end());
 
@@ -84,37 +87,19 @@ FVSedimentMaterialSI::FVSedimentMaterialSI(const InputParameters & parameters)
 
 	// Get pressure
 	ADReal sig_m = _pressure(r, t);
+	
+	// Compute effective strain rate (3D)
+	ADReal II_eps = 0.5 * (u_x * u_x + v_y * v_y + w_z * w_z +
+			       2. * (eps_xy * eps_xy + eps_xz * eps_xz + eps_yz * eps_yz));
 
-	ADReal eta = 0;
-	
-	// Get viscosity
-	if (_dt < 2)
-	  {
-	    ADReal eta = 1e10;
-	  }
-	else
-	  {
-	    Moose::StateArg previous_time(1, Moose::SolutionIterationType::Time);
-	    ADReal eta = _viscosity(r, previous_time);
-	  }
-	
-	ADReal sxx = 2 * eta * u_x + sig_m;
-	ADReal syy = 2 * eta * v_y + sig_m;
-	ADReal szz = 2 * eta * w_z + sig_m;
-	
-	ADReal sxy = eta * (u_y + v_x);
-	ADReal sxz = eta * (u_z + w_x);
-	ADReal syz = eta * (v_z + w_y);
-	
-	ADReal sxx_dev = 2 * eta * u_x;
-	ADReal syy_dev = 2 * eta * v_y;
-	ADReal szz_dev = 2 * eta * w_z;
- 
-	// von Mises stress (second invariant)
-	ADReal sig_e = std::sqrt(3./2. * (sxx_dev*sxx_dev + syy_dev*syy_dev + 2*sxy*sxy));
-	
+	// Finite strain rate parameter included to avoid infinite viscosity at low stresses
+        if (II_eps < _II_eps_min)
+          II_eps = _II_eps_min;
+
+	ADReal eps_e = std::sqrt(II_eps);
+	  
         // Compute viscosity
-	ADReal viscosity = (_FrictionCoefficient * sig_m) / std::abs(sig_e); // Pas
+	ADReal viscosity = (_FrictionCoefficient * sig_m) / std::abs(eps_e); // Pas
 
 	return viscosity;
       },

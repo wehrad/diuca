@@ -22,19 +22,19 @@ mult = 1
 _dt = '${fparse nb_years * 3600 * 24 * 365 * mult}'
 
 # upstream inlet (ice influx from the ice sheet interior)
-inlet_mph = 0.1 # mh-1
+inlet_mph = 0.5 # mh-1
 inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
 
 # Numerical scheme parameters
 velocity_interp_method = 'rc'
 advected_interp_method = 'upwind'
-vel_scaling = 1e-6
+vel_scaling = 1e-8 # 1e-6
 
 # Material properties
 rho = 'rho'
 mu = 'mu'
 
-initial_II_eps_min = 1e-03
+initial_II_eps_min = 1e-3
 
 # ------------------------
 
@@ -86,20 +86,27 @@ initial_II_eps_min = 1e-03
     block = '3'
   []
   
-  [frontal_zone]
-    type = SubdomainBoundingBoxGenerator
-    input = 'delete_sediment_block'
-    block_id = 10
-    bottom_left = '20000 -1000 -3000'
-    top_right = '19000 15000 3000'
-  []
-  [refined_front]
-    type = RefineBlockGenerator
-    input = "frontal_zone"
-    block = '10'
+  # [frontal_zone]
+  #   type = SubdomainBoundingBoxGenerator
+  #   input = 'delete_sediment_block'
+  #   block_id = 10
+  #   bottom_left = '20000 -1000 -3000'
+  #   top_right = '19000 15000 3000'
+  # []
+  # [refined_front]
+  #   type = RefineBlockGenerator
+  #   input = "frontal_zone"
+  #   block = '10'
+  #   refinement = '1'
+  #   enable_neighbor_refinement = true
+  #   max_element_volume = 1e100
+  # []
+  [refined_surface]
+    type = RefineSidesetGenerator
+    input = 'delete_sediment_block' # 'refined_front'
+    boundaries = 'surface'
     refinement = '1'
     enable_neighbor_refinement = true
-    max_element_volume = 1e100
   []
 []
 
@@ -261,15 +268,27 @@ initial_II_eps_min = 1e-03
   [no_slip_x]
     type = INSFVNoSlipWallBC
     variable = vel_x
-    boundary = 'left right bottom'
+    boundary = 'left right'
     function = 0
   []
-  [no_slip_y]
-    type = INSFVNoSlipWallBC
+  [free_slip_xsurf]
+    type = INSFVNaturalFreeSlipBC
+    variable = vel_x
+    momentum_component = 'x'
+    boundary = 'bottom'
+  []
+  [free_slip_ysurf]
+    type = INSFVNaturalFreeSlipBC
     variable = vel_y
-    boundary = 'left right bottom'
-    function = 0
+    momentum_component = 'y'
+    boundary = 'bottom'
   []
+  # [no_slip_y]
+  #   type = INSFVNoSlipWallBC
+  #   variable = vel_y
+  #   boundary = 'left right bottom'
+  #   function = 0
+  # []
   [no_slip_z]
     type = INSFVNoSlipWallBC
     variable = vel_z
