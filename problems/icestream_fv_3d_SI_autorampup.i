@@ -22,17 +22,17 @@ mult = 1
 _dt = '${fparse nb_years * 3600 * 24 * 365 * mult}'
 
 # upstream inlet (ice influx from the ice sheet interior)
-inlet_mph = 0.5 # mh-1
+inlet_mph = 0.1 # mh-1
 inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
 
 # Numerical scheme parameters
 velocity_interp_method = 'rc'
 advected_interp_method = 'upwind'
-vel_scaling = 1e-8 # 1e-6
+vel_scaling = 1e-6
 
 # Material properties
-rho = 'rho'
-mu = 'mu'
+rho = 'rho_ice'
+mu = 'mu_ice'
 
 initial_II_eps_min = 1e-3
 
@@ -170,6 +170,7 @@ initial_II_eps_min = 1e-3
   [u_gravity]
     type = INSFVMomentumGravity
     variable = vel_x
+    rho = ${rho}
     momentum_component = 'x'
     gravity = '0 0 -9.81'
   []
@@ -203,7 +204,7 @@ initial_II_eps_min = 1e-3
   [v_buoyant]
     type = INSFVMomentumGravity
     variable = vel_y
-    # rho = 'rho_mixture'
+    rho = ${rho}
     momentum_component = 'y'
     gravity = '0 0 -9.81'
   []
@@ -237,6 +238,7 @@ initial_II_eps_min = 1e-3
   [w_buoyant]
     type = INSFVMomentumGravity
     variable = vel_z
+    rho = ${rho}
     momentum_component = 'z'
     gravity = '0 0 -9.81'
   []
@@ -359,7 +361,8 @@ initial_II_eps_min = 1e-3
     velocity_y = "vel_y"
     velocity_z = "vel_z"
     pressure = "pressure"
-    output_properties = 'mu rho'
+    output_properties = 'mu_ice rho_ice'
+    outputs = "out"
     # II_eps_min = 1e-10
   []
 []
