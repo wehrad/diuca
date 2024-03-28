@@ -14,10 +14,11 @@
 # ------------------------ domain settings
 
 # sediment rheology
-# sliding_law = "GudmundssonRaymond"
+sliding_law = "GudmundssonRaymond"
 sediment_layer_thickness = 300.
-# slipperiness_coefficient_mmpaa = 3000. # 3000.
-# slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (365*24*3600)}'
+slipperiness_coefficient_mmpaa = 3000. # 3000.
+slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (365*24*3600)}'
+# slipperiness_coefficient = 3e-08
 
 # ------------------------ simulation settings
 
@@ -411,41 +412,42 @@ initial_II_eps_min = 1e-03
     output_properties = 'mu_ice rho_ice'
     outputs = "out"
   []
-  [sediment]
-    type = FVConstantMaterial
-    block = '0'
-    viscosity = 1e10
-    density = 1850.
-    output_properties = 'mu_material rho_material'
-  []
-
   # [sediment]
-  #   type = FVSedimentMaterialSI
+  #   type = FVConstantMaterial
   #   block = '0'
-  #   velocity_x = "vel_x"
-  #   velocity_y = "vel_y"
-  #   velocity_z = "vel_z"
-  #   pressure = "pressure"
-  #   density  = 1850.
-  #   sliding_law = ${sliding_law}
-  #   SlipperinessCoefficient = ${slipperiness_coefficient}
-  #   LayerThickness = ${sediment_layer_thickness}
-  #   output_properties = 'mu_sediment rho_sediment' 
+  #   viscosity = 1e10
+  #   density = 1850.
+  #   output_properties = 'mu_material rho_material'
   # []
+
+  [sediment]
+    type = FVSedimentMaterialSI
+    block = '0'
+    velocity_x = "vel_x"
+    velocity_y = "vel_y"
+    velocity_z = "vel_z"
+    pressure = "pressure"
+    density  = 1850.
+    sliding_law = ${sliding_law}
+    SlipperinessCoefficient = ${slipperiness_coefficient}
+    LayerThickness = ${sediment_layer_thickness}
+    output_properties = 'mu_sediment rho_sediment'
+    outputs = "out"
+  []
 
   [mu_combined]
     type = ADPiecewiseByBlockFunctorMaterial
     prop_name = 'mu_combined'
     subdomain_to_prop_value = 'eleblock1 mu_ice
                                eleblock2 mu_ice
-                               0 mu_material' # 10  mu_ice
+                               0 mu_sediment' # 10  mu_ice
   []
   [rho_combined]
     type = ADPiecewiseByBlockFunctorMaterial
     prop_name = 'rho_combined'
     subdomain_to_prop_value = 'eleblock1 rho_ice
                                eleblock2 rho_ice
-                               0 rho_material' # 10  rho_ice
+                               0 rho_sediment' # 10  rho_ice
   []
   # [darcy]
   #   type = ADGenericVectorFunctorMaterial
