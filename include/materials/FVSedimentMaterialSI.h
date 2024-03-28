@@ -26,13 +26,22 @@ protected:
   const Moose::Functor<ADReal> & _vel_y;
   const Moose::Functor<ADReal> & _vel_z;
 
-  // Sediment friction parameter
-  const Real & _FrictionCoefficient;
-
   // pressure
   const Moose::Functor<ADReal> & _pressure;
 
+  // Friction coefficient (DruckerPrager model)
+  const Real & _FrictionCoefficient;
+
+  // Slipperiness coefficient (Slip model)
+  const Real & _SlipperinessCoefficient;
+
+  // Layer thickness (Slip model)
+  const Real & _LayerThickness;
+
   // Finite strain rate parameter
   const Real & _II_eps_min;
+
+  // Sediment sliding law
+  const std::string & _sliding_law;
 
 };

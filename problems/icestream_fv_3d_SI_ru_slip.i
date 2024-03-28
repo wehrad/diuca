@@ -13,8 +13,11 @@
 
 # ------------------------ domain settings
 
-sediment_thickness = 50.
-# slipperiness_coefficient = 0.1
+# sediment rheology
+sliding_law = "GudmundssonRaymond"
+sediment_layer_thickness = 50.
+slipperiness_coefficient_mmpaa = 3000.
+slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (365*24*3600)}'
 
 # ------------------------ simulation settings
 
@@ -46,9 +49,9 @@ initial_II_eps_min = 1e-03
 
 [Problem]
   type = FEProblem
-  near_null_space_dimension = 2
-  null_space_dimension = 2
-  transpose_null_space_dimension = 2
+  # near_null_space_dimension = 1
+  # null_space_dimension = 1
+  # transpose_null_space_dimension = 1
 []
 [GlobalParams]
   rhie_chow_user_object = 'rc'
@@ -77,6 +80,8 @@ initial_II_eps_min = 1e-03
     block = '3'
   []
 
+  # Create sediment layer by projecting glacier bed by
+  # the sediment thickness
   [lowerDblock_sediment]
     type = LowerDBlockFromSidesetGenerator
     input = "delete_sediment_block"
@@ -92,7 +97,7 @@ initial_II_eps_min = 1e-03
     type = MeshExtruderGenerator
     input = separateMesh_sediment
     num_layers = 1
-    extrusion_vector = '0. 0. -${sediment_thickness}'
+    extrusion_vector = '0. 0. -${sediment_layer_thickness}'
     # bottom/top swap is (correct and) due to inverse extrusion
     top_sideset = 'bottom_sediment'
   []
@@ -100,6 +105,32 @@ initial_II_eps_min = 1e-03
     type = StitchedMeshGenerator
     inputs = 'delete_sediment_block extrude_sediment'
     stitch_boundaries_pairs = 'bottom bottom_sediment'
+  []
+
+  [add_sediment_lateral_sides]
+    type = ParsedGenerateSideset
+    combinatorial_geometry = 'y > 9999.99 | y < 0.01'
+    included_subdomains = 0
+    new_sideset_name = 'left_right_sediment'
+    input = 'stitch_sediment'
+    replace = True
+  []
+
+  [add_sediment_upstream_side]
+    type = ParsedGenerateSideset
+    combinatorial_geometry = 'x < 0.01'
+    included_subdomains = 0
+    new_sideset_name = 'upstream_sediment'
+    input = 'add_sediment_lateral_sides'
+    replace = True
+  []
+  [add_sediment_downstream_side]
+    type = ParsedGenerateSideset
+    combinatorial_geometry = 'x > 19599.99'
+    included_subdomains = 0
+    new_sideset_name = 'downstream_sediment'
+    input = 'add_sediment_upstream_side'
+    replace = True
   []
   # [add_sediment_side_sets]
   #   input = 'stitch_sediment'
@@ -311,19 +342,19 @@ initial_II_eps_min = 1e-03
   [no_slip_x]
     type = INSFVNoSlipWallBC
     variable = vel_x
-    boundary = 'left right'
+    boundary = 'left right left_right_sediment'
     function = 0
   []
   [no_slip_y]
     type = INSFVNoSlipWallBC
     variable = vel_y
-    boundary = 'left right'
+    boundary = 'left right left_right_sediment'
     function = 0
   []
   [no_slip_z]
     type = INSFVNoSlipWallBC
     variable = vel_z
-    boundary = 'left right'
+    boundary = 'left right left_right_sediment'
     function = 0
   []
 
@@ -393,37 +424,39 @@ initial_II_eps_min = 1e-03
   []
   # [sediment]
   #   type = FVConstantMaterial
-  #   block = 'eleblock3'
+  #   block = '0'
   #   viscosity = 1e10
   #   density = 1850.
   #   output_properties = 'mu_material rho_material'
   # []
 
-  # [sediment]
-  #   type = FVSedimentMaterialSI
-  #   block = 'eleblock3'
-  #   velocity_x = "vel_x"
-  #   velocity_y = "vel_y"
-  #   velocity_z = "vel_z"
-  #   pressure = "pressure"
-  #   output_properties = 'mu_sediment rho_sediment'
-  #   density  = 1850.
-  #   FrictionCoefficient = 0.1
-  # []
+  [sediment]
+    type = FVSedimentMaterialSI
+    block = '0'
+    velocity_x = "vel_x"
+    velocity_y = "vel_y"
+    velocity_z = "vel_z"
+    pressure = "pressure"
+    density  = 1850.
+    sliding_law = ${sliding_law}
+    SlipperinessCoefficient = ${slipperiness_coefficient}
+    LayerThickness = ${sediment_layer_thickness}
+    output_properties = 'mu_sediment rho_sediment' 
+  []
 
   [mu_combined]
     type = ADPiecewiseByBlockFunctorMaterial
     prop_name = 'mu_combined'
     subdomain_to_prop_value = 'eleblock1 mu_ice
-                               eleblock2 mu_ice'
-                               # eleblock3 mu_sediment' # 10  mu_ice
+                               eleblock2 mu_ice
+                               0 mu_sediment' # 10  mu_ice
   []
   [rho_combined]
     type = ADPiecewiseByBlockFunctorMaterial
     prop_name = 'rho_combined'
     subdomain_to_prop_value = 'eleblock1 rho_ice
-                               eleblock2 rho_ice'
-                               # eleblock3 rho_sediment' # 10  rho_ice
+                               eleblock2 rho_ice
+                               0 rho_sediment' # 10  rho_ice
   []
   # [darcy]
   #   type = ADGenericVectorFunctorMaterial
