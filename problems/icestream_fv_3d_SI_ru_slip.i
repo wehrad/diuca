@@ -14,10 +14,10 @@
 # ------------------------ domain settings
 
 # sediment rheology
-sliding_law = "GudmundssonRaymond"
-sediment_layer_thickness = 50.
-slipperiness_coefficient_mmpaa = 3000.
-slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (365*24*3600)}'
+# sliding_law = "GudmundssonRaymond"
+sediment_layer_thickness = 300.
+# slipperiness_coefficient_mmpaa = 3000. # 3000.
+# slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (365*24*3600)}'
 
 # ------------------------ simulation settings
 
@@ -132,17 +132,6 @@ initial_II_eps_min = 1e-03
     input = 'add_sediment_upstream_side'
     replace = True
   []
-  # [add_sediment_side_sets]
-  #   input = 'stitch_sediment'
-  #   type = SideSetsFromNormalsGenerator
-  #   normals = '0 -1  0
-  #              0  1  0
-  #              -1 0  0
-  #              1  0  0'
-  #   new_boundary = 'left_sediment right_sediment
-  #                   upstream_sediment downstream_sediment'
-  # []
-
 
   # [frontal_zone]
   #   type = SubdomainBoundingBoxGenerator
@@ -154,8 +143,8 @@ initial_II_eps_min = 1e-03
   # []
   # [refined_front]
   #   type = RefineBlockGenerator
-  #   input = "frontal_zone"
-  #   block = "10"
+  #   input = "add_sediment_downstream_side"
+  #   block = "0"
   #   refinement = '1'
   #   enable_neighbor_refinement = true
   #   max_element_volume = 1e100
@@ -328,33 +317,33 @@ initial_II_eps_min = 1e-03
   [ice_inlet_y]
     type = INSFVInletVelocityBC
     variable = vel_y
-    boundary = 'upstream'
+    boundary = 'upstream upstream_sediment'
     functor = 0
   []
   [ice_inlet_z]
     type = INSFVInletVelocityBC
     variable = vel_z
-    boundary = 'upstream'
+    boundary = 'upstream upstream_sediment'
     functor = 0
   []
 
-  # no slip at the glacier base nor on the sides
+  # no slip at the sediment base nor on the sides
   [no_slip_x]
     type = INSFVNoSlipWallBC
     variable = vel_x
-    boundary = 'left right left_right_sediment'
+    boundary = 'left right left_right_sediment bottom_sediment'
     function = 0
   []
   [no_slip_y]
     type = INSFVNoSlipWallBC
     variable = vel_y
-    boundary = 'left right left_right_sediment'
+    boundary = 'left right left_right_sediment bottom_sediment'
     function = 0
   []
   [no_slip_z]
     type = INSFVNoSlipWallBC
     variable = vel_z
-    boundary = 'left right left_right_sediment'
+    boundary = 'left right left_right_sediment bottom_sediment'
     function = 0
   []
 
@@ -422,41 +411,41 @@ initial_II_eps_min = 1e-03
     output_properties = 'mu_ice rho_ice'
     outputs = "out"
   []
-  # [sediment]
-  #   type = FVConstantMaterial
-  #   block = '0'
-  #   viscosity = 1e10
-  #   density = 1850.
-  #   output_properties = 'mu_material rho_material'
-  # []
-
   [sediment]
-    type = FVSedimentMaterialSI
+    type = FVConstantMaterial
     block = '0'
-    velocity_x = "vel_x"
-    velocity_y = "vel_y"
-    velocity_z = "vel_z"
-    pressure = "pressure"
-    density  = 1850.
-    sliding_law = ${sliding_law}
-    SlipperinessCoefficient = ${slipperiness_coefficient}
-    LayerThickness = ${sediment_layer_thickness}
-    output_properties = 'mu_sediment rho_sediment' 
+    viscosity = 1e10
+    density = 1850.
+    output_properties = 'mu_material rho_material'
   []
+
+  # [sediment]
+  #   type = FVSedimentMaterialSI
+  #   block = '0'
+  #   velocity_x = "vel_x"
+  #   velocity_y = "vel_y"
+  #   velocity_z = "vel_z"
+  #   pressure = "pressure"
+  #   density  = 1850.
+  #   sliding_law = ${sliding_law}
+  #   SlipperinessCoefficient = ${slipperiness_coefficient}
+  #   LayerThickness = ${sediment_layer_thickness}
+  #   output_properties = 'mu_sediment rho_sediment' 
+  # []
 
   [mu_combined]
     type = ADPiecewiseByBlockFunctorMaterial
     prop_name = 'mu_combined'
     subdomain_to_prop_value = 'eleblock1 mu_ice
                                eleblock2 mu_ice
-                               0 mu_sediment' # 10  mu_ice
+                               0 mu_material' # 10  mu_ice
   []
   [rho_combined]
     type = ADPiecewiseByBlockFunctorMaterial
     prop_name = 'rho_combined'
     subdomain_to_prop_value = 'eleblock1 rho_ice
                                eleblock2 rho_ice
-                               0 rho_sediment' # 10  rho_ice
+                               0 rho_material' # 10  rho_ice
   []
   # [darcy]
   #   type = ADGenericVectorFunctorMaterial

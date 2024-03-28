@@ -38,7 +38,7 @@ FVSedimentMaterialSI::validParams()
   params.declareControllable("II_eps_min"); // s-1
 
   // Model to simulate sediments
-  params.addParam<std::string>("sliding_law", "Slip", "Model to simulate sediment deformation (DruckerPrager or GudmundssonRaymond)");
+  params.addParam<std::string>("sliding_law", "GudmundssonRaymond", "Model to simulate sediment deformation (DruckerPrager or GudmundssonRaymond)");
   params.declareControllable("sliding_law");
 
   return params;
