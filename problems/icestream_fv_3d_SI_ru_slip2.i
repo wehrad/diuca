@@ -14,11 +14,10 @@
 # ------------------------ domain settings
 
 # sediment rheology
-sliding_law = "GudmundssonRaymond"
+# sliding_law = "GudmundssonRaymond"
 sediment_layer_thickness = 300.
-# slipperiness_coefficient_mmpaa = 3000. # 9.512937595129376e-11
-# slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (365*24*3600)}' # 
-slipperiness_coefficient = 3e-08
+# slipperiness_coefficient_mmpaa = 3000. # 3000.
+# slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (365*24*3600)}'
 
 # ------------------------ simulation settings
 
@@ -44,7 +43,7 @@ vel_scaling = 1e-6
 rho = 'rho_combined'
 mu = 'mu_combined'
 
-initial_II_eps_min = 1e-07
+initial_II_eps_min = 1e-03
 
 # ------------------------
 
@@ -150,33 +149,6 @@ initial_II_eps_min = 1e-07
   #   enable_neighbor_refinement = true
   #   max_element_volume = 1e100
   # []
-
-  [fast_zone]
-    type = SubdomainBoundingBoxGenerator
-    input = 'add_sediment_downstream_side'
-    block_id = "10"
-    bottom_left = '20000 3749.99 -200.' # 99.99'
-    top_right = '13000  6700.99 434'
-    restricted_subdomains = 'eleblock2'
-  []
-  [refined_fastzone]
-    type = RefineBlockGenerator
-    input = "fast_zone"
-    block = "10"
-    refinement = '1'
-    enable_neighbor_refinement = false
-    max_element_volume = 1e100
-  []
-
-  # [refined_surface]
-  #   type = RefineSidesetGenerator
-  #   input = "add_sediment_downstream_side"
-  #   boundaries = "surface"
-  #   refinement = '1'
-  #   enable_neighbor_refinement = false
-  #   boundary_side = "primary"
-  # []
-
 []
 
 [Variables]
@@ -431,7 +403,7 @@ initial_II_eps_min = 1e-07
 [FunctorMaterials]
   [ice]
     type = FVIceMaterialSI
-    block = 'eleblock1 eleblock2 10' #  10
+    block = 'eleblock1 eleblock2' #  10
     velocity_x = "vel_x"
     velocity_y = "vel_y"
     velocity_z = "vel_z"
@@ -439,44 +411,41 @@ initial_II_eps_min = 1e-07
     output_properties = 'mu_ice rho_ice'
     outputs = "out"
   []
-  # [sediment]
-  #   type = FVConstantMaterial
-  #   block = '0'
-  #   viscosity = 1e10
-  #   density = 1850.
-  #   output_properties = 'mu_material rho_material'
-  # []
-
   [sediment]
-    type = FVSedimentMaterialSI
+    type = FVConstantMaterial
     block = '0'
-    velocity_x = "vel_x"
-    velocity_y = "vel_y"
-    velocity_z = "vel_z"
-    pressure = "pressure"
-    density  = 1850.
-    sliding_law = ${sliding_law}
-    SlipperinessCoefficient = ${slipperiness_coefficient}
-    LayerThickness = ${sediment_layer_thickness}
-    output_properties = 'mu_sediment rho_sediment'
-    outputs = "out"
+    viscosity = 1e8 # 1e10
+    density = 1850.
+    output_properties = 'mu_material rho_material'
   []
+
+  # [sediment]
+  #   type = FVSedimentMaterialSI
+  #   block = '0'
+  #   velocity_x = "vel_x"
+  #   velocity_y = "vel_y"
+  #   velocity_z = "vel_z"
+  #   pressure = "pressure"
+  #   density  = 1850.
+  #   sliding_law = ${sliding_law}
+  #   SlipperinessCoefficient = ${slipperiness_coefficient}
+  #   LayerThickness = ${sediment_layer_thickness}
+  #   output_properties = 'mu_sediment rho_sediment' 
+  # []
 
   [mu_combined]
     type = ADPiecewiseByBlockFunctorMaterial
     prop_name = 'mu_combined'
     subdomain_to_prop_value = 'eleblock1 mu_ice
                                eleblock2 mu_ice
-                               10  mu_ice
-                               0 mu_sediment'
+                               0 mu_material' # 10  mu_ice
   []
   [rho_combined]
     type = ADPiecewiseByBlockFunctorMaterial
     prop_name = 'rho_combined'
     subdomain_to_prop_value = 'eleblock1 rho_ice
                                eleblock2 rho_ice
-                               10  rho_ice
-                               0 rho_sediment'  
+                               0 rho_material' # 10  rho_ice
   []
   # [darcy]
   #   type = ADGenericVectorFunctorMaterial
