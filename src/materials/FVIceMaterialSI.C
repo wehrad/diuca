@@ -63,10 +63,10 @@ FVIceMaterialSI::FVIceMaterialSI(const InputParameters & parameters)
            << std::endl;
 
   addFunctorProperty<ADReal>(
-      "rho", [this](const auto &, const auto &) -> ADReal { return _rho; }, clearance_schedule);
+      "rho_ice", [this](const auto &, const auto &) -> ADReal { return _rho; }, clearance_schedule);
 
   addFunctorProperty<ADReal>(
-      "mu",
+      "mu_ice",
       [this](const auto & r, const auto & t) -> ADReal
       {
         // Wrap term with Glen's fluidity parameter for clarity
@@ -104,6 +104,7 @@ FVIceMaterialSI::FVIceMaterialSI(const InputParameters & parameters)
 	
         // Compute viscosity
         ADReal viscosity = (0.5 * ApGlen * std::pow(II_eps, -(1. - 1. / _nGlen) / 2.)); // Pas
+	
         return std::max(viscosity, 3.153600e09);
       },
       clearance_schedule);
