@@ -88,8 +88,8 @@ FVSedimentMaterialSI::FVSedimentMaterialSI(const InputParameters & parameters)
       [this](const auto &, const auto &) -> ADReal
       {
 
-	// ADReal viscosity = _LayerThickness / _SlipperinessCoefficient;
-	ADReal viscosity = 1e10;
+	ADReal viscosity = _LayerThickness / _SlipperinessCoefficient;
+	// ADReal viscosity = 1e10;
   
 	return viscosity;
       },

@@ -15,10 +15,10 @@
 
 # sediment rheology
 sliding_law = "GudmundssonRaymond"
-sediment_layer_thickness = 300.
+sediment_layer_thickness = 50.
 # slipperiness_coefficient_mmpaa = 3000. # 9.512937595129376e-11
 # slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (365*24*3600)}' # 
-slipperiness_coefficient = 3e-08
+slipperiness_coefficient = 0.5e-06
 
 # ------------------------ simulation settings
 
@@ -151,22 +151,22 @@ initial_II_eps_min = 1e-07
   #   max_element_volume = 1e100
   # []
 
-  [fast_zone]
-    type = SubdomainBoundingBoxGenerator
-    input = 'add_sediment_downstream_side'
-    block_id = "10"
-    bottom_left = '20000 3749.99 -200.' # 99.99'
-    top_right = '13000  6700.99 434'
-    restricted_subdomains = 'eleblock2'
-  []
-  [refined_fastzone]
-    type = RefineBlockGenerator
-    input = "fast_zone"
-    block = "10"
-    refinement = '1'
-    enable_neighbor_refinement = false
-    max_element_volume = 1e100
-  []
+  # [fast_zone]
+  #   type = SubdomainBoundingBoxGenerator
+  #   input = 'add_sediment_downstream_side'
+  #   block_id = "10"
+  #   bottom_left = '20000 3749.99 -200.' # 99.99'
+  #   top_right = '13000  6700.99 434'
+  #   restricted_subdomains = 'eleblock2'
+  # []
+  # [refined_fastzone]
+  #   type = RefineBlockGenerator
+  #   input = "fast_zone"
+  #   block = "10"
+  #   refinement = '1'
+  #   enable_neighbor_refinement = false
+  #   max_element_volume = 1e100
+  # []
 
   # [refined_surface]
   #   type = RefineSidesetGenerator
@@ -177,6 +177,11 @@ initial_II_eps_min = 1e-07
   #   boundary_side = "primary"
   # []
 
+
+  [add_nodesets]
+    type = NodeSetsFromSideSetsGenerator
+    input = 'add_sediment_downstream_side'
+  []
 []
 
 [Variables]
@@ -277,16 +282,6 @@ initial_II_eps_min = 1e-07
     momentum_component = 'y'
     gravity = '0 0 -9.81'
   []
-  # [v_friction]
-  #   type = PINSFVMomentumFriction
-  #   variable = 'vel_y'
-  #   Darcy_name = "Darcy_coefficient"
-  #   # Forchheimer_name = 1e10
-  #   block = "3"
-  #   rho = ${rho}
-  #   mu = ${mu}
-  #   momentum_component = 'y'
-  # []
 
   [w_time]
     type = INSFVMomentumTimeDerivative
@@ -321,16 +316,6 @@ initial_II_eps_min = 1e-07
     momentum_component = 'z'
     gravity = '0 0 -9.81'
   []
-  # [w_friction]
-  #   type = PINSFVMomentumFriction
-  #   variable = 'vel_z'
-  #   Darcy_name = "Darcy_coefficient"
-  #   # Forchheimer_name = "Forchheimer_coefficient"
-  #   block = "3"
-  #   rho = ${rho}
-  #   mu = ${mu}
-  #   momentum_component = 'z'
-  # []
 []
 
 [FVBCs]
@@ -431,7 +416,7 @@ initial_II_eps_min = 1e-07
 [FunctorMaterials]
   [ice]
     type = FVIceMaterialSI
-    block = 'eleblock1 eleblock2 10' #  10
+    block = 'eleblock1 eleblock2' #  10
     velocity_x = "vel_x"
     velocity_y = "vel_y"
     velocity_z = "vel_z"
@@ -467,16 +452,14 @@ initial_II_eps_min = 1e-07
     prop_name = 'mu_combined'
     subdomain_to_prop_value = 'eleblock1 mu_ice
                                eleblock2 mu_ice
-                               10  mu_ice
-                               0 mu_sediment'
+                               0 mu_sediment' #                                10  mu_ice
   []
   [rho_combined]
     type = ADPiecewiseByBlockFunctorMaterial
     prop_name = 'rho_combined'
     subdomain_to_prop_value = 'eleblock1 rho_ice
                                eleblock2 rho_ice
-                               10  rho_ice
-                               0 rho_sediment'  
+                               0 rho_sediment'  #                                10  rho_ice
   []
   # [darcy]
   #   type = ADGenericVectorFunctorMaterial
