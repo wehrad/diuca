@@ -166,8 +166,8 @@
     value = -9.81
   []
   [DynamicTensorMechanics]
-    stiffness_damping_coefficient = 0.0001 # 0.01 # 0.02
-    mass_damping_coefficient = 0.0001 # 0.01 # 0.02
+    stiffness_damping_coefficient = 0.02
+    mass_damping_coefficient = 0.02
     displacements = 'disp_x disp_y disp_z'
     static_initialization = true
   []
