@@ -5,7 +5,7 @@
 #include "MastodonUtils.h"
 #include "ResponseHistoryBuilder.h"
 
-registerMooseObject("MastodonApp", ResponseSpectraCalculator);
+registerMooseObject("diucaApp", ResponseSpectraCalculator);
 
 InputParameters
 ResponseSpectraCalculator::validParams()

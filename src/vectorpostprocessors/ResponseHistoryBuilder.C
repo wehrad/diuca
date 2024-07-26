@@ -8,7 +8,7 @@
 // C++ includes
 #include <unistd.h>
 
-registerMooseObject("MastodonApp", ResponseHistoryBuilder);
+registerMooseObject("diucaApp", ResponseHistoryBuilder);
 
 InputParameters
 ResponseHistoryBuilder::validParams()

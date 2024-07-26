@@ -13,7 +13,8 @@
 [Mesh]
   [channel]      
   type = FileMeshGenerator
-  file = mesh_icestream.e
+  file = ../../../meshes/mesh_icestream.e
+
   []
 
   [slip_zone_large]
