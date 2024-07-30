@@ -4,18 +4,18 @@
 # Simulation results with coarse mesh: 600Hz and 800Hz
 
 [Mesh]
-   type = GeneratedMesh
-   elem_type = HEX8
-   dim = 3
-   xmin=0
-   xmax=1
-   nx=10
-   ymin=0
-   ymax=0.1
-   ny = 1
-   zmin=0
-   zmax=0.15
-   nz = 2
+  type = GeneratedMesh
+  elem_type = HEX8
+  dim = 3
+  xmin = 0
+  xmax = 10000.
+  nx = 20
+  zmin = 0
+  zmax = 5000.
+  ny = 10
+  ymin = -1000.
+  ymax = 500.
+  nz = 10
 []
 
 [GlobalParams]
@@ -81,45 +81,147 @@
 []
 
 [BCs]
-#Left
-  [disp_x_left]
+  # [dirichlet_bottom_x]
+  #   type = DirichletBC
+  #   variable = disp_x
+  #   value = 0
+  #   boundary = 'bottom'
+  # []
+  # [dirichlet_bottom_y]
+  #   type = DirichletBC
+  #   variable = disp_y
+  #   value = 0
+  #   boundary = 'bottom'
+  # []
+  # [dirichlet_bottom_z]
+  #   type = DirichletBC
+  #   variable = disp_z
+  #   value = 0
+  #   boundary = 'bottom'
+  # []
+
+  [dirichlet_front_x]
     type = DirichletBC
     variable = disp_x
-    boundary = 'left'
-    value = 0.0
+    value = 0
+    boundary = 'front'
   []
-  [disp_y_left]
+  [dirichlet_front_y]
     type = DirichletBC
     variable = disp_y
-    boundary = 'left'
-    value = 0.0
+    value = 0
+    boundary = 'front'
   []
-  [disp_z_left]
+  [dirichlet_front_z]
     type = DirichletBC
     variable = disp_z
-    boundary = 'left'
-    value = 0.0
+    value = 0
+    boundary = 'front'
   []
-  #Right
-  [BC_right_yreal]
+
+  [dirichlet_back_x]
+    type = DirichletBC
+    variable = disp_x
+    value = 0
+    boundary = 'back'
+  []
+  [dirichlet_back_y]
+    type = DirichletBC
+    variable = disp_y
+    value = 0
+    boundary = 'back'
+  []
+  [dirichlet_back_z]
+    type = DirichletBC
+    variable = disp_z
+    value = 0
+    boundary = 'back'
+  []
+
+  [top_xreal]
+    type = NeumannBC
+    variable = disp_x
+    boundary = 'top'
+    value = 1000
+  []
+  [top_yreal]
+    type = NeumannBC
+    variable = disp_y
+    boundary = 'top'
+    value = 1000
+  []
+  [top_zreal]
+    type = NeumannBC
+    variable = disp_z
+    boundary = 'top'
+    value = 1000
+  []
+
+  [right_xreal]
+    type = NeumannBC
+    variable = disp_x
+    boundary = 'right'
+    value = 1000
+  []
+  [right_yreal]
     type = NeumannBC
     variable = disp_y
     boundary = 'right'
     value = 1000
   []
-  [BC_right_zreal]
+  [right_zreal]
     type = NeumannBC
     variable = disp_z
     boundary = 'right'
     value = 1000
   []
+
+  [left_xreal]
+    type = NeumannBC
+    variable = disp_x
+    boundary = 'left'
+    value = 1000
+  []
+  [left_yreal]
+    type = NeumannBC
+    variable = disp_y
+    boundary = 'left'
+    value = 1000
+  []
+  [left_zreal]
+    type = NeumannBC
+    variable = disp_z
+    boundary = 'left'
+    value = 1000
+  []
+
+  # [bottom_xreal]
+  #   type = NeumannBC
+  #   variable = disp_x
+  #   boundary = 'bottom'
+  #   value = 1000
+  # []
+  # [bottom_yreal]
+  #   type = NeumannBC
+  #   variable = disp_y
+  #   boundary = 'bottom'
+  #   value = 1000
+  # []
+  # [bottom_zreal]
+  #   type = NeumannBC
+  #   variable = disp_z
+  #   boundary = 'bottom'
+  #   value = 1000
+  # []
+
 []
+
 
 [Materials]
   [elastic_tensor_Al]
     type = ComputeIsotropicElasticityTensor
-    youngs_modulus = 68e9
-    poissons_ratio = 0.36
+    youngs_modulus = 8.7e9 # Pa
+    poissons_ratio = 0.32
   []
   [compute_stress]
     type = ComputeLagrangianLinearElasticStress
@@ -157,17 +259,17 @@
   solve_type=LINEAR
   petsc_options_iname = ' -pc_type'
   petsc_options_value = 'lu'
-  start_time = 300  #starting frequency
-  end_time =  1200  #ending frequency
+  start_time = 0.01  #starting frequency
+  end_time =  3.  #ending frequency
   nl_abs_tol = 1e-6
   [TimeStepper]
     type = ConstantDT
-    dt = 50  #frequency stepsize
+    dt = 0.01  #frequency stepsize
   []
 []
 
 [Outputs]
   csv=true
-  exodus=false
+  exodus=true
   console = false
 []
