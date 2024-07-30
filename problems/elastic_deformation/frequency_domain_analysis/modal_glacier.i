@@ -17,6 +17,7 @@ index = 0
     nz = 5
   []
 []
+
 [GlobalParams]
   displacements = 'disp_x disp_y disp_z'
 []
