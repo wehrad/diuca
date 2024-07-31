@@ -36,83 +36,83 @@
   [disp_x]
     order = FIRST
     family = LAGRANGE
-    block = '1 2 255'
+    block = '1 2'
   []
   [disp_y]
     order = FIRST
     family = LAGRANGE
-    block = '1 2 255'
+    block = '1 2'
   []
   [disp_z]
     order = FIRST
     family = LAGRANGE
-    block = '1 2 255'
+    block = '1 2'
   []
 []
 
 [AuxVariables]
   [vel_x]
-    block = '1 2 255'
+    block = '1 2'
   []
   [accel_x]
-    block = '1 2 255'
+    block = '1 2'
   []
   [vel_y]
-    block = '1 2 255'
+    block = '1 2'
   []
   [accel_y]
-    block = '1 2 255'
+    block = '1 2'
   []
   [vel_z]
-    block = '1 2 255'
+    block = '1 2'
   []
   [accel_z]
-    block = '1 2 255'
+    block = '1 2'
   []
   [stress_xx]
     order = CONSTANT
     family = MONOMIAL
-    block = '1 2 255'
+    block = '1 2'
   []
   [stress_xy]
     order = CONSTANT
     family = MONOMIAL
-    block = '1 2 255'
+    block = '1 2'
   []
   [stress_xz]
     order = CONSTANT
     family = MONOMIAL
-    block = '1 2 255'
+    block = '1 2'
   []
   [stress_yx]
     order = CONSTANT
     family = MONOMIAL
-    block = '1 2 255'
+    block = '1 2'
   []
   [stress_yy]
     order = CONSTANT
     family = MONOMIAL
-    block = '1 2 255'
+    block = '1 2'
   []
   [stress_yz]
     order = CONSTANT
     family = MONOMIAL
-    block = '1 2 255'
+    block = '1 2'
   []
   [stress_zx]
     order = CONSTANT
     family = MONOMIAL
-    block = '1 2 255'
+    block = '1 2'
   []
   [stress_zy]
     order = CONSTANT
     family = MONOMIAL
-    block = '1 2 255'
+    block = '1 2'
   []
   [stress_zz]
     order = CONSTANT
     family = MONOMIAL
-    block = '1 2 255'
+    block = '1 2'
   []
   [calving_boolean]
   []
@@ -155,22 +155,26 @@
     type = Gravity
     variable = disp_x
     value= 0.
+    block = '1 2'
   []
   [gravity_y]
     type = Gravity
     variable = disp_y
     value = 0.
+    block = '1 2'
   []
   [gravity_z]
     type = Gravity
     variable = disp_z
     value = -9.81
+    block = '1 2'
   []
   [DynamicTensorMechanics]
     stiffness_damping_coefficient = 0.02
     mass_damping_coefficient = 0.02
     displacements = 'disp_x disp_y disp_z'
     static_initialization = true
+    block = '1 2'
   []
   [inertia_x]
     type = InertialForce
@@ -179,6 +183,7 @@
     acceleration = accel_x
     beta = 0.25
     gamma = 0.5
+    block = '1 2'
   []
   [inertia_y]
     type = InertialForce
@@ -187,6 +192,7 @@
     acceleration = accel_y
     beta = 0.25
     gamma = 0.5
+    block = '1 2'
   []
   [inertia_z]
     type = InertialForce
@@ -195,6 +201,7 @@
     acceleration = accel_z
     beta = 0.25
     gamma = 0.5
+    block = '1 2'
   []
 []
 
@@ -206,6 +213,7 @@
     velocity = vel_x
     beta = 0.25
     execute_on = timestep_end
+    block = '1 2'
   []
   [vel_x]
     type = NewmarkVelAux
@@ -213,6 +221,7 @@
     acceleration = accel_x
     gamma = 0.5
     execute_on = timestep_end
+    block = '1 2'
   []
   [accel_y]
     type = NewmarkAccelAux
@@ -221,6 +230,7 @@
     velocity = vel_y
     beta = 0.25
     execute_on = timestep_end
+    block = '1 2'
   []
   [vel_y]
     type = NewmarkVelAux
@@ -228,6 +238,7 @@
     acceleration = accel_y
     gamma = 0.5
     execute_on = timestep_end
+    block = '1 2'
   []
   [accel_z]
     type = NewmarkAccelAux
@@ -236,6 +247,7 @@
     velocity = vel_z
     beta = 0.25
     execute_on = timestep_end
+    block = '1 2'
   []
   [vel_z]
     type = NewmarkVelAux
@@ -243,6 +255,7 @@
     acceleration = accel_z
     gamma = 0.5
     execute_on = timestep_end
+    block = '1 2'
   []
   [stress_xx]
     type = RankTwoAux
@@ -250,6 +263,7 @@
     variable = stress_xx
     index_i = 0
     index_j = 0
+    block = '1 2'
   []
   [stress_xy]
     type = RankTwoAux
@@ -257,6 +271,7 @@
     variable = stress_xy
     index_i = 0
     index_j = 1
+    block = '1 2'
   []
   [stress_xz]
     type = RankTwoAux
@@ -264,6 +279,7 @@
     variable = stress_xz
     index_i = 0
     index_j = 2
+    block = '1 2'
   []
   [stress_yx]
     type = RankTwoAux
@@ -271,6 +287,7 @@
     variable = stress_yx
     index_i = 1
     index_j = 0
+    block = '1 2'
   []
   [stress_yy]
     type = RankTwoAux
@@ -278,6 +295,7 @@
     variable = stress_yy
     index_i = 1
     index_j = 1
+    block = '1 2'
   []
   [stress_yz]
     type = RankTwoAux
@@ -285,6 +303,7 @@
     variable = stress_yz
     index_i = 1
     index_j = 2
+    block = '1 2'
   []
   [stress_zx]
     type = RankTwoAux
@@ -292,6 +311,7 @@
     variable = stress_zx
     index_i = 2
     index_j = 0
+    block = '1 2'
   []
   [stress_zy]
     type = RankTwoAux
@@ -299,6 +319,7 @@
     variable = stress_zy
     index_i = 2
     index_j = 1
+    block = '1 2'
   []
   [stress_zz]
     type = RankTwoAux
@@ -306,6 +327,7 @@
     variable = stress_zz
     index_i = 2
     index_j = 2
+    block = '1 2'
   []
   # [damage_index]
   #   type = MaterialRealAux
@@ -327,33 +349,33 @@
     type = ComputeIsotropicElasticityTensor
     youngs_modulus = 8.7e9 #Pa
     poissons_ratio = 0.31
-    block = '1 2 255'
+    block = '1 2'
   []
   [strain]
     type = ComputeIncrementalSmallStrain
     displacements = 'disp_x disp_y disp_z'
-    block = '1 2 255'
+    block = '1 2'
   []
   [density]
     type = GenericConstantMaterial
     prop_names = density
     prop_values = 900 #kg/m3
-    block = '1 2 255'
+    block = '1 2'
   []
   [stress]
     type = ComputeFiniteStrainElasticStress
-    block = '1 2 255'
+    block = '1 2'
   []
   # [stress]
   #   type = ComputeDamageWithoutStressUpdate
   #   damage_model = damage
-  #   block = '1 2 255'
+  #   block = '1 2'
   # []
   [strain_from_initial_stress]
     type = ComputeEigenstrainFromInitialStress
     initial_stress = '0 0 0  0 0 0  0 0 weight'
     eigenstrain_name = ini_stress
-    block = '1 2 255'
+    block = '1 2'
   []
   [von_mises]
     type = RankTwoInvariant
@@ -361,7 +383,7 @@
     property_name = von_mises
     rank_two_tensor = stress
     outputs = exodus
-    block = '1 2 255'
+    block = '1 2'
   []
   # [damage]
   #   type = CustomDamageMazars
@@ -371,7 +393,7 @@
   #   outputs = exodus
   #   output_properties = damage_index
   #   block = '1 2 255'
-  # []
+# []
 []
 
 [BCs]
