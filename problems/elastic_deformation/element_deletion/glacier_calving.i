@@ -329,13 +329,13 @@
     index_j = 2
     block = '1 2'
   []
-  # [damage_index]
-  #   type = MaterialRealAux
-  #   variable = damage_index
-  #   property = damage_index
-  #   execute_on = timestep_end
-  #   block = '1 2 255'
-  # []
+  [damage_index]
+    type = MaterialRealAux
+    variable = damage_index
+    property = damage_index
+    execute_on = timestep_end
+    block = '1 2'
+  []
   [calving]
     type = FunctionAux
     variable = calving_boolean
@@ -366,11 +366,11 @@
     type = ComputeFiniteStrainElasticStress
     block = '1 2'
   []
-  # [stress]
-  #   type = ComputeDamageWithoutStressUpdate
-  #   damage_model = damage
-  #   block = '1 2'
-  # []
+  [stress]
+    type = ComputeDamageWithoutStressUpdate
+    damage_model = damage
+    block = '1 2'
+  []
   [strain_from_initial_stress]
     type = ComputeEigenstrainFromInitialStress
     initial_stress = '0 0 0  0 0 0  0 0 weight'
@@ -385,15 +385,15 @@
     outputs = exodus
     block = '1 2'
   []
-  # [damage]
-  #   type = CustomDamageMazars
-  #   B = 0.01
-  #   sig_th = 0.11
-  #   alpha = 1.
-  #   outputs = exodus
-  #   output_properties = damage_index
-  #   block = '1 2 255'
-# []
+  [damage]
+    type = IceDamage
+    B = 1.0
+    sig_th = 1.0
+    alpha = 1.0
+    outputs = exodus
+    output_properties = damage_index
+    block = '1 2'
+[]
 []
 
 [BCs]
@@ -507,3 +507,5 @@
   exodus = true
   perf_graph = true
 []
+
+
