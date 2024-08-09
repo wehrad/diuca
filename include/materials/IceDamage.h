@@ -28,7 +28,7 @@ public:
   // virtual void initQpStatefulProperties() override;
   
 protected:
-
+  
   virtual void updateQpDamageIndex() override;
   
   // Damage law parameters
@@ -38,5 +38,7 @@ protected:
   const Real & _alpha;
 
   /// Current stress
-  const MaterialProperty<double> & _von_mises;
+  // const MaterialProperty<double> & _von_mises;
+  const MaterialProperty<RankTwoTensor> & _stress;
+
 };

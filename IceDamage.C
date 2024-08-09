@@ -20,7 +20,6 @@
 #include "MooseUtils.h"
 
 #include "libmesh/utility.h"
-#include "RankTwoScalarTools.h"
 
 registerMooseObject("diucaApp", IceDamage);
 
@@ -48,31 +47,27 @@ IceDamage::IceDamage(const InputParameters & parameters)
   _alpha(getParam<Real>("alpha")),
 
   // stress for damage quantification
-  // _von_mises(getMaterialProperty<double>("von_mises"))
-  _stress(getMaterialProperty<RankTwoTensor>("stress"))
-  
+  _von_mises(getMaterialProperty<double>("von_mises"))
+    
 {
 }
 
-// void
-// IceDamage::initQpStatefulProperties()
-// {
-//   ScalarDamageBase::initQpStatefulProperties();
-//   _damage_index[_qp] = 0.0;
-// }
+void
+IceDamage::initQpStatefulProperties()
+{
+  ScalarDamageBase::initQpStatefulProperties();
+  _damage_index[_qp] = 0.0;
+}
 
 void
 IceDamage::updateQpDamageIndex()
 {
-
-  const auto & stress = MetaPhysicL::raw_value(_stress[_qp]);
-  const auto & _von_mises = RankTwoScalarTools::vonMisesStress(stress);
   
   // access damage at previous timestep
   Real d_old = _damage_index_old[_qp];
   
   // stress measure
-  Real Xi = _alpha * _von_mises;
+  Real Xi = _alpha * _von_mises[_qp];
 
   // compute damage
   // Real damage_dt = _B * std::pow((Xi/(1.-d_old)) - _sig_th, _r);
@@ -81,5 +76,5 @@ IceDamage::updateQpDamageIndex()
   // update damage  
   _damage_index[_qp] = d_old + _dt * damage_dt;
 
-  // std::cout << _damage_index[_qp];
+  std::out >>_damage_index[_qp]; 
 }
