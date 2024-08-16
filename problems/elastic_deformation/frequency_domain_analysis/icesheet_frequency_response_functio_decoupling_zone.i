@@ -293,8 +293,7 @@ bed_coupled = 0
     type = ConditionalFunctionEnableControl
     conditional_function = bed_coupling_function
     disable_objects = 'BCs::dirichlet_decoupling_bottom_x BCs::dirichlet_decoupling_bottom_y BCs::dirichlet_decoupling_bottom_z'
-    execute_on = 'timestep_begin timestep_end'
-    # execute_on = 'INITIAL TIMESTEP_BEGIN'
+    execute_on = 'INITIAL TIMESTEP_BEGIN'
   []
 []
 
