@@ -1,3 +1,6 @@
+# look into (test/tests/meshgenerators/block_deletion_generator/block_deletion_test6.i)
+# for a real block deletion
+
 [Mesh]
   
   [channel]      
