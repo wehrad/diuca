@@ -119,21 +119,18 @@ bed_coupled = 0
     variable = disp_x
     value = 0
     boundary = 'bottom'
-    preset=false
   []
   [dirichlet_bottom_y]
     type = DirichletBC
     variable = disp_y
     value = 0
     boundary = 'bottom'
-    preset=false
   []
   [dirichlet_bottom_z]
     type = DirichletBC
     variable = disp_z
     value = 0
     boundary = 'bottom'
-    preset=false
   []
 
   [dirichlet_decoupling_bottom_x]
