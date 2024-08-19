@@ -24,7 +24,16 @@
     top_right = '60 20100 60'
   []
 
-  final_generator = final_mesh
+  [refined_mesh]
+    type = RefineBlockGenerator
+    input = "final_mesh"
+    block = "1 2 255"
+    refinement = '1 1 1'
+    enable_neighbor_refinement = true
+    max_element_volume = 1e100
+  []
+
+  final_generator = refined_mesh
 
 []
 
@@ -146,7 +155,8 @@
   []
   [calving_criterion]
     type = ParsedFunction
-    value = 'if((x>18000.)&(t>0.06), 1000., -1000.)'
+    # value = 'if((x>18000.)&(t>0.06), 1000., -1000.)'
+    value = 'if((x>18000.)&(t>4.), 1000., -1000.)'
   []
 []
 
@@ -505,8 +515,8 @@
   solve_type = 'NEWTON'
   nl_rel_tol = 1e-7
   nl_abs_tol = 1e-12
-  dt = 0.02
-  end_time = 10.
+  dt = 2.0 # 0.02
+  end_time = 30.
   timestep_tolerance = 1e-6
   automatic_scaling = true
   [TimeIntegrator]
@@ -528,14 +538,18 @@
     variable = 'von_mises'
     boundary = surface
     sort_by = x
-    # contains_complete_history=true
   []
   [surface_damage]
     type = SideValueSampler
     variable = 'damage_index'
     boundary = surface
     sort_by = x
-    # contains_complete_history=true
+  []
+  [surface_stressxy]
+    type = SideValueSampler
+    variable = 'stress_xy'
+    boundary = surface
+    sort_by = x
   []
 []
 
