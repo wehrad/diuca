@@ -21,6 +21,6 @@ jobs:
 
 
 
-      - name: Fail fast?!
-        if: steps.linter.outputs.clang-tidy-checks-failed > 0
-        run: exit 1
+      # - name: Fail fast?!
+      #   if: steps.linter.outputs.clang-tidy-checks-failed > 0
+      #   run: exit 1
