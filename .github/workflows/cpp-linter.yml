@@ -1,5 +1,9 @@
 name: cpp-linter
-on: [push]
+on:
+  push:
+    branches: [main, master, develop]
+    paths: ['**.c', '**.cpp', '**.h', '**.hpp', '**.cxx', '**.hxx', '**.cc', '**.hh', '**CMakeLists.txt', 'meson.build', '**.cmake']
+
 
 jobs:
   cpp-linter:
