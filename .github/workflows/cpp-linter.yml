@@ -1,7 +1,6 @@
 name: cpp-linter
 on:
   push:
-    branches: [main, master, develop]
     paths: ['src/*/**.c']
 
 
