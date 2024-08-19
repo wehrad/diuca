@@ -1,11 +1,5 @@
-name: cpp-linter
-on:
-  pull_request:
-    branches: [main, master, develop]
-    paths: ['**.C']
-  push:
-    branches: [main, master, develop]
-    paths: ['**.h']
+name: CI
+on: [push]
 
 jobs:
   cpp-linter:
