@@ -1,7 +1,7 @@
 name: cpp-linter
 on:
   push:
-    paths: ['src']
+    path: 'src/*/*'
 
 
 jobs:
