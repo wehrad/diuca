@@ -83,3 +83,5 @@ IceDamage::updateQpDamageIndex()
 
   // std::cout << _damage_index[_qp];
 }
+
+I'm testing cpp-linter
