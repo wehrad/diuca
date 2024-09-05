@@ -1,7 +1,7 @@
 # from moose/modules/solid_mechanics/examples/wave_propagation/cantilever_sweepi.
 
 # choose if bed is coupled or not
-bed_coupled = 0
+# bed_coupled = 0
 
 [Mesh]
   [block]
@@ -39,13 +39,29 @@ bed_coupled = 0
   []
   [decoupling_bottom]
     type = SideSetsAroundSubdomainGenerator
-    input = 'wide_decoupling_zone_refined'
+    input = 'wide_decoupling_zone_refined' # 'wide_decoupling_zone_refined'
     block = '4'
     new_boundary = 'decoupling_bottom'
     replace = true
     normal = '0 -1 0'
   []
 
+  [delete_bottom]
+    type=BoundaryDeletionGenerator
+    input='decoupling_bottom'
+    boundary_names='bottom'
+  []
+
+  [add_bottom_back]
+    type = ParsedGenerateSideset
+    input = 'delete_bottom'
+    combinatorial_geometry = '(x < 1750 | x > 2250 | z < 1750 | z > 2250) & (y < 101)'
+    # included_subdomains = '0'
+    normal = '0 -1 0'
+    new_sideset_name = 'bottom'
+    replace=true
+  []
+  
 []
 
 [GlobalParams]
@@ -133,24 +149,24 @@ bed_coupled = 0
     boundary = 'bottom'
   []
 
-  [dirichlet_decoupling_bottom_x]
-    type = DirichletBC
-    variable = disp_x
-    value = 0
-    boundary = 'decoupling_bottom'
-  []
-  [dirichlet_decoupling_bottom_y]
-    type = DirichletBC
-    variable = disp_y
-    value = 0
-    boundary = 'decoupling_bottom'
-  []
-  [dirichlet_decoupling_bottom_z]
-    type = DirichletBC
-    variable = disp_z
-    value = 0
-    boundary = 'decoupling_bottom'
-  []
+#   [dirichlet_decoupling_bottom_x]
+  #   type = DirichletBC
+  #   variable = disp_x
+  #   value = 0.1
+  #   boundary = 'decoupling_bottom'
+  # []
+  # [dirichlet_decoupling_bottom_y]
+  #   type = DirichletBC
+  #   variable = disp_y
+  #   value = 0.1
+  #   boundary = 'decoupling_bottom'
+  # []
+  # [dirichlet_decoupling_bottom_z]
+  #   type = DirichletBC
+  #   variable = disp_z
+  #   value = 0.1
+  #   boundary = 'decoupling_bottom'
+  # []
 
   [right_xreal]
     type = NeumannBC
@@ -273,13 +289,13 @@ bed_coupled = 0
   [freq2]
     type = ParsedFunction
     symbol_names = density
-    symbol_values = 2.7e3 #Al kg/m3
+    symbol_values = 917 # ice, kg/m3
     expression = '-t*t*density'
   []
-  [bed_coupling_function]
-    type = ParsedFunction
-    expression = '${bed_coupled} = 0'
-  []
+  # [bed_coupling_function]
+  #   type = ParsedFunction
+  #   expression = '${bed_coupled} = 0'
+  # []
 []
 
 [Controls]
@@ -289,12 +305,12 @@ bed_coupled = 0
     function = 'freq2'
     execute_on = 'initial timestep_begin'
   []
-  [bed_not_coupled]
-    type = ConditionalFunctionEnableControl
-    conditional_function = bed_coupling_function
-    disable_objects = 'BCs::dirichlet_decoupling_bottom_x BCs::dirichlet_decoupling_bottom_y BCs::dirichlet_decoupling_bottom_z'
-    execute_on = 'INITIAL TIMESTEP_BEGIN'
-  []
+  # [bed_not_coupled]
+  #   type = ConditionalFunctionEnableControl
+  #   conditional_function = bed_coupling_function
+  #   disable_objects = 'BCs::dirichlet_decoupling_bottom_x BCs::dirichlet_decoupling_bottom_y BCs::dirichlet_decoupling_bottom_z'
+  #   execute_on = 'INITIAL TIMESTEP_BEGIN'
+  # []
 []
 
 [Executioner]
