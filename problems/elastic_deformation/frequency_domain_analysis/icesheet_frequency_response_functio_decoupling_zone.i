@@ -56,7 +56,7 @@
     type = ParsedGenerateSideset
     input = 'delete_bottom'
     combinatorial_geometry = '(x < 1750 | x > 2250 | z < 1750 | z > 2250) & (y < 101)'
-    # included_subdomains = '0'
+    included_subdomains = '0'
     normal = '0 -1 0'
     new_sideset_name = 'bottom'
     replace=true
@@ -149,24 +149,24 @@
     boundary = 'bottom'
   []
 
-#   [dirichlet_decoupling_bottom_x]
-  #   type = DirichletBC
-  #   variable = disp_x
-  #   value = 0.1
-  #   boundary = 'decoupling_bottom'
-  # []
-  # [dirichlet_decoupling_bottom_y]
-  #   type = DirichletBC
-  #   variable = disp_y
-  #   value = 0.1
-  #   boundary = 'decoupling_bottom'
-  # []
-  # [dirichlet_decoupling_bottom_z]
-  #   type = DirichletBC
-  #   variable = disp_z
-  #   value = 0.1
-  #   boundary = 'decoupling_bottom'
-  # []
+  [dirichlet_decoupling_bottom_x]
+    type = DirichletBC
+    variable = disp_x
+    value = 0.
+    boundary = 'decoupling_bottom'
+  []
+  [dirichlet_decoupling_bottom_y]
+    type = DirichletBC
+    variable = disp_y
+    value = 0.
+    boundary = 'decoupling_bottom'
+  []
+  [dirichlet_decoupling_bottom_z]
+    type = DirichletBC
+    variable = disp_z
+    value = 0.
+    boundary = 'decoupling_bottom'
+  []
 
   [right_xreal]
     type = NeumannBC
@@ -244,6 +244,22 @@
     value = 1000
   []
 
+
+  # [Periodic]
+  #   [periodic_x]
+  #     variable = disp_x
+  #     auto_direction = 'x'
+  #   []
+  #   [periodic_y]
+  #     variable = disp_y
+  #     auto_direction = 'x'
+  #   []
+  #   [periodic_z]
+  #     variable = disp_z
+  #     auto_direction = 'x'
+  #   []
+  # []
+
   # [bottom_xreal]
   #   type = NeumannBC
   #   variable = disp_x
@@ -318,16 +334,17 @@
   solve_type=LINEAR
   petsc_options_iname = ' -pc_type'
   petsc_options_value = 'lu'
-  start_time = 0.01 #starting frequency
-  end_time =  2.  #ending frequency
+  start_time = 4 #starting frequency
+  end_time =  6.  #ending frequency
   nl_abs_tol = 1e-6
   [TimeStepper]
     type = ConstantDT
-    dt = 0.05  #frequency stepsize
+    dt = 0.1  #frequency stepsize
   []
 []
 
 [Outputs]
   csv=true
   exodus=true
+  perf_graph=true
 []
