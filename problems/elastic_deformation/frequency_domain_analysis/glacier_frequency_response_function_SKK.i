@@ -1,18 +1,21 @@
-# from moose/modules/solid_mechanics/examples/wave_propagation/cantilever_sweepi.
+# from moose/modules/solid_mechanics/examples/wave_propagation/cantilever_sweep.i
+
+# choose if bed is coupled or not
+bed_coupled = 1
 
 [Mesh]
-  type = GeneratedMesh
-  elem_type = HEX8
-  dim = 3
-  xmin = 0
-  xmax = 10000.
-  nx = 20
-  zmin = 0
-  zmax = 5000.
-  ny = 10
-  ymin = -1000.
-  ymax = 500.
-  nz = 10
+  [channel]      
+    type = FileMeshGenerator
+    file = ../../../meshes/mesh_icestream_wtsed.e
+  []
+  # [refined_channel]
+  #   type = RefineBlockGenerator
+  #   input = 'channel'
+  #   block = '1 2'
+  #   refinement = '1 1'
+  #   enable_neighbor_refinement = true
+  #   max_element_volume = 1e100
+  # []
 []
 
 [GlobalParams]
@@ -48,18 +51,21 @@
         variable = disp_x
         rate = 0# filled by controller
         extra_vector_tags = 'ref'
+        block = '1 2'
     []
     [reaction_realy]
         type = Reaction
         variable = disp_y
         rate = 0# filled by controller
         extra_vector_tags = 'ref'
+        block = '1 2'
     []
     [reaction_realz]
         type = Reaction
         variable = disp_z
         rate = 0# filled by controller
         extra_vector_tags = 'ref'
+        block = '1 2'
     []
 []
 
@@ -78,79 +84,41 @@
 []
 
 [BCs]
-  # [dirichlet_bottom_x]
-  #   type = DirichletBC
-  #   variable = disp_x
-  #   value = 0
-  #   boundary = 'bottom'
-  # []
-  # [dirichlet_bottom_y]
-  #   type = DirichletBC
-  #   variable = disp_y
-  #   value = 0
-  #   boundary = 'bottom'
-  # []
-  # [dirichlet_bottom_z]
-  #   type = DirichletBC
-  #   variable = disp_z
-  #   value = 0
-  #   boundary = 'bottom'
-  # []
-
-  [dirichlet_front_x]
+  [dirichlet_bottom_x]
     type = DirichletBC
     variable = disp_x
     value = 0
-    boundary = 'front'
+    boundary = 'bottom'
   []
-  [dirichlet_front_y]
+  [dirichlet_bottom_y]
     type = DirichletBC
     variable = disp_y
     value = 0
-    boundary = 'front'
+    boundary = 'bottom'
   []
-  [dirichlet_front_z]
+  [dirichlet_bottom_z]
     type = DirichletBC
     variable = disp_z
     value = 0
-    boundary = 'front'
+    boundary = 'bottom'
   []
 
-  [dirichlet_back_x]
-    type = DirichletBC
-    variable = disp_x
-    value = 0
-    boundary = 'back'
-  []
-  [dirichlet_back_y]
-    type = DirichletBC
-    variable = disp_y
-    value = 0
-    boundary = 'back'
-  []
-  [dirichlet_back_z]
-    type = DirichletBC
-    variable = disp_z
-    value = 0
-    boundary = 'back'
-  []
-
-  [top_xreal]
+  [upstream_xreal]
     type = NeumannBC
     variable = disp_x
-    boundary = 'top'
+    boundary = 'upstream'
     value = 1000
   []
-  [top_yreal]
+  [upstream_yreal]
     type = NeumannBC
     variable = disp_y
-    boundary = 'top'
+    boundary = 'upstream'
     value = 1000
   []
-  [top_zreal]
+  [upstream_zreal]
     type = NeumannBC
     variable = disp_z
-    boundary = 'top'
+    boundary = 'upstream'
     value = 1000
   []
 
@@ -191,6 +159,24 @@
     boundary = 'left'
     value = 1000
   []
+  [downstream_xreal]
+    type = NeumannBC
+    variable = disp_x
+    boundary = 'downstream'
+    value = 1000
+  []
+  [downstream_yreal]
+    type = NeumannBC
+    variable = disp_y
+    boundary = 'downstream'
+    value = 1000
+  []
+  [downstream_zreal]
+    type = NeumannBC
+    variable = disp_z
+    boundary = 'downstream'
+    value = 1000
+  []
 
   # [bottom_xreal]
   #   type = NeumannBC
@@ -210,7 +196,6 @@
   #   boundary = 'bottom'
   #   value = 1000
   # []
-
 []
 
 
@@ -240,6 +225,10 @@
     symbol_values = 2.7e3 #Al kg/m3
     expression = '-t*t*density'
   []
+  [bed_coupling_function]
+    type = ParsedFunction
+    expression = '${bed_coupled} = 0'
+  []
 []
 
 [Controls]
@@ -249,6 +238,13 @@
     function = 'freq2'
     execute_on = 'initial timestep_begin'
   []
+  [bed_not_coupled]
+    type = ConditionalFunctionEnableControl
+    conditional_function = bed_coupling_function
+    disable_objects = 'BCs::dirichlet_bottom_x BCs::dirichlet_bottom_y'
+    # enable_objects = 'BCs::bottom_xreal BCs::bottom_yreal'
+    execute_on = 'INITIAL TIMESTEP_BEGIN'
+  []
 []
 
 [Executioner]
@@ -257,16 +253,15 @@
   petsc_options_iname = ' -pc_type'
   petsc_options_value = 'lu'
   start_time = 0.01 #starting frequency
-  end_time =  1.  #ending frequency
-  nl_abs_tol = 1e-6
+  end_time =  10.  #ending frequency
+  nl_abs_tol = 1e-8
   [TimeStepper]
     type = ConstantDT
-    dt = 0.05  #frequency stepsize
+    dt = 0.1  #frequency stepsize
   []
 []
 
 [Outputs]
   csv=true
   exodus=true
-  console = false
 []
