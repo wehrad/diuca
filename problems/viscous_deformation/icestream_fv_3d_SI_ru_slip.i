@@ -9,16 +9,19 @@
 # boundary) to take into account the ice coming from the inner part of
 # the ice sheet.
 
-# NOTE: the sediment block is considered as ice for now
-
 # ------------------------ domain settings
 
 # sediment rheology
 sliding_law = "GudmundssonRaymond"
+# sediment_layer_thickness = 50.
 sediment_layer_thickness = 50.
-# slipperiness_coefficient_mmpaa = 3000. # 9.512937595129376e-11
-# slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (365*24*3600)}' # 
-slipperiness_coefficient = 0.5e-06
+slipperiness_coefficient_mmpaa = 3e6 # 3e4 # 3e3 # 9.512937595129376e-11
+slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (365*24*3600)}' # 
+
+# Ryser et al 2014 seems to use sediment viscosities between 5e14 and 1e13 Pas
+
+# slipperiness_coefficient = 0.5e-06
+# slipperiness_coefficient = 1e-07
 
 # ------------------------ simulation settings
 
@@ -27,7 +30,9 @@ slipperiness_coefficient = 0.5e-06
 # ice has a high viscosity and hence response times
 # of years
 nb_years = 0.075
-mult = 1
+# mult = 1
+# mult = 0.5
+mult = 0.5
 _dt = '${fparse nb_years * 3600 * 24 * 365 * mult}'
 
 # upstream inlet (ice influx from the ice sheet interior)
@@ -72,7 +77,7 @@ initial_II_eps_min = 1e-07
 
   [channel]
     type = FileMeshGenerator
-    file = mesh_icestream.e
+    file = ../../meshes/mesh_icestream_sed.e
   []
 
   [delete_sediment_block]
@@ -100,7 +105,8 @@ initial_II_eps_min = 1e-07
     num_layers = 1
     extrusion_vector = '0. 0. -${sediment_layer_thickness}'
     # bottom/top swap is (correct and) due to inverse extrusion
-    top_sideset = 'bottom_sediment'
+    top_sideset = 'top_sediment'
+    bottom_sideset = 'bottom_sediment'
   []
   [stitch_sediment]
     type = StitchedMeshGenerator
@@ -133,6 +139,9 @@ initial_II_eps_min = 1e-07
     input = 'add_sediment_upstream_side'
     replace = True
   []
+
+
+
 
   # [frontal_zone]
   #   type = SubdomainBoundingBoxGenerator
@@ -178,10 +187,25 @@ initial_II_eps_min = 1e-07
   # []
 
 
+
+
   [add_nodesets]
     type = NodeSetsFromSideSetsGenerator
     input = 'add_sediment_downstream_side'
   []
+
+
+
+
+  # [refined_sediments]
+  #   type = RefineBlockGenerator
+  #   input = "add_nodesets"
+  #   block = "0"
+  #   refinement = '1'
+  #   enable_neighbor_refinement = true
+  #   max_element_volume = 1e100
+  # []
+
 []
 
 [Variables]
@@ -321,11 +345,17 @@ initial_II_eps_min = 1e-07
 [FVBCs]
 
   # ice and sediment influx
+  # [ice_inlet_x]
+  #   type = INSFVInletVelocityBC
+  #   variable = vel_x
+  #   boundary = 'upstream'
+  #   functor = ${inlet_mps}
+  # []
   [ice_inlet_x]
     type = INSFVInletVelocityBC
     variable = vel_x
     boundary = 'upstream'
-    functor = ${inlet_mps}
+    functor = influx
   []
   [ice_inlet_y]
     type = INSFVInletVelocityBC
@@ -344,23 +374,23 @@ initial_II_eps_min = 1e-07
   [no_slip_x]
     type = INSFVNoSlipWallBC
     variable = vel_x
-    boundary = 'left right left_right_sediment bottom_sediment'
+    boundary = 'top_sediment left right left_right_sediment'
     function = 0
   []
   [no_slip_y]
     type = INSFVNoSlipWallBC
     variable = vel_y
-    boundary = 'left right left_right_sediment bottom_sediment'
+    boundary = 'left right left_right_sediment top_sediment'
     function = 0
   []
   [no_slip_z]
     type = INSFVNoSlipWallBC
     variable = vel_z
-    boundary = 'left right left_right_sediment bottom_sediment'
+    boundary = 'left right left_right_sediment top_sediment'
     function = 0
   []
 
-  # free slip
+  # free slip at the surface
   [free_slip_x]
     type = INSFVNaturalFreeSlipBC
     variable = vel_x
@@ -401,6 +431,12 @@ initial_II_eps_min = 1e-07
     expression = 'initial_II_eps_min * exp(-(t-_dt) * 1e-6)'
     symbol_names = '_dt initial_II_eps_min'
     symbol_values = '${_dt} ${initial_II_eps_min}'
+  []
+  [influx]
+    type = ParsedFunction
+    expression = 'inlet_mps * sin((2*pi / 20000) * y)'
+    symbol_names = 'inlet_mps'
+    symbol_values = '${inlet_mps}'
   []
 []
 
