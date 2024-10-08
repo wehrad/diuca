@@ -114,9 +114,9 @@ initial_II_eps_min = 1e-07
   #   variable = vel_x
   #   rho = ${rho}
   #   momentum_component = 'x'
-  #   gravity = '0 -9.81'
+  #   gravity = '0 -9.81 0'
   # []
-
+ 
   [v_time]
     type = INSFVMomentumTimeDerivative
     variable = vel_y
@@ -148,47 +148,45 @@ initial_II_eps_min = 1e-07
   #   variable = vel_y
   #   rho = ${rho}
   #   momentum_component = 'y'
-  #   gravity = '0 -9.81'
+  #   gravity = '0 -9.81 0'
   # []
 
 []
 
 [FVBCs]
-
-  # [no_slip_x]
-  #   type = INSFVNoSlipWallBC
-  #   variable = vel_x
-  #   boundary = 'top_sediment left right left_right_sediment'
-  #   function = 0
-  # []
-  # [no_slip_y]
-  #   type = INSFVNoSlipWallBC
-  #   variable = vel_y
-  #   boundary = 'left right left_right_sediment top_sediment'
-  #   function = 0
-  # []
   
-  # free slip at the surface
-  # [free_slip_x]
-  #   type = INSFVNaturalFreeSlipBC
-  #   variable = vel_x
-  #   momentum_component = 'x'
-  #   boundary = 'surface'
-  # []
-  # [free_slip_y]
-  #   type = INSFVNaturalFreeSlipBC
-  #   variable = vel_y
-  #   momentum_component = 'y'
-  #   boundary = 'surface'
-  # []
-
-  # ocean pressure at the glacier front
-  [outlet_p]
-    type = INSFVOutletPressureBC
-    variable = pressure
-    boundary = 'top bottom'
-    function = 1 # Pa
+  [free_slip_x]
+    type = INSFVNaturalFreeSlipBC
+    variable = vel_x
+    momentum_component = 'x'
+    boundary = 'left right'
   []
+  [free_slip_y]
+    type = INSFVNaturalFreeSlipBC
+    variable = vel_y
+    momentum_component = 'y'
+    boundary = 'left right'
+  []
+
+  [no_slip_bottom_x]
+    type = INSFVNoSlipWallBC
+    variable = vel_x
+    boundary = 'bottom'
+    function = 0
+  []
+  [slip_bottom_y]
+    type = INSFVNoSlipWallBC
+    variable = vel_y
+    boundary = 'bottom'
+    function = 1e-4
+  []
+  [slip_top]
+    type = INSFVNoSlipWallBC
+    variable = vel_y
+    boundary = 'top'
+    function = -1e-4
+  []
+  
 []
 
 # ------------------------
