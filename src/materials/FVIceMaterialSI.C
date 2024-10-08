@@ -49,8 +49,10 @@ FVIceMaterialSI::FVIceMaterialSI(const InputParameters & parameters)
 
     // Velocities
     _vel_x(getFunctor<ADReal>("velocity_x")),
-    _vel_y(getFunctor<ADReal>("velocity_y")),
-    _vel_z(getFunctor<ADReal>("velocity_z")),
+    _vel_y(_mesh.dimension() >= 2 ? &getFunctor<Real>("vel_y") : nullptr),
+    _vel_z(_mesh.dimension() == 3 ? &getFunctor<Real>("vel_z") : nullptr),
+    // _vel_y(getFunctor<ADReal>("velocity_y")),
+    // _vel_z(getFunctor<ADReal>("velocity_z")),
 
     // Finite strain rate parameter
     _II_eps_min(getParam<Real>("II_eps_min"))
