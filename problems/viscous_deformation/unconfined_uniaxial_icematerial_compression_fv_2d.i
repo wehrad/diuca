@@ -41,7 +41,6 @@ initial_II_eps_min = 1e-07
     type = INSFVRhieChowInterpolator
     u = vel_x
     v = vel_y
-    w = vel_z
     pressure = pressure
   []
 []
@@ -65,11 +64,6 @@ initial_II_eps_min = 1e-07
     scaling = ${vel_scaling}
   []
   [vel_y]
-    type = INSFVVelocityVariable
-    two_term_boundary_expansion = true
-    scaling = ${vel_scaling}
-  []
-  [vel_z]
     type = INSFVVelocityVariable
     two_term_boundary_expansion = true
     scaling = ${vel_scaling}
@@ -223,7 +217,6 @@ initial_II_eps_min = 1e-07
     block = '0' #  10
     velocity_x = "vel_x"
     velocity_y = "vel_y"
-    velocity_z = "vel_z"
     pressure = "pressure"
     output_properties = 'mu_ice rho_ice'
     outputs = "out"
