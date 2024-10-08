@@ -15,8 +15,10 @@
 sliding_law = "GudmundssonRaymond"
 # sediment_layer_thickness = 50.
 sediment_layer_thickness = 50.
-slipperiness_coefficient_mmpaa = 3000. # 9.512937595129376e-11
+slipperiness_coefficient_mmpaa = 3e6 # 3e4 # 3e3 # 9.512937595129376e-11
 slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (365*24*3600)}' # 
+
+# Ryser et al 2014 seems to use sediment viscosities between 5e14 and 1e13 Pas
 
 # slipperiness_coefficient = 0.5e-06
 # slipperiness_coefficient = 1e-07
@@ -372,7 +374,7 @@ initial_II_eps_min = 1e-07
   [no_slip_x]
     type = INSFVNoSlipWallBC
     variable = vel_x
-    boundary = 'left right left_right_sediment top_sediment'
+    boundary = 'top_sediment left right left_right_sediment'
     function = 0
   []
   [no_slip_y]
@@ -387,26 +389,6 @@ initial_II_eps_min = 1e-07
     boundary = 'left right left_right_sediment top_sediment'
     function = 0
   []
-
-  # # no slip at the sediment base nor on the sides
-  # [slip_x]
-  #   type = INSFVInletVelocityBC
-  #   variable = vel_x
-  #   boundary = 'top_sediment'
-  #   functor = 0.
-  # []
-  # [slip_y]
-  #   type = INSFVNoSlipWallBC
-  #   variable = vel_y
-  #   boundary = 'bottom_sediment'
-  #   function = 0
-  # []
-  # [slip_z]
-  #   type = INSFVNoSlipWallBC
-  #   variable = vel_z
-  #   boundary = 'bottom_sediment'
-  #   function = 0
-  # []
 
   # free slip at the surface
   [free_slip_x]
