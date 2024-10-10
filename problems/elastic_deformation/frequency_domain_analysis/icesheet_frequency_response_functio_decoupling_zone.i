@@ -1,4 +1,4 @@
-# from moose/modules/solid_mechanics/examples/wave_propagation/cantilever_sweepi.
+# from moose/modules/solid_mechanics/examples/wave_propagation/cantilever_sweep.i
 
 # choose if bed is coupled or not
 # bed_coupled = 0
@@ -10,13 +10,13 @@
     dim = 3
     xmin = 0
     xmax = 5000.
-    nx = 20
+    nx = 50
     zmin = 0
     zmax = 5000.
-    nz = 20
-    ymin = 100.
-    ymax = 700.
-    ny = 10
+    nz = 50
+    ymin = 0.
+    ymax = 600.
+    ny = 5
   []
 
   # [wide_decoupling_zone]
@@ -237,10 +237,15 @@
 
 [Postprocessors]
   [dispMag]
-    type = NodalExtremeValue
-    value_type = max
+    type = AverageNodalVariableValue
+    boundary = 'top'
     variable = disp_mag
   []
+  # [dispMag]
+  #   type = NodalExtremeValue
+  #   value_type = max
+  #   variable = disp_mag
+  # []
 []
 
 [Functions]
