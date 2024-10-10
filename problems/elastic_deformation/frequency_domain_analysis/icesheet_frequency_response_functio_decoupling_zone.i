@@ -10,13 +10,13 @@
     dim = 3
     xmin = 0
     xmax = 5000.
-    nx = 50
+    nx = 25 # 50
     zmin = 0
     zmax = 5000.
-    nz = 50
+    nz = 25 # 50
     ymin = 0.
     ymax = 600.
-    ny = 5
+    ny = 3 # 6
   []
 
   # [wide_decoupling_zone]
@@ -172,19 +172,19 @@
     type = NeumannBC
     variable = disp_x
     boundary = 'left right back front'
-    value = 1000
+    value = 1
   []
   [yreal]
     type = NeumannBC
     variable = disp_y
     boundary = 'left right back front'
-    value = 1000
+    value = 1
   []
   [zreal]
     type = NeumannBC
     variable = disp_z
     boundary = 'left right back front'
-    value = 1000
+    value = 1
   []
 
   # [Periodic]
@@ -281,7 +281,7 @@
   solve_type=LINEAR
   petsc_options_iname = ' -pc_type'
   petsc_options_value = 'lu'
-  start_time = 0 #starting frequency
+  start_time = 0.1 #starting frequency
   end_time =  6.  #ending frequency
   nl_abs_tol = 1e-6
   [TimeStepper]
