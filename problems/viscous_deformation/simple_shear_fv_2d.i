@@ -52,8 +52,8 @@ initial_II_eps_min = 1e-07
   xmax = 1
   ymin = 0
   ymax = 1
-  nx = 3
-  ny = 3
+  nx = 20
+  ny = 20
   elem_type = QUAD9
 []
 
@@ -153,60 +153,84 @@ initial_II_eps_min = 1e-07
 
 []
 
-[FVBCs]
-  
-  # [free_slip_x]
-  #   type = INSFVNaturalFreeSlipBC
-  #   variable = vel_x
-  #   momentum_component = 'x'
-  #   boundary = 'left right'
-  # []
-  # [free_slip_y]
-  #   type = INSFVNaturalFreeSlipBC
-  #   variable = vel_y
-  #   momentum_component = 'y'
-  #   boundary = 'left right'
+[AuxVariables]
+  [sigma_x]
+    order = CONSTANT
+    family = MONOMIAL
+  []
+  [sigma_y]
+    order = CONSTANT
+    family = MONOMIAL
+  []
+[]
+    
+[AuxKernels]
+  [stress_comp1]
+    type = INSStressComponentAux
+    variable = sigma_x
+    comp = 0
+    mu_name = ${mu}
+    execute_on="TIMESTEP_END"
+  []
+  [stress_comp2]
+    type = INSStressComponentAux
+    variable = sigma_y
+    comp = 1
+    mu_name = ${mu}
+    execute_on="TIMESTEP_END"
+  []
+
+  # [traction_x]
+  #   type = ComputeINSStress
+  #   variable = sigma_x
+  #   u = vel_x
+  #   v = vel_y
+  #   pressure = pressure
+  #   mu_name = ${mu}
+  #   component = 0
+  #   boundary = 'bottom'
   # []
 
-  # [no_slip_bottom_x]
-  #   type = INSFVNoSlipWallBC
-  #   variable = vel_x
+  # [traction_y]
+  #   type = ComputeINSStress
+  #   variable = sigma_y
+  #   u = vel_x
+  #   v = vel_y
+  #   pressure = pressure
+  #   mu_name = ${mu}
+  #   component = 0
   #   boundary = 'bottom'
-  #   function = 0
   # []
-  # [no_slip_top_x]
-  #   type = INSFVNoSlipWallBC
-  #   variable = vel_x
-  #   boundary = 'top'
-  #   function = 0
-  # []
-  [slip_bottom_y]
+[]
+
+[FVBCs]
+
+  [free_slip_x]
+    type = INSFVNaturalFreeSlipBC
+    variable = vel_x
+    momentum_component = 'x'
+    boundary = 'left right'
+  []
+  
+  [no_slip_bottom_x]
     type = INSFVNoSlipWallBC
-    variable = vel_y
+    variable = vel_x
     boundary = 'bottom'
+    function = 0.
+  []
+  [slip_top_x]
+    type = INSFVNoSlipWallBC
+    variable = vel_x
+    boundary = 'top'
     function = 1e-5
   []
-  [slip_top]
+
+  [no_slip_y]
     type = INSFVNoSlipWallBC
     variable = vel_y
-    boundary = 'top'
-    function = -1e-5
+    boundary = 'bottom top'
+    function = 0.
   []
-
-  # [inlet_top]
-  #   type = INSFVOutletPressureBC
-  #   variable = pressure
-  #   boundary = 'top'
-  #   function = -100 # Pa
-  # []
-  # [outlet_bottom]
-  #   type = INSFVOutletPressureBC
-  #   variable = pressure
-  #   boundary = 'bottom'
-  #   function = 100 # Pa
-  # []
-  
-  
 []
 
 # ------------------------
