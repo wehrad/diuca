@@ -286,7 +286,7 @@
   nl_abs_tol = 1e-6
   [TimeStepper]
     type = ConstantDT
-    dt = 0.02  #frequency stepsize
+    dt = 0.05  #frequency stepsize
   []
 []
 
