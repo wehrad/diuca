@@ -6,7 +6,7 @@
 //*
 //* Licensed under LGPL 2.1, please see LICENSE for details
 //* https://www.gnu.org/licenses/lgpl-2.1.html
-
+// modified from MOOSE INSFVIceStress
 #pragma once
 
 #include "INSFVFluxKernel.h"
@@ -15,26 +15,21 @@
 // Forward declare variable class
 class INSFVVelocityVariable;
 
-class INSFVMixingLengthReynoldsStress : public INSFVFluxKernel
+class INSFVIceStress : public INSFVFluxKernel
 {
 public:
   static InputParameters validParams();
 
-  INSFVMixingLengthReynoldsStress(const InputParameters & params);
+  INSFVIceStress(const InputParameters & params);
 
   using INSFVFluxKernel::gatherRCData;
   void gatherRCData(const FaceInfo &) override final;
 
 protected:
-  /**
-   * Routine to compute this object's strong residual (e.g. not multipled by area). This routine
-   * can also populate the _ae and _an coefficients
-   * @param populate_a_coeffs Boolean to let the function know that it should also populate the
-   *                          a coefficients in a monolithic RC approach
-   */
-  ADReal computeStrongResidual(const bool populate_a_coeffs);
 
-  virtual ADReal computeSegregatedContribution() override;
+  ADReal computeStrongResidual();
+
+  // virtual ADReal computeSegregatedContribution() override;
 
   /// The dimension of the simulation
   const unsigned int _dim;
@@ -43,21 +38,16 @@ protected:
   const unsigned int _axis_index;
 
   /// x-velocity
-  const Moose::Functor<ADReal> & _u;
+  const Moose::Functor<ADReal> & _vel_x;
   /// y-velocity
-  const Moose::Functor<ADReal> * const _v;
+  const Moose::Functor<ADReal> * const _vel_y;
   /// z-velocity
-  const Moose::Functor<ADReal> * const _w;
+  const Moose::Functor<ADReal> * const _vel_z;
 
-  /// Density
-  const Moose::Functor<ADReal> & _rho;
+  /// Viscosity
+  const Moose::Functor<ADReal> & _mu;
 
-  /// Turbulent eddy mixing length
-  const Moose::Functor<ADReal> & _mixing_len;
+  
 
-  /// Rhie-Chow element coefficient
-  ADReal _ae = 0;
 
-  /// Rhie-Chow neighbor coefficient
-  ADReal _an = 0;
 };

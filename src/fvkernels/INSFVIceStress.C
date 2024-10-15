@@ -7,9 +7,12 @@
 //* Licensed under LGPL 2.1, please see LICENSE for details
 //* https://www.gnu.org/licenses/lgpl-2.1.html
 // modified from MOOSE INSFVMixingLengthReynoldsStress
+
+// probably use instead https://github.com/idaholab/moose/blob/a35543bb275d046234e6544b1e4c11563b57c710/framework/src/fvkernels/FVKernel.C#L10
+// with this https://github.com/casperversteeg/WhALE/blob/b115054ef7aeac03d99bb1c6c4a542ed9fa9b9fc/src/auxkernels/ComputeINSStress.CAD
+
 #include "INSFVIceStress.h"
 #include "INSFVVelocityVariable.h"
-// #include "NS.h"
 #include "SystemBase.h"
 
 registerMooseObject("diucaApp", INSFVIceStress);
@@ -36,16 +39,16 @@ INSFVIceStress::INSFVIceStress(const InputParameters & params)
   : INSFVFluxKernel(params),
     _dim(blocksMaxDimension()),
     _axis_index(getParam<MooseEnum>("momentum_component")),
-    _u(getFunctor<ADReal>("u")),
-    _v(params.isParamValid("v") ? &getFunctor<ADReal>("v") : nullptr),
-    _w(params.isParamValid("w") ? &getFunctor<ADReal>("w") : nullptr),
-    _mu(getParam<ADReal>("viscosity")),
+    _vel_x(getFunctor<ADReal>("velocity_x")),
+    _vel_y(_mesh.dimension() >= 2 ? &getFunctor<ADReal>("velocity_y") : nullptr),
+    _vel_z(_mesh.dimension() == 3 ? &getFunctor<ADReal>("velocity_z") : nullptr),
+    _mu(getFunctor<ADReal>("viscosity"))
 {
   
-  if (_dim >= 2 && !_v)
+  if (_dim >= 2 && !_vel_y)
     mooseError(
         "In two or more dimensions, the v velocity must be supplied using the 'v' parameter");
-  if (_dim >= 3 && !_w)
+  if (_dim >= 3 && !_vel_z)
     mooseError("In three dimensions, the w velocity must be supplied using the 'w' parameter");
 
 }
@@ -60,47 +63,50 @@ INSFVIceStress::computeStrongResidual()
   const auto state = determineState();
 
   const ADReal mu = _mu(face, state);
-
+  const auto grad_var = _vel_x.gradient(face, state);
+  
   if (_index == 0)
     {
-      const auto grad_var = _u.gradient(face, state);
+      auto grad_var = _vel_x.gradient(face, state);
     }
   else if (_index == 1)
     {
-      const auto grad_var = _v.gradient(face, state);
+      auto grad_var = _vel_y->gradient(face, state);
     }
   else if (_index == 2)
-    {     const auto grad_var = _w.gradient(face, state);
+    {
+      auto grad_var = _vel_z->gradient(face, state);
     }
 
 
-  ADReal sigma_index_dev = 2*eta*grad_var(_index);
+  ADReal sigma_index_dev = 2 * mu * grad_var(_index);
 
   return sigma_index_dev;
 }
 
-ADReal
-INSFVIceStress::computeSegregatedContribution()
-{
-  return computeStrongResidual(false);
-}
-
-// void
-// INSFVIceStress::gatherRCData(const FaceInfo & fi)
+// ADReal
+// INSFVIceStress::computeSegregatedContribution()
 // {
-//   if (skipForBoundary(fi))
-//     return;
-
-//   _face_info = &fi;
-//   _normal = fi.normal();
-//   _face_type = fi.faceType(std::make_pair(_var.number(), _var.sys().number()));
-
-//   addResidualAndJacobian(computeStrongResidual(true) * (fi.faceArea() * fi.faceCoord()));
-
-//   if (_face_type == FaceInfo::VarFaceNeighbors::ELEM ||
-//       _face_type == FaceInfo::VarFaceNeighbors::BOTH)
-//     _rc_uo.addToA(&fi.elem(), _index, _ae * (fi.faceArea() * fi.faceCoord()));
-//   if (_face_type == FaceInfo::VarFaceNeighbors::NEIGHBOR ||
-//       _face_type == FaceInfo::VarFaceNeighbors::BOTH)
-//     _rc_uo.addToA(fi.neighborPtr(), _index, _an * (fi.faceArea() * fi.faceCoord()));
+//   return computeStrongResidual(false);
 // }
+
+void
+INSFVIceStress::gatherRCData(const FaceInfo & fi)
+{
+  if (skipForBoundary(fi))
+    return;
+
+  _face_info = &fi;
+  _normal = fi.normal();
+  _face_type = fi.faceType(std::make_pair(_var.number(), _var.sys().number()));
+
+  addResidualAndJacobian(computeStrongResidual() * (fi.faceArea() * fi.faceCoord()));
+  // addResidualAndJacobian(computeStrongResidual(true) * (fi.faceArea() * fi.faceCoord()));
+
+  // if (_face_type == FaceInfo::VarFaceNeighbors::ELEM ||
+  //     _face_type == FaceInfo::VarFaceNeighbors::BOTH)
+  //   _rc_uo.addToA(&fi.elem(), _index, _ae * (fi.faceArea() * fi.faceCoord()));
+  // if (_face_type == FaceInfo::VarFaceNeighbors::NEIGHBOR ||
+  //     _face_type == FaceInfo::VarFaceNeighbors::BOTH)
+  //   _rc_uo.addToA(fi.neighborPtr(), _index, _an * (fi.faceArea() * fi.faceCoord()));
+}
