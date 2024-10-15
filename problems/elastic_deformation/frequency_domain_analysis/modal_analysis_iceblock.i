@@ -88,21 +88,21 @@ index = 0
     type = ADCoefReaction
     variable = disp_x
     extra_vector_tags = 'eigen'
-    coefficient = -917 # density
+    coefficient = -917
     block = '0'
   []
   [mass_y]
     type = ADCoefReaction
     variable = disp_y
     extra_vector_tags = 'eigen'
-    coefficient = -917 # density
+    coefficient = -917
     block = '0'
   []
   [mass_z]
     type = ADCoefReaction
     variable = disp_z
     extra_vector_tags = 'eigen'
-    coefficient = -917 # density
+    coefficient = -917
     block = '0'
   []
   [stiffness_x]
