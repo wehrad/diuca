@@ -23,9 +23,10 @@ INSFVIceStress::validParams()
   InputParameters params = INSFVFluxKernel::validParams();
   params.addClassDescription(
       "Compute ice stresses following Glen's flow law");
-  params.addRequiredParam<MooseFunctorName>("u", "The velocity in the x direction.");
-  params.addParam<MooseFunctorName>("v", "The velocity in the y direction.");
-  params.addParam<MooseFunctorName>("w", "The velocity in the z direction.");
+  params.addRequiredParam<MooseFunctorName>("velocity_x", "The velocity in the x direction.");
+  params.addParam<MooseFunctorName>("velocity_y", "The velocity in the y direction.");
+  params.addParam<MooseFunctorName>("velocity_z", "The velocity in the z direction.");
+  params.addParam<MooseFunctorName>("mu", "Ice viscosity");
   params.addRequiredCoupledVar("pressure", "Mean stress");
   MooseEnum momentum_component("x=0 y=1 z=2");
   params.addRequiredParam<MooseEnum>(
@@ -42,7 +43,7 @@ INSFVIceStress::INSFVIceStress(const InputParameters & params)
     _vel_x(getFunctor<ADReal>("velocity_x")),
     _vel_y(_mesh.dimension() >= 2 ? &getFunctor<ADReal>("velocity_y") : nullptr),
     _vel_z(_mesh.dimension() == 3 ? &getFunctor<ADReal>("velocity_z") : nullptr),
-    _mu(getFunctor<ADReal>("viscosity"))
+    _mu(getFunctor<ADReal>("mu"))
 {
   
   if (_dim >= 2 && !_vel_y)
