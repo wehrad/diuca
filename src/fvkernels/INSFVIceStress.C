@@ -78,7 +78,7 @@ INSFVIceStress::computeStrongResidual()
       auto grad_var = _vel_z->gradient(face, state);
     }
 
-
+  // compute deviatoric stress
   ADReal sigma_index_dev = 2 * mu * grad_var(_index);
 
   return sigma_index_dev;
