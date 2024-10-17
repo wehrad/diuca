@@ -19,64 +19,84 @@
     ny = 3 # 6
   []
 
-  [wide_shaking_zone]
+  [shaking_zone]
     type = SubdomainBoundingBoxGenerator
     input = 'block'
     block_id = 4
     bottom_left = '2200 -1 2200'
     top_right = '2700 101 2700'
   []
-  [wide_decoupling_zone1]
+  [decoupling_zone_left]
     type = SubdomainBoundingBoxGenerator
-    input = 'block'
+    input = 'shaking_zone'
     block_id = 5
-    bottom_left = '950 -1 950'
-    top_right = '1550 101 1550'
+    bottom_left = '2200 -1 950'
+    top_right = '2700 101 1550'
   []
-  [wide_decoupling_zone2]
+  [decoupling_zone_right]
     type = SubdomainBoundingBoxGenerator
-    input = 'block'
-    block_id = 5
-    bottom_left = '3450 -1 3450'
-    top_right = '4050 101 4050'
+    input = 'decoupling_zone_left'
+    block_id = 6
+    bottom_left = '2200 -1 3450'
+    top_right = '2700 101 4050'
+  []
+  [decoupling_zone_top]
+    type = SubdomainBoundingBoxGenerator
+    input = 'decoupling_zone_right'
+    block_id = 7
+    bottom_left = '3450 -1 2200'
+    top_right = '4050 101 2700'
+  []
+  [decoupling_zone_bottom]
+    type = SubdomainBoundingBoxGenerator
+    input = 'decoupling_zone_top'
+    block_id = 8
+    bottom_left = '950 -1 2200'
+    top_right = '1550 101 2700'
   []
   [mesh_combined_interm]
     type = CombinerGenerator
-    inputs = 'block wide_shaking_zone'
+    inputs = 'block decoupling_zone_bottom'
   []
-  # [wide_shaking_zone_refined]
-  #   type = RefineBlockGenerator
-  #   input = "mesh_combined_interm"
-  #   block = '4'
-  #   refinement = '1'
-  #   enable_neighbor_refinement = true
-  # []
   [shaking_bottom]
     type = SideSetsAroundSubdomainGenerator
-    # input = 'wide_shaking_zone_refined'
     input = 'mesh_combined_interm'
     block = '4'
     new_boundary = 'shaking_bottom'
     replace = true
-    normal = '0 -1 0'
+    normal = '0 1 0'
   []
-
+  [decoupling_bottom]
+    type = SideSetsAroundSubdomainGenerator
+    input = 'shaking_bottom'
+    block = '5 6 7 8'
+    new_boundary = 'decoupling_bottom'
+    replace = true
+    normal = '0 1 0'
+  []
   [delete_bottom]
     type=BoundaryDeletionGenerator
-    input='shaking_bottom'
+    input='decoupling_bottom'
     boundary_names='bottom'
   []
 
   [add_bottom_back]
     type = ParsedGenerateSideset
     input = 'delete_bottom'
-    combinatorial_geometry = '(x < 1750 | x > 2250 | z < 1750 | z > 2250) & (y < 101)'
+    combinatorial_geometry = '((x<2200 & z<2200) | (x>2700 & z>2700)) & (y<1)|
+                              ((x>2700 & z<2200) | (x<2200 & z>2700)) & (y<1)|
+                              ((z<950) | (z>4050)) & (y<1)|
+                              ((x<950) | (x>4050)) & (y<1)|
+                              (z>1550) & (z<2200) & (y < 1)|
+                              (z>2700) & (z<3450) & (y < 1)|
+                              (x>2700) & (x<3450) & (y < 1)|
+                              (x>1550) & (x<2200) & (y < 1)' 
     included_subdomains = '0'
     normal = '0 -1 0'
     new_sideset_name = 'bottom'
     replace=true
   []
-  
+
 []
 
 [GlobalParams]
@@ -145,6 +165,24 @@
 []
 
 [BCs]
+  [dirichlet_bottom1_x]
+    type = DirichletBC
+    variable = disp_x
+    value = 0
+    boundary = 'decoupling_bottom'
+  []
+  [dirichlet_bottom1_y]
+    type = DirichletBC
+    variable = disp_y
+    value = 0
+    boundary = 'decoupling_bottom'
+  []
+  [dirichlet_bottom1_z]
+    type = DirichletBC
+    variable = disp_z
+    value = 0
+    boundary = 'decoupling_bottom'
+  []
   # [dirichlet_bottom_x]
   #   type = DirichletBC
   #   variable = disp_x
@@ -183,6 +221,17 @@
     value = 1
   []
 
+  # [Periodic]
+  #   [periodic_x]
+  #     variable = disp_x
+  #     auto_direction = 'x'
+  #   []
+  #   [periodic_z]
+  #     variable = disp_z
+  #     auto_direction = 'z'
+  #   []
+  # []
+
 []
 
 
@@ -198,16 +247,16 @@
 []
 
 [Postprocessors]
-  # [dispMag]
-  #   type = AverageNodalVariableValue
-  #   boundary = 'top'
-  #   variable = disp_mag
-  # []
   [dispMag]
-    type = NodalExtremeValue
-    value_type = max
+    type = AverageNodalVariableValue
+    boundary = 'top'
     variable = disp_mag
   []
+  # [dispMag]
+  #   type = NodalExtremeValue
+  #   value_type = max
+  #   variable = disp_mag
+  # []
 []
 
 [Functions]
@@ -244,11 +293,11 @@
   petsc_options_iname = ' -pc_type'
   petsc_options_value = 'lu'
   start_time = 0.1 #starting frequency
-  end_time =  6.  #ending frequency
+  end_time =  10.  #ending frequency
   nl_abs_tol = 1e-6
   [TimeStepper]
     type = ConstantDT
-    dt = 0.005  #frequency stepsize
+    dt = 0.01  #frequency stepsize
   []
 []
 
