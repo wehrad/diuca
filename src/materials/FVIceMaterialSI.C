@@ -94,7 +94,7 @@ FVIceMaterialSI::FVIceMaterialSI(const InputParameters & parameters)
         ADReal eps_xz = 0.5 * (u_z + w_x);
         ADReal eps_yz = 0.5 * (v_z + w_y);
 
-        // Compute effective strain rate (3D)
+        // Compute effective strain rate
         ADReal II_eps = 0.5 * (u_x * u_x + v_y * v_y + w_z * w_z +
                                2. * (eps_xy * eps_xy + eps_xz * eps_xz + eps_yz * eps_yz));
 
@@ -106,7 +106,15 @@ FVIceMaterialSI::FVIceMaterialSI(const InputParameters & parameters)
 	
         // Compute viscosity
         ADReal viscosity = (0.5 * ApGlen * std::pow(II_eps, -(1. - 1. / _nGlen) / 2.)); // Pas
-	
+
+	// Compute stresses
+	const ADReal sig_xx = 2 * viscosity * u_x + sigm;
+	const ADReal sig_yy = 2 * viscosity * v_y + sigm;
+	const AdReal sig_zz = 2 * viscosity * w_z + sigm;
+	const ADReal sig_xy = 2 * viscosity * eps_xy;
+	const ADReal sig_xz = 2 * viscosity * eps_xz;
+	const ADReal sig_yz = 2 * viscosity * eps_yz;
+
         return std::max(viscosity, 3.153600e09);
       },
       clearance_schedule);
