@@ -236,7 +236,7 @@ initial_II_eps_min = 1e-07
     velocity_x = "vel_x"
     velocity_y = "vel_y"
     pressure = "pressure"
-    output_properties = 'mu_ice rho_ice'
+    output_properties = 'mu_ice rho_ice sig_x'
     outputs = "out"
   []
 
