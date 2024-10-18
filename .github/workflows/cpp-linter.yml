@@ -1,7 +1,8 @@
 name: cpp-linter
 on:
   push:
-    path: '*/*/*'
+    paths: ['**.c', '**.cpp', '**.h', '**.hpp', '**.cxx', '**.hxx', '**.cc', '**.hh', '**CMakeLists.txt', 'meson.build', '**.cmake']
+    # path: '*/*/*'
 
 
 jobs:
