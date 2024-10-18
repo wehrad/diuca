@@ -209,6 +209,4 @@ FVIceMaterialSI::FVIceMaterialSI(const InputParameters & parameters)
 
         return ADRealVectorValue(sig_zz, sig_zx, sig_zy);
       });
-
-  cc
 }
