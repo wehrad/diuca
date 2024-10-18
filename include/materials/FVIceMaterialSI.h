@@ -19,8 +19,8 @@ protected:
   const unsigned int _mesh_dimension;
 
   // Glen parameters
-  const Real _AGlen;
-  const Real _nGlen;
+  const ADReal _AGlen;
+  const ADReal _nGlen;
 
   // density of the fluid
   const ADReal & _rho;
@@ -33,6 +33,6 @@ protected:
   // const Moose::Functor<ADReal> & _vel_z;
 
   // Finite strain rate parameter
-  const Real & _II_eps_min;
+  const ADReal & _II_eps_min;
 
 };

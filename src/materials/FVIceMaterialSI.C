@@ -64,7 +64,7 @@ FVIceMaterialSI::FVIceMaterialSI(const InputParameters & parameters)
 
   
   addFunctorProperty<ADReal>(
-			     "rho_ice", [this](const auto &, const auto &) -> ADReal { return _rho; }); // , clearance_schedule);
+			     "rho_ice", [this](const auto &, const auto &) -> ADReal { return _rho; });
 
   const auto & eps_x = addFunctorProperty<ADRealVectorValue>(
       "eps_x",
@@ -167,11 +167,13 @@ FVIceMaterialSI::FVIceMaterialSI(const InputParameters & parameters)
         // Compute viscosity
         ADReal mu = (0.5 * ApGlen * std::pow(II_eps, -(1. - 1. / _nGlen) / 2.)); // Pas
        
-        return std::max(mu, 3.153600e09);	
+        return std::max(mu, 3.153600e09);
+      },
+     clearance_schedule);
   
   const auto & sig_x = addFunctorProperty<ADRealVectorValue>(
       "sig_x",
-      [&eps_x, &eps_xy, &eps_xz, &viscosity](const auto & r, const auto & t) -> ADRealVectorValue
+      [this, &eps_x, &eps_xy, &eps_xz, &viscosity](const auto & r, const auto & t) -> ADRealVectorValue
       {
 
 	// Compute x-related stresses
@@ -184,7 +186,7 @@ FVIceMaterialSI::FVIceMaterialSI(const InputParameters & parameters)
 
   const auto & sig_y = addFunctorProperty<ADRealVectorValue>(
       "sig_y",
-      [&eps_y, &eps_xy, &eps_yz, &viscosity](const auto & r, const auto & t) -> ADRealVectorValue
+      [this, &eps_y, &eps_xy, &eps_yz, &viscosity](const auto & r, const auto & t) -> ADRealVectorValue
       {
 
 	// Compute y-related stresses
@@ -197,7 +199,7 @@ FVIceMaterialSI::FVIceMaterialSI(const InputParameters & parameters)
 
   const auto & sig_z = addFunctorProperty<ADRealVectorValue>(
       "sig_z",
-      [&eps_z, &eps_xz, &eps_yz, &viscosity](const auto & r, const auto & t) -> ADRealVectorValue
+      [this, &eps_z, &eps_xz, &eps_yz, &viscosity](const auto & r, const auto & t) -> ADRealVectorValue
       {
 
 	// Compute z-related stresses
@@ -207,7 +209,4 @@ FVIceMaterialSI::FVIceMaterialSI(const InputParameters & parameters)
 
         return ADRealVectorValue(sig_zz, sig_zx, sig_zy);
       });
-  
-      },
-      clearance_schedule);
 }
