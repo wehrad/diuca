@@ -29,9 +29,10 @@ protected:
   const Moose::Functor<ADReal> & _vel_x;
   const Moose::Functor<ADReal> * const _vel_y;
   const Moose::Functor<ADReal> * const _vel_z;
-  // const Moose::Functor<ADReal> & _vel_y;
-  // const Moose::Functor<ADReal> & _vel_z;
 
+  // pressure
+  const Moose::Functor<ADReal> & _pressure;
+  
   // Finite strain rate parameter
   const ADReal & _II_eps_min;
 

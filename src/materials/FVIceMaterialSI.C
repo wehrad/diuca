@@ -18,13 +18,15 @@ FVIceMaterialSI::validParams()
   params.addParam<MooseFunctorName>("velocity_z", "Velocity in z dimension");
 
   // Mean pressure
-  params.addRequiredCoupledVar("pressure", "Mean stress");
+  params.addParam<MooseFunctorName>("pressure", "Mean stress");
+
+  // params.addRequiredCoupledVar("pressure", "Mean stress");
 
   // Fluid properties
-  params.addParam<Real>(
+  params.addParam<ADReal>(
       "AGlen", 2.378234398782344e-24, "Fluidity parameter in Glen's flow law"); // Pa-3s-1
 
-  params.addParam<Real>("nGlen", 3., "Glen exponent");     //
+  params.addParam<ADReal>("nGlen", 3., "Glen exponent");     //
   params.addParam<ADReal>("density", 917., "Ice density"); // kgm-3
 
   // Convergence parameters
@@ -41,8 +43,8 @@ FVIceMaterialSI::FVIceMaterialSI(const InputParameters & parameters)
     _mesh_dimension(_mesh.dimension()),
 
     // Glen parameters
-    _AGlen(getParam<Real>("AGlen")),
-    _nGlen(getParam<Real>("nGlen")),
+    _AGlen(getParam<ADReal>("AGlen")),
+    _nGlen(getParam<ADReal>("nGlen")),
 
     // Ice density
     _rho(getParam<ADReal>("density")),
@@ -51,6 +53,9 @@ FVIceMaterialSI::FVIceMaterialSI(const InputParameters & parameters)
     _vel_x(getFunctor<ADReal>("velocity_x")),
     _vel_y(_mesh.dimension() >= 2 ? &getFunctor<ADReal>("velocity_y") : nullptr),
     _vel_z(_mesh.dimension() == 3 ? &getFunctor<ADReal>("velocity_z") : nullptr),
+
+    // Pressure
+    _pressure(getFunctor<ADReal>("pressure")),
 
     // Finite strain rate parameter
     _II_eps_min(getParam<Real>("II_eps_min"))
@@ -177,7 +182,7 @@ FVIceMaterialSI::FVIceMaterialSI(const InputParameters & parameters)
       {
 
 	// Compute x-related stresses
-        ADReal sig_xx = 2. * viscosity(r, t) * eps_x(r, t)(0); //  + sigm;
+        ADReal sig_xx = 2. * viscosity(r, t) * eps_x(r, t)(0) + _pressure(r, t);
 	ADReal sig_xy = 2. * viscosity(r, t) * eps_xy(r, t); 
 	ADReal sig_xz = 2. * viscosity(r, t) * eps_xz(r, t);
 
@@ -190,7 +195,7 @@ FVIceMaterialSI::FVIceMaterialSI(const InputParameters & parameters)
       {
 
 	// Compute y-related stresses
-	ADReal sig_yy = 2. * viscosity(r, t) * eps_y(r, t)(1); //  + sigm;
+	ADReal sig_yy = 2. * viscosity(r, t) * eps_y(r, t)(1) + _pressure(r, t);
 	ADReal sig_yx = 2. * viscosity(r, t) * eps_xy(r, t);
 	ADReal sig_yz = 2. * viscosity(r, t) * eps_yz(r, t);
  
@@ -203,7 +208,7 @@ FVIceMaterialSI::FVIceMaterialSI(const InputParameters & parameters)
       {
 
 	// Compute z-related stresses
-	ADReal sig_zz = 2. * viscosity(r, t) * eps_z(r, t)(2); //  + sigm;
+	ADReal sig_zz = 2. * viscosity(r, t) * eps_z(r, t)(2) + _pressure(r, t);
 	ADReal sig_zx = 2. * viscosity(r, t) * eps_xz(r, t);
 	ADReal sig_zy = 2. * viscosity(r, t) * eps_yz(r, t);
 
