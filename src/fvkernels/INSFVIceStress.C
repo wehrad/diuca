@@ -40,7 +40,7 @@ INSFVIceStress::INSFVIceStress(const InputParameters & params)
     _axis_index(getParam<MooseEnum>("momentum_component")),
     _sig_x(getFunctor<ADRealVectorValue>("sig_x")),
     _sig_y(getFunctor<ADRealVectorValue>("sig_y")),
-    _sig_z(getFunctor<ADRealVectorValue>("sig_z")),
+    _sig_z(getFunctor<ADRealVectorValue>("sig_z"))
 {
   
   // if (_dim >= 2 && !_vel_y)
@@ -61,20 +61,23 @@ INSFVIceStress::gatherRCData(const FaceInfo & fi)
   _normal = fi.normal();
   _face_type = fi.faceType(std::make_pair(_var.number(), _var.sys().number()));
 
+  const auto face = makeCDFace(*_face_info);
+  const auto state = determineState();
+  
   if (_index == 0)
     {
-      addResidualAndJacobian(_sig_x(0) * (fi.faceArea() * fi.faceCoord())); // xx
-      addResidualAndJacobian(_sig_x(1) * (fi.faceArea() * fi.faceCoord())); // xy
-      addResidualAndJacobian(_sig_x(2) * (fi.faceArea() * fi.faceCoord())); // xz
+      addResidualAndJacobian(_sig_x(face, state)(0) * (fi.faceArea() * fi.faceCoord())); // xx
+      addResidualAndJacobian(_sig_x(face, state)(1) * (fi.faceArea() * fi.faceCoord())); // xy
+      addResidualAndJacobian(_sig_x(face, state)(2) * (fi.faceArea() * fi.faceCoord())); // xz
     }
   else if (_index == 1)
     {
-      addResidualAndJacobian(_sig_y(0) * (fi.faceArea() * fi.faceCoord())); // yy
-      addResidualAndJacobian(_sig_y(2) * (fi.faceArea() * fi.faceCoord())); // yz
+      addResidualAndJacobian(_sig_y(face, state)(0) * (fi.faceArea() * fi.faceCoord())); // yy
+      addResidualAndJacobian(_sig_y(face, state)(2) * (fi.faceArea() * fi.faceCoord())); // yz
     }
   else if (_index == 2)
     {
-      addResidualAndJacobian(_sig_z(0) * (fi.faceArea() * fi.faceCoord())); // zz
+      addResidualAndJacobian(_sig_z(face, state)(0) * (fi.faceArea() * fi.faceCoord())); // zz
     }
 
 

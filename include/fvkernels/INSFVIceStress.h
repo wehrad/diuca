@@ -28,8 +28,11 @@ public:
 protected:
 
   /// The dimension of the simulation
-  const unsigned int _dim;
+  // const unsigned int _dim;
 
+  /// index x|y|z
+  const unsigned int _axis_index;
+  
   /// x-related stresses
   const Moose::Functor<ADRealVectorValue> & _sig_x;
 

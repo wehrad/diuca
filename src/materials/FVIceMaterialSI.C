@@ -195,7 +195,13 @@ FVIceMaterialSI::FVIceMaterialSI(const InputParameters & parameters)
       {
 
 	// Compute y-related stresses
-	ADReal sig_yy = 2. * viscosity(r, t) * eps_y(r, t)(1) + _pressure(r, t);
+	ADReal sig_yy;
+	if (_mesh.dimension() >= 2){
+	  sig_yy = 2. * viscosity(r, t) * eps_y(r, t)(1) + _pressure(r, t);
+	}
+	else{
+	  sig_yy = 0.;
+	}
 	ADReal sig_yx = 2. * viscosity(r, t) * eps_xy(r, t);
 	ADReal sig_yz = 2. * viscosity(r, t) * eps_yz(r, t);
  
@@ -208,7 +214,13 @@ FVIceMaterialSI::FVIceMaterialSI(const InputParameters & parameters)
       {
 
 	// Compute z-related stresses
-	ADReal sig_zz = 2. * viscosity(r, t) * eps_z(r, t)(2) + _pressure(r, t);
+	ADReal sig_zz;
+	if (_mesh.dimension() == 3){
+	  sig_zz = 2. * viscosity(r, t) * eps_z(r, t)(2) + _pressure(r, t);
+	}
+	else {
+	  sig_zz = 0.;
+	}
 	ADReal sig_zx = 2. * viscosity(r, t) * eps_xz(r, t);
 	ADReal sig_zy = 2. * viscosity(r, t) * eps_yz(r, t);
 

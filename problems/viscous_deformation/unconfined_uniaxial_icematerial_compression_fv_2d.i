@@ -150,7 +150,15 @@ initial_II_eps_min = 1e-07
   #   momentum_component = 'y'
   #   gravity = '0 -9.81 0'
   # []
-
+ [stress_x]
+   type = INSFVIceStress
+   variable = vel_x
+   # mu = ${mu}
+   momentum_component = 'x'
+   # velocity_x = "vel_x"
+   # velocity_y = "vel_y"
+   # pressure=pressure
+  []
 []
 
 [FVBCs]
@@ -236,7 +244,7 @@ initial_II_eps_min = 1e-07
     velocity_x = "vel_x"
     velocity_y = "vel_y"
     pressure = "pressure"
-    output_properties = 'mu_ice rho_ice sig_x'
+    output_properties = 'mu_ice rho_ice sig_x sig_y sig_z'
     outputs = "out"
   []
 
