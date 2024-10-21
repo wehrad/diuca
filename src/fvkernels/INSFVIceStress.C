@@ -42,12 +42,6 @@ INSFVIceStress::INSFVIceStress(const InputParameters & params)
     _sig_y(getFunctor<ADRealVectorValue>("sig_y")),
     _sig_z(getFunctor<ADRealVectorValue>("sig_z"))
 {
-  
-  // if (_dim >= 2 && !_vel_y)
-  //   mooseError(
-  //       "In two or more dimensions, the v velocity must be supplied using the 'v' parameter");
-  // if (_dim >= 3 && !_vel_z)
-  //   mooseError("In three dimensions, the w velocity must be supplied using the 'w' parameter");
 
 }
 
