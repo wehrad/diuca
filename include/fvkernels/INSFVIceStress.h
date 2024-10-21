@@ -27,27 +27,16 @@ public:
 
 protected:
 
-  ADReal computeStrongResidual();
-
-  // virtual ADReal computeSegregatedContribution() override;
-
   /// The dimension of the simulation
   const unsigned int _dim;
 
-  /// index x|y|z
-  const unsigned int _axis_index;
+  /// x-related stresses
+  const Moose::Functor<ADRealVectorValue> & _sig_x;
 
-  /// x-velocity
-  const Moose::Functor<ADReal> & _vel_x;
-  /// y-velocity
-  const Moose::Functor<ADReal> * const _vel_y;
-  /// z-velocity
-  const Moose::Functor<ADReal> * const _vel_z;
+  /// y-related stresses
+  const Moose::Functor<ADRealVectorValue> & _sig_y;
 
-  /// Viscosity
-  const Moose::Functor<ADReal> & _mu;
-
-  
-
+  /// z-related stresses
+  const Moose::Functor<ADRealVectorValue> & _sig_z;
 
 };
