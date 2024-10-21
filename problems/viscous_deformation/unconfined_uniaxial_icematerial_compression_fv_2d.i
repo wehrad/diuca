@@ -153,12 +153,14 @@ initial_II_eps_min = 1e-07
  [stress_x]
    type = INSFVIceStress
    variable = vel_x
-   # mu = ${mu}
    momentum_component = 'x'
-   # velocity_x = "vel_x"
-   # velocity_y = "vel_y"
-   # pressure=pressure
-  []
+ []
+ [stress_y]
+   type = INSFVIceStress
+   variable = vel_y
+   momentum_component = 'y'
+ []
+
 []
 
 [FVBCs]
