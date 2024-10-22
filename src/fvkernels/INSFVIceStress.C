@@ -74,5 +74,4 @@ INSFVIceStress::gatherRCData(const FaceInfo & fi)
       addResidualAndJacobian(_sig_z(face, state)(0) * (fi.faceArea() * fi.faceCoord())); // zz
     }
 
-
 }
