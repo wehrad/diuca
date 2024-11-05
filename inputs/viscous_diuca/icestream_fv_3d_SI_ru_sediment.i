@@ -9,33 +9,20 @@
 # boundary) to take into account the ice coming from the inner part of
 # the ice sheet.
 
-# ------------------------ domain settings
+# NOTE: the sediment block is considered as ice for now
 
-# sediment rheology
-sliding_law = "GudmundssonRaymond"
-sediment_layer_thickness = 50.
-slipperiness_coefficient_mmpaa = 3e3 # 3e4 # 3e3 # 9.512937595129376e-11
-slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (365*24*3600)}' # 
-
-# Ryser et al 2014 seems to use sediment viscosities between 5e14 and 1e13 Pas
-
-# slipperiness_coefficient = 0.5e-06
-# slipperiness_coefficient = 1e-07
-
-# ------------------------ simulation settings
+# ------------------------
 
 # dt associated with rest time associated with the
 # geometry (in seconds)
 # ice has a high viscosity and hence response times
 # of years
 nb_years = 0.075
-# mult = 1
-# mult = 0.5
-mult = 0.5
+mult = 1
 _dt = '${fparse nb_years * 3600 * 24 * 365 * mult}'
 
 # upstream inlet (ice influx from the ice sheet interior)
-inlet_mph = 0.5 # mh-1
+inlet_mph = 0.1 # mh-1
 inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
 
 # Numerical scheme parameters
@@ -48,15 +35,15 @@ vel_scaling = 1e-6
 rho = 'rho_combined'
 mu = 'mu_combined'
 
-initial_II_eps_min = 1e-07
+initial_II_eps_min = 1e-03
 
 # ------------------------
 
 [Problem]
   type = FEProblem
-  # near_null_space_dimension = 1
-  # null_space_dimension = 1
-  # transpose_null_space_dimension = 1
+  near_null_space_dimension = 2
+  null_space_dimension = 2
+  transpose_null_space_dimension = 2
 []
 [GlobalParams]
   rhie_chow_user_object = 'rc'
@@ -76,72 +63,10 @@ initial_II_eps_min = 1e-07
 
   [channel]
     type = FileMeshGenerator
-    file = ../../meshes/mesh_icestream_sed.e
+    file = ../mesh_icestream_wtsed.e
   []
 
-  [delete_sediment_block]
-    type = BlockDeletionGenerator
-    input = channel
-    block = '3'
-  []
-
-  # Create sediment layer by projecting glacier bed by
-  # the sediment thickness
-  [lowerDblock_sediment]
-    type = LowerDBlockFromSidesetGenerator
-    input = "delete_sediment_block"
-    new_block_name = "block_0"
-    sidesets = "bottom"
-  []
-  [separateMesh_sediment]
-    type = BlockToMeshConverterGenerator
-    input = lowerDblock_sediment
-    target_blocks = "block_0"
-  []
-  [extrude_sediment]
-    type = MeshExtruderGenerator
-    input = separateMesh_sediment
-    num_layers = 1
-    extrusion_vector = '0. 0. -${sediment_layer_thickness}'
-    # bottom/top swap is (correct and) due to inverse extrusion
-    top_sideset = 'top_sediment'
-    bottom_sideset = 'bottom_sediment'
-  []
-  [stitch_sediment]
-    type = StitchedMeshGenerator
-    inputs = 'delete_sediment_block extrude_sediment'
-    stitch_boundaries_pairs = 'bottom bottom_sediment'
-  []
-
-  [add_sediment_lateral_sides]
-    type = ParsedGenerateSideset
-    combinatorial_geometry = 'y > 9999.99 | y < 0.01'
-    included_subdomains = 0
-    new_sideset_name = 'left_right_sediment'
-    input = 'stitch_sediment'
-    replace = True
-  []
-
-  [add_sediment_upstream_side]
-    type = ParsedGenerateSideset
-    combinatorial_geometry = 'x < 0.01'
-    included_subdomains = 0
-    new_sideset_name = 'upstream_sediment'
-    input = 'add_sediment_lateral_sides'
-    replace = True
-  []
-  [add_sediment_downstream_side]
-    type = ParsedGenerateSideset
-    combinatorial_geometry = 'x > 19599.99'
-    included_subdomains = 0
-    new_sideset_name = 'downstream_sediment'
-    input = 'add_sediment_upstream_side'
-    replace = True
-  []
-
-
-
-
+  
   # [frontal_zone]
   #   type = SubdomainBoundingBoxGenerator
   #   input = 'channel'
@@ -152,59 +77,12 @@ initial_II_eps_min = 1e-07
   # []
   # [refined_front]
   #   type = RefineBlockGenerator
-  #   input = "add_sediment_downstream_side"
-  #   block = "0"
-  #   refinement = '1'
-  #   enable_neighbor_refinement = true
-  #   max_element_volume = 1e100
-  # []
-
-  # [fast_zone]
-  #   type = SubdomainBoundingBoxGenerator
-  #   input = 'add_sediment_downstream_side'
-  #   block_id = "10"
-  #   bottom_left = '20000 3749.99 -200.' # 99.99'
-  #   top_right = '13000  6700.99 434'
-  #   restricted_subdomains = 'eleblock2'
-  # []
-  # [refined_fastzone]
-  #   type = RefineBlockGenerator
-  #   input = "fast_zone"
+  #   input = "frontal_zone"
   #   block = "10"
   #   refinement = '1'
-  #   enable_neighbor_refinement = false
-  #   max_element_volume = 1e100
-  # []
-
-  # [refined_surface]
-  #   type = RefineSidesetGenerator
-  #   input = "add_sediment_downstream_side"
-  #   boundaries = "surface"
-  #   refinement = '1'
-  #   enable_neighbor_refinement = false
-  #   boundary_side = "primary"
-  # []
-
-
-
-
-  [add_nodesets]
-    type = NodeSetsFromSideSetsGenerator
-    input = 'add_sediment_downstream_side'
-  []
-
-
-
-
-  # [refined_sediments]
-  #   type = RefineBlockGenerator
-  #   input = "add_nodesets"
-  #   block = "0"
-  #   refinement = '1'
   #   enable_neighbor_refinement = true
   #   max_element_volume = 1e100
   # []
-
 []
 
 [Variables]
@@ -305,6 +183,16 @@ initial_II_eps_min = 1e-07
     momentum_component = 'y'
     gravity = '0 0 -9.81'
   []
+  # [v_friction]
+  #   type = PINSFVMomentumFriction
+  #   variable = 'vel_y'
+  #   Darcy_name = "Darcy_coefficient"
+  #   # Forchheimer_name = 1e10
+  #   block = "3"
+  #   rho = ${rho}
+  #   mu = ${mu}
+  #   momentum_component = 'y'
+  # []
 
   [w_time]
     type = INSFVMomentumTimeDerivative
@@ -339,57 +227,61 @@ initial_II_eps_min = 1e-07
     momentum_component = 'z'
     gravity = '0 0 -9.81'
   []
+  # [w_friction]
+  #   type = PINSFVMomentumFriction
+  #   variable = 'vel_z'
+  #   Darcy_name = "Darcy_coefficient"
+  #   # Forchheimer_name = "Forchheimer_coefficient"
+  #   block = "3"
+  #   rho = ${rho}
+  #   mu = ${mu}
+  #   momentum_component = 'z'
+  # []
 []
 
 [FVBCs]
 
   # ice and sediment influx
-  # [ice_inlet_x]
-  #   type = INSFVInletVelocityBC
-  #   variable = vel_x
-  #   boundary = 'upstream'
-  #   functor = ${inlet_mps}
-  # []
   [ice_inlet_x]
     type = INSFVInletVelocityBC
     variable = vel_x
     boundary = 'upstream'
-    functor = influx
+    functor = ${inlet_mps}
   []
   [ice_inlet_y]
     type = INSFVInletVelocityBC
     variable = vel_y
-    boundary = 'upstream upstream_sediment'
+    boundary = 'upstream'
     functor = 0
   []
   [ice_inlet_z]
     type = INSFVInletVelocityBC
     variable = vel_z
-    boundary = 'upstream upstream_sediment'
+    boundary = 'upstream'
     functor = 0
   []
 
-  # no slip at the sediment base nor on the sides
+  # no slip at the glacier base nor on the sides
   [no_slip_x]
     type = INSFVNoSlipWallBC
     variable = vel_x
-    boundary = 'top_sediment left right left_right_sediment'
+    boundary = 'left left_sediment right right_sediment sediment'
     function = 0
   []
   [no_slip_y]
     type = INSFVNoSlipWallBC
     variable = vel_y
-    boundary = 'left right left_right_sediment top_sediment'
+    boundary = 'left left_sediment right right_sediment sediment'
     function = 0
   []
   [no_slip_z]
     type = INSFVNoSlipWallBC
     variable = vel_z
-    boundary = 'left right left_right_sediment top_sediment'
+    boundary = 'left left_sediment right right_sediment sediment'
     function = 0
   []
 
-  # free slip at the surface
+  # free slip
   [free_slip_x]
     type = INSFVNaturalFreeSlipBC
     variable = vel_x
@@ -431,12 +323,6 @@ initial_II_eps_min = 1e-07
     symbol_names = '_dt initial_II_eps_min'
     symbol_values = '${_dt} ${initial_II_eps_min}'
   []
-  [influx]
-    type = ParsedFunction
-    expression = 'inlet_mps * sin((2*pi / 20000) * y)'
-    symbol_names = 'inlet_mps'
-    symbol_values = '${inlet_mps}'
-  []
 []
 
 [Controls]
@@ -459,10 +345,9 @@ initial_II_eps_min = 1e-07
     output_properties = 'mu_ice rho_ice'
     outputs = "out"
   []
-  
   # [sediment]
   #   type = FVConstantMaterial
-  #   block = '0'
+  #   block = 'eleblock3'
   #   viscosity = 1e10
   #   density = 1850.
   #   output_properties = 'mu_material rho_material'
@@ -470,17 +355,14 @@ initial_II_eps_min = 1e-07
 
   [sediment]
     type = FVSedimentMaterialSI
-    block = '0'
+    block = 'eleblock3'
     velocity_x = "vel_x"
     velocity_y = "vel_y"
     velocity_z = "vel_z"
     pressure = "pressure"
-    density  = 1850.
-    sliding_law = ${sliding_law}
-    SlipperinessCoefficient = ${slipperiness_coefficient}
-    LayerThickness = ${sediment_layer_thickness}
     output_properties = 'mu_sediment rho_sediment'
-    outputs = "out"
+    density  = 1850.
+    FrictionCoefficient = 0.1
   []
 
   [mu_combined]
@@ -488,14 +370,14 @@ initial_II_eps_min = 1e-07
     prop_name = 'mu_combined'
     subdomain_to_prop_value = 'eleblock1 mu_ice
                                eleblock2 mu_ice
-                               0 mu_sediment' #                                10  mu_ice
+                               eleblock3 mu_sediment' # 10  mu_ice
   []
   [rho_combined]
     type = ADPiecewiseByBlockFunctorMaterial
     prop_name = 'rho_combined'
     subdomain_to_prop_value = 'eleblock1 rho_ice
                                eleblock2 rho_ice
-                               0 rho_sediment'  #                                10  rho_ice
+                               eleblock3 rho_sediment' # 10  rho_ice
   []
   # [darcy]
   #   type = ADGenericVectorFunctorMaterial
@@ -562,12 +444,8 @@ initial_II_eps_min = 1e-07
   type = Transient
   num_steps = 100
 
-  # petsc_options_iname = '-pc_type -pc_factor_shift'
-  # petsc_options_value = 'lu       NONZERO'
-
-  petsc_options_iname = '-pc_type -pc_factor_shift_type'
+  petsc_options_iname = '-pc_type -pc_factor_shift'
   petsc_options_value = 'lu       NONZERO'
-
   # petsc_options = '-pc_svd_monitor'
   # petsc_options_iname = '-pc_type'
   # petsc_options_value = 'svd'

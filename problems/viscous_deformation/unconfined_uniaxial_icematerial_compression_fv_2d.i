@@ -49,10 +49,10 @@ initial_II_eps_min = 1e-07
   type = GeneratedMesh
   dim = 2
   xmin = 0
-  xmax = 1
+  xmax = 0.333
   ymin = 0
   ymax = 1
-  nx = 3
+  nx = 1
   ny = 3
   elem_type = QUAD9
 []
@@ -209,7 +209,7 @@ initial_II_eps_min = 1e-07
     variable = vel_y
     momentum_component='y'
     boundary = 'bottom'
-    value = 1.
+    value = 1e6
   []
   [slip_bottom_x]
     type = INSFVStressMomentumFluxBC
@@ -224,7 +224,7 @@ initial_II_eps_min = 1e-07
     variable = vel_y
     momentum_component='y'
     boundary = 'top'
-    value = -1.
+    value = -1e6
   []
   [slip_top_x]
     type = INSFVStressMomentumFluxBC
@@ -278,7 +278,7 @@ initial_II_eps_min = 1e-07
     velocity_x = "vel_x"
     velocity_y = "vel_y"
     pressure = "pressure"
-    output_properties = 'mu_ice rho_ice sig_x sig_y sig_z'
+    output_properties = 'mu_ice rho_ice eps_x eps_y eps_z sig_x sig_y sig_z'
     outputs = "out"
   []
 

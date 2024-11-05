@@ -23,11 +23,11 @@ FVIceMaterialSI::validParams()
   // params.addRequiredCoupledVar("pressure", "Mean stress");
 
   // Fluid properties
-  params.addParam<ADReal>(
+  params.addParam<Real>(
       "AGlen", 2.378234398782344e-24, "Fluidity parameter in Glen's flow law"); // Pa-3s-1
 
-  params.addParam<ADReal>("nGlen", 3., "Glen exponent");     //
-  params.addParam<ADReal>("density", 917., "Ice density"); // kgm-3
+  params.addParam<Real>("nGlen", 3., "Glen exponent");     //
+  params.addParam<Real>("density", 917., "Ice density"); // kgm-3
 
   // Convergence parameters
   params.addParam<Real>("II_eps_min", 1e-25, "Finite strain rate parameter"); // s-1
@@ -43,11 +43,11 @@ FVIceMaterialSI::FVIceMaterialSI(const InputParameters & parameters)
     _mesh_dimension(_mesh.dimension()),
 
     // Glen parameters
-    _AGlen(getParam<ADReal>("AGlen")),
-    _nGlen(getParam<ADReal>("nGlen")),
+    _AGlen(getParam<Real>("AGlen")),
+    _nGlen(getParam<Real>("nGlen")),
 
     // Ice density
-    _rho(getParam<ADReal>("density")),
+    _rho(getParam<Real>("density")),
 
     // Velocities
     _vel_x(getFunctor<ADReal>("velocity_x")),
