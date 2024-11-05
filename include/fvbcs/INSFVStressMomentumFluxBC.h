@@ -26,6 +26,6 @@ public:
 
 protected:
   // stress to be applied
-  const ADReal & _sig;
+  const Real & _sig;
 
 };

@@ -19,7 +19,7 @@ INSFVStressMomentumFluxBC::validParams()
   params.addClassDescription(
       "Imparts a stress on the momentum equation");
   // params.addParam<MaterialPropertyName>("rc_pressure", "rc_pressure", "The recoil pressure");
-  params.addParam<ADReal>("value", 0., "Stress to apply");
+  params.addParam<Real>("value", 0., "Stress to apply");
   params.declareControllable("value");
   
   return params;
@@ -28,7 +28,7 @@ INSFVStressMomentumFluxBC::validParams()
 INSFVStressMomentumFluxBC::INSFVStressMomentumFluxBC(
     const InputParameters & params)
   : INSFVFreeSurfaceBC(params),
-    _sig(getParam<ADReal>("value"))
+    _sig(getParam<Real>("value"))
 {
 }
 
