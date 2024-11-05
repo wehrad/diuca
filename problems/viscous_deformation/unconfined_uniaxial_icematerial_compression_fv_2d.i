@@ -205,29 +205,33 @@ initial_II_eps_min = 1e-07
   # []
 
   [slip_bottom_y]
-    type = FVNeumannBC
+    type = INSFVStressMomentumFluxBC
     variable = vel_y
+    momentum_component='y'
     boundary = 'bottom'
-    value = 1
+    value = 1.
   []
   [slip_bottom_x]
-    type = FVNeumannBC
+    type = INSFVStressMomentumFluxBC
     variable = vel_x
+    momentum_component='x'
     boundary = 'bottom'
-    value = 0
+    value = 0.
   []
   
   [slip_top_y]
-    type = FVNeumannBC
+    type = INSFVStressMomentumFluxBC
     variable = vel_y
+    momentum_component='y'
     boundary = 'top'
-    value = -1
+    value = -1.
   []
   [slip_top_x]
-    type = FVNeumannBC
+    type = INSFVStressMomentumFluxBC
     variable = vel_x
+    momentum_component='x'
     boundary = 'top'
-    value = 0
+    value = 0.
   []
   
   
