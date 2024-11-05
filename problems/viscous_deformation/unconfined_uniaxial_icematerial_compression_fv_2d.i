@@ -150,16 +150,16 @@ initial_II_eps_min = 1e-07
   #   momentum_component = 'y'
   #   gravity = '0 -9.81 0'
   # []
- [stress_x]
-   type = INSFVIceStress
-   variable = vel_x
-   momentum_component = 'x'
- []
- [stress_y]
-   type = INSFVIceStress
-   variable = vel_y
-   momentum_component = 'y'
- []
+ # [stress_x]
+ #   type = INSFVIceStress
+ #   variable = vel_x
+ #   momentum_component = 'x'
+ # []
+ # [stress_y]
+ #   type = INSFVIceStress
+ #   variable = vel_y
+ #   momentum_component = 'y'
+ # []
 
 []
 
@@ -190,19 +190,47 @@ initial_II_eps_min = 1e-07
   #   boundary = 'top'
   #   function = 0
   # []
+  
+  # [slip_bottom_y]
+  #   type = INSFVNoSlipWallBC
+  #   variable = vel_y
+  #   boundary = 'bottom'
+  #   function = 1e-5
+  # []
+  # [slip_top]
+  #   type = INSFVNoSlipWallBC
+  #   variable = vel_y
+  #   boundary = 'top'
+  #   function = -1e-5
+  # []
+
   [slip_bottom_y]
-    type = INSFVNoSlipWallBC
+    type = FVNeumannBC
     variable = vel_y
     boundary = 'bottom'
-    function = 1e-5
+    value = 1
   []
-  [slip_top]
-    type = INSFVNoSlipWallBC
+  [slip_bottom_x]
+    type = FVNeumannBC
+    variable = vel_x
+    boundary = 'bottom'
+    value = 0
+  []
+  
+  [slip_top_y]
+    type = FVNeumannBC
     variable = vel_y
     boundary = 'top'
-    function = -1e-5
+    value = -1
   []
-
+  [slip_top_x]
+    type = FVNeumannBC
+    variable = vel_x
+    boundary = 'top'
+    value = 0
+  []
+  
+  
   # [inlet_top]
   #   type = INSFVOutletPressureBC
   #   variable = pressure

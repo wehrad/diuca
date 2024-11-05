@@ -8,9 +8,6 @@
 //* https://www.gnu.org/licenses/lgpl-2.1.html
 // modified from MOOSE INSFVMixingLengthReynoldsStress
 
-// probably use instead https://github.com/idaholab/moose/blob/a35543bb275d046234e6544b1e4c11563b57c710/framework/src/fvkernels/FVKernel.C#L10
-// with this https://github.com/casperversteeg/WhALE/blob/b115054ef7aeac03d99bb1c6c4a542ed9fa9b9fc/src/auxkernels/ComputeINSStress.CAD
-
 #include "INSFVIceStress.h"
 #include "INSFVVelocityVariable.h"
 #include "SystemBase.h"
