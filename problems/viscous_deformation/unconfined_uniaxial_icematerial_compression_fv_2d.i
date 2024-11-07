@@ -1,14 +1,6 @@
-# ------------------------ domain settings
-
 # ------------------------ simulation settings
 
-# dt associated with rest time associated with the
-# geometry (in seconds)
-# ice has a high viscosity and hence response times
-# of years
 nb_years = 0.075
-# mult = 1
-# mult = 0.5
 mult = 0.5
 _dt = '${fparse nb_years * 3600 * 24 * 365 * mult}'
 
@@ -16,21 +8,20 @@ _dt = '${fparse nb_years * 3600 * 24 * 365 * mult}'
 velocity_interp_method = 'rc'
 advected_interp_method = 'upwind'
 
+# velocity scaling
 vel_scaling = 1e-6
 
 # Material properties
 rho = 'rho_ice'
 mu = 'mu_ice'
 
+# Initial finite strain rate for viscosity rampup
 initial_II_eps_min = 1e-07
 
 # ------------------------
 
 [Problem]
   type = FEProblem
-  # near_null_space_dimension = 1
-  # null_space_dimension = 1
-  # transpose_null_space_dimension = 1
 []
 [GlobalParams]
   rhie_chow_user_object = 'rc'
@@ -150,108 +141,57 @@ initial_II_eps_min = 1e-07
   #   momentum_component = 'y'
   #   gravity = '0 -9.81 0'
   # []
- # [stress_x]
- #   type = INSFVIceStress
- #   variable = vel_x
- #   momentum_component = 'x'
- # []
- # [stress_y]
- #   type = INSFVIceStress
- #   variable = vel_y
- #   momentum_component = 'y'
- # []
 
 []
 
 [FVBCs]
   
-  # [free_slip_x]
-  #   type = INSFVNaturalFreeSlipBC
-  #   variable = vel_x
-  #   momentum_component = 'x'
-  #   boundary = 'left right'
-  # []
-  # [free_slip_y]
-  #   type = INSFVNaturalFreeSlipBC
-  #   variable = vel_y
-  #   momentum_component = 'y'
-  #   boundary = 'left right'
-  # []
-
-  # [no_slip_bottom_x]
-  #   type = INSFVNoSlipWallBC
-  #   variable = vel_x
-  #   boundary = 'bottom'
-  #   function = 0
-  # []
-  # [no_slip_top_x]
-  #   type = INSFVNoSlipWallBC
-  #   variable = vel_x
-  #   boundary = 'top'
-  #   function = 0
-  # []
-  
-  # [slip_bottom_y]
-  #   type = INSFVNoSlipWallBC
-  #   variable = vel_y
-  #   boundary = 'bottom'
-  #   function = 1e-5
-  # []
-  # [slip_top]
-  #   type = INSFVNoSlipWallBC
-  #   variable = vel_y
-  #   boundary = 'top'
-  #   function = -1e-5
-  # []
-
-  [slip_bottom_y]
+  [compression_bottom_yy]
     type = INSFVStressMomentumFluxBC
     variable = vel_y
     momentum_component='y'
     boundary = 'bottom'
     value = 1e6
   []
-  [slip_bottom_x]
+  [compression_bottom_xx]
     type = INSFVStressMomentumFluxBC
     variable = vel_x
     momentum_component='x'
     boundary = 'bottom'
     value = 0.
   []
+  [compression_bottom_xy]
+    type = INSFVStressMomentumFluxBC
+    variable = vel_x
+    momentum_component='y'
+    boundary = 'bottom'
+    value = 0.
+  []
   
-  [slip_top_y]
+  [compression_top_yy]
     type = INSFVStressMomentumFluxBC
     variable = vel_y
     momentum_component='y'
     boundary = 'top'
     value = -1e6
   []
-  [slip_top_x]
+  [compression_top_xx]
     type = INSFVStressMomentumFluxBC
     variable = vel_x
     momentum_component='x'
     boundary = 'top'
     value = 0.
   []
-  
-  
-  # [inlet_top]
-  #   type = INSFVOutletPressureBC
-  #   variable = pressure
-  #   boundary = 'top'
-  #   function = -100 # Pa
-  # []
-  # [outlet_bottom]
-  #   type = INSFVOutletPressureBC
-  #   variable = pressure
-  #   boundary = 'bottom'
-  #   function = 100 # Pa
-  # []
-  
+  [compression_top_xy]
+    type = INSFVStressMomentumFluxBC
+    variable = vel_x
+    momentum_component='y'
+    boundary = 'top'
+    value = 0.
+  []
   
 []
 
-# ------------------------
 
 [Functions]
   [viscosity_rampup]
@@ -278,24 +218,9 @@ initial_II_eps_min = 1e-07
     velocity_x = "vel_x"
     velocity_y = "vel_y"
     pressure = "pressure"
-    output_properties = 'mu_ice rho_ice eps_x eps_y eps_z sig_x sig_y sig_z'
+    output_properties = 'mu_ice rho_ice eps_xx eps_yy sig_xx sig_yy eps_xy sig_xy'
     outputs = "out"
   []
-
-  # [mu_combined]
-  #   type = ADPiecewiseByBlockFunctorMaterial
-  #   prop_name = 'mu_combined'
-  #   subdomain_to_prop_value = 'eleblock1 mu_ice
-  #                              eleblock2 mu_ice
-  #                              0 mu_sediment' #                                10  mu_ice
-  # []
-  # [rho_combined]
-  #   type = ADPiecewiseByBlockFunctorMaterial
-  #   prop_name = 'rho_combined'
-  #   subdomain_to_prop_value = 'eleblock1 rho_ice
-  #                              eleblock2 rho_ice
-  #                              0 rho_sediment'  #                                10  rho_ice
-  # []
 
 []
 
@@ -356,9 +281,6 @@ initial_II_eps_min = 1e-07
 [Executioner]
   type = Transient
   num_steps = 100
-
-  # petsc_options_iname = '-pc_type -pc_factor_shift'
-  # petsc_options_value = 'lu       NONZERO'
 
   petsc_options_iname = '-pc_type -pc_factor_shift_type'
   petsc_options_value = 'lu       NONZERO'

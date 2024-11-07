@@ -211,7 +211,7 @@ initial_II_eps_min = 1e-07
   [vel_x]
     type = INSFVVelocityVariable
     two_term_boundary_expansion = true
-    scaling = ${vel_scaling}
+    scaling = ${vel_scaling }
   []
   [vel_y]
     type = INSFVVelocityVariable

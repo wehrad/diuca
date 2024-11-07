@@ -137,6 +137,36 @@ FVIceMaterialSI::FVIceMaterialSI(const InputParameters & parameters)
         return eps_yz;
       });
 
+  const auto & eps_xx = addFunctorProperty<ADReal>(
+      "eps_xx",
+      [this, &eps_x](const auto & r, const auto & t) -> ADReal
+      {
+
+	ADReal eps_xx = eps_x(r, t)(0);
+	
+        return eps_xx;
+      });
+
+  const auto & eps_yy = addFunctorProperty<ADReal>(
+      "eps_yy",
+      [this, &eps_y](const auto & r, const auto & t) -> ADReal
+      {
+
+	ADReal eps_yy = eps_y(r, t)(1);
+	
+        return eps_yy;
+      });
+
+  const auto & eps_zz = addFunctorProperty<ADReal>(
+      "eps_zz",
+      [this, &eps_z](const auto & r, const auto & t) -> ADReal
+      {
+
+	ADReal eps_zz = eps_z(r, t)(2);
+	
+        return eps_zz;
+      });
+
   const auto & viscosity = addFunctorProperty<ADReal>(
       "mu_ice",
       [this, &eps_x, &eps_y, &eps_z, &eps_xy, &eps_xz, &eps_yz](const auto & r, const auto & t) -> ADReal
@@ -226,4 +256,66 @@ FVIceMaterialSI::FVIceMaterialSI(const InputParameters & parameters)
 
         return ADRealVectorValue(sig_zz, sig_zx, sig_zy);
       });
+
+
+  const auto & sig_xx = addFunctorProperty<ADReal>(
+      "sig_xx",
+      [this, &sig_x](const auto & r, const auto & t) -> ADReal
+      {
+
+	ADReal _sig_xx = sig_x(r, t)(0);
+	
+        return _sig_xx;
+      });
+
+  const auto & sig_yy = addFunctorProperty<ADReal>(
+      "sig_yy",
+      [this, &sig_y](const auto & r, const auto & t) -> ADReal
+      {
+
+	ADReal _sig_yy = sig_y(r, t)(0);
+	
+        return _sig_yy;
+      });
+
+  const auto & sig_zz = addFunctorProperty<ADReal>(
+      "sig_zz",
+      [this, &sig_z](const auto & r, const auto & t) -> ADReal
+      {
+
+	ADReal _sig_zz = sig_z(r, t)(0);
+	
+        return _sig_zz;
+      });
+
+  const auto & sig_xy = addFunctorProperty<ADReal>(
+      "sig_xy",
+      [this, &sig_x](const auto & r, const auto & t) -> ADReal
+      {
+
+	ADReal _sig_xy = sig_x(r, t)(1);
+	
+        return _sig_xy;
+      });
+
+  const auto & sig_xz = addFunctorProperty<ADReal>(
+      "sig_xz",
+      [this, &sig_x](const auto & r, const auto & t) -> ADReal
+      {
+
+	ADReal _sig_xz = sig_x(r, t)(2);
+	
+        return _sig_xz;
+      });
+
+  const auto & sig_yz = addFunctorProperty<ADReal>(
+      "sig_yz",
+      [this, &sig_y](const auto & r, const auto & t) -> ADReal
+      {
+
+	ADReal _sig_yz = sig_y(r, t)(2);
+	
+        return _sig_yz;
+      });
+
 }
