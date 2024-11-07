@@ -214,7 +214,7 @@ initial_II_eps_min = 1e-07
 [FunctorMaterials]
   [ice]
     type = FVIceMaterialSI
-    block = '0' #  10
+    block = '0'
     velocity_x = "vel_x"
     velocity_y = "vel_y"
     pressure = "pressure"
