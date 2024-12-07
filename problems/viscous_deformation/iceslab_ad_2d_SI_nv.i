@@ -1,14 +1,17 @@
 # ------------------------
 
 # slope of the bottom boundary (in degrees)
-bed_slope = 0.
+bed_slope = 10.
 
 # change coordinate system to add a slope
 gravity_x = '${fparse sin(bed_slope / 180 * pi) * 9.81 }'
 gravity_y = '${fparse - cos(bed_slope / 180 * pi) * 9.81}'
 
 #  geometry of the ice slab
-length = 1000.
+# length = 1000.
+# thickness = 100.
+
+length = 500.
 thickness = 100.
 
 # dt associated with rest time associated with the
@@ -65,7 +68,7 @@ initial_II_eps_min = 1e-07
     ymin = 0
     ymax = '${thickness}'
     nx = 50
-    ny = 5
+    ny = 10
     elem_type = QUAD9
   []
   # [pin_pressure_node]
@@ -154,14 +157,20 @@ initial_II_eps_min = 1e-07
 
 [BCs]
 
-  # [Periodic]
-  #   [up_down]
-  #     primary = left
-  #     secondary = right
-  #     translation = '${length} 0 0'
-  #     variable = 'velocity'
-  #   []
-  # []
+  [Periodic]
+    [up_down_velocity]
+      primary = left
+      secondary = right
+      translation = '${length} 0 0'
+      variable = 'velocity'
+    []
+    [up_down_p]
+      primary = left
+      secondary = right
+      translation = '${length} 0 0'
+      variable = 'p'
+    []
+  []
 
   # we need to pin the pressure to remove the singular value
   #[pin_pressure]
@@ -276,7 +285,7 @@ initial_II_eps_min = 1e-07
 
 [Executioner]
   type = Transient
-  num_steps = 100
+  num_steps = 200
 
   petsc_options_iname = '-pc_type -pc_factor_shift_type'
   petsc_options_value = 'lu       NONZERO'
