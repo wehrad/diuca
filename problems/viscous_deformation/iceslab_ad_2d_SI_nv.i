@@ -26,6 +26,10 @@ _dt = '${fparse nb_years * 3600 * 24 * 365}'
 #              inlet_mph / 3600
 #             } # ms-1
 
+# initial_II_eps_min = 1e-22 constant
+# initial_II_eps_min = 1e-07 decay = 2e-6 was the safest
+# initial_II_eps_min = 1e-07 decay = 1e-5 aggressive
+
 initial_II_eps_min = 1e-07
 
 # ------------------------
@@ -37,7 +41,7 @@ initial_II_eps_min = 1e-07
   # []
   [viscosity_rampup]
     type = ParsedFunction
-    expression = 'initial_II_eps_min * exp(-(t-_dt) * 2e-6)'
+    expression = 'initial_II_eps_min * exp(-(t-_dt) * 5e-6)' # 3e-6 # 2e-6
     # expression = 'initial_II_eps_min'
     symbol_names = '_dt initial_II_eps_min'
     symbol_values = '${_dt} ${initial_II_eps_min}'
@@ -110,10 +114,12 @@ initial_II_eps_min = 1e-07
 [Variables]
   [velocity]
     family = LAGRANGE_VEC
-    scaling = 1e-6
-    # initial_condition = 1e-8
+    # scaling = 1e-6
+    scaling = 1e6
+    # initial_condition = 1e-6
   []
   [p]
+    scaling = 1e6
   []
 []
 
@@ -192,7 +198,7 @@ initial_II_eps_min = 1e-07
     type = ADVectorFunctionDirichletBC
     variable = velocity
     boundary = 'bottom'
-    function_x = 0. # "${inlet_mps}"
+    function_x = 1e-7 # "${inlet_mps}"
     function_y = 0.
     # set_x_comp = False
   []
@@ -285,7 +291,7 @@ initial_II_eps_min = 1e-07
 
 [Executioner]
   type = Transient
-  num_steps = 200
+  num_steps = 100
 
   petsc_options_iname = '-pc_type -pc_factor_shift_type'
   petsc_options_value = 'lu       NONZERO'
@@ -301,18 +307,21 @@ initial_II_eps_min = 1e-07
   # nl_rel_tol = 1e-07
 
   # l_tol = 1e-6
-  l_tol = 1e-4
+  l_tol = 1e-6
 
-  nl_rel_tol = 1e-04
-  nl_abs_tol = 1e-04
+  # nl_rel_tol = 1e-04 in the initial SSA test
+  # nl_abs_tol = 1e-04
+
+  nl_rel_tol = 1e-05
+  nl_abs_tol = 1e-05
 
   nl_max_its = 100
   nl_forced_its = 3
   line_search = none
 
   dt = '${_dt}'
-  # steady_state_detection = true
-  # steady_state_tolerance = 1e-100
+  steady_state_detection = true
+  steady_state_tolerance = 1e-10
   check_aux = true
  
 []
