@@ -1,7 +1,7 @@
 # ------------------------ 
 
 # slope of the bottom boundary (in degrees)
-bed_slope = 10 # 5
+bed_slope = 5. # 5
 
 # change coordinate system to add a slope
 gravity_x = ${fparse
@@ -41,7 +41,7 @@ _dt = ${fparse
   xmax = '${length}'
   ymin = 0
   ymax = '${thickness}'
-  nx = 10
+  nx = 25
   ny = 5
   elem_type = QUAD9
   
@@ -92,10 +92,10 @@ _dt = ${fparse
     type = INSADMomentumTimeDerivative
     variable = velocity
   []
-  [momentum_advection]
-    type = INSADMomentumAdvection
-    variable = velocity
-  []
+  # [momentum_advection]
+  #   type = INSADMomentumAdvection
+  #   variable = velocity
+  # []
   [momentum_viscous]
     type = INSADMomentumViscous
     variable = velocity
@@ -119,14 +119,14 @@ _dt = ${fparse
 
 [BCs]
 
-  [Periodic]
-    [up_down]
-      primary = left
-      secondary = right
-      translation = '${length} 0 0'
-      variable = 'velocity'
-    []
-  []
+  # [Periodic]
+  #   [up_down]
+  #     primary = left
+  #     secondary = right
+  #     translation = '${length} 0 0'
+  #     variable = 'velocity'
+  #   []
+  # []
   
   # [inlet]
   #   type = ADVectorFunctionDirichletBC
@@ -139,7 +139,7 @@ _dt = ${fparse
     type = ADVectorFunctionDirichletBC
     variable = velocity
     boundary = 'bottom'
-    function_x = 0.
+    # function_x = 0.
     function_y = 0.
   []
 []
@@ -165,6 +165,7 @@ _dt = ${fparse
     solve_type = 'NEWTON'
   []
 []
+
 
 [Executioner]
   type = Transient

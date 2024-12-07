@@ -68,7 +68,7 @@ initial_II_eps_min = 1e-07
     ymin = 0
     ymax = '${thickness}'
     nx = 50
-    ny = 10
+    ny = 20
     elem_type = QUAD9
   []
   # [pin_pressure_node]

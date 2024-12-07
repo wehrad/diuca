@@ -40,11 +40,11 @@ initial_II_eps_min = 1e-07
   type = GeneratedMesh
   dim = 2
   xmin = 0
-  xmax = 0.333
+  xmax = 1
   ymin = 0
   ymax = 1
-  nx = 1
-  ny = 3
+  nx = 10
+  ny = 10
   elem_type = QUAD9
 []
 
@@ -103,11 +103,10 @@ initial_II_eps_min = 1e-07
   # [u_gravity]
   #   type = INSFVMomentumGravity
   #   variable = vel_x
-  #   rho = ${rho}
   #   momentum_component = 'x'
-  #   gravity = '0 -9.81 0'
+  #   gravity = '${gravity_x} ${gravity_y} 0.'
   # []
- 
+
   [v_time]
     type = INSFVMomentumTimeDerivative
     variable = vel_y
@@ -146,49 +145,70 @@ initial_II_eps_min = 1e-07
 
 [FVBCs]
   
-  [compression_bottom_yy]
-    type = INSFVStressMomentumFluxBC
+  # [compression_bottom_yy]
+  #   type = INSFVStressMomentumFluxBC
+  #   variable = vel_y
+  #   momentum_component='y'
+  #   boundary = 'bottom'
+  #   value = 1e6
+  # []
+  # [compression_bottom_xx]
+  #   type = INSFVStressMomentumFluxBC
+  #   variable = vel_x
+  #   momentum_component='x'
+  #   boundary = 'bottom'
+  #   value = 0.
+  # []
+  # [compression_bottom_xy]
+  #   type = INSFVStressMomentumFluxBC
+  #   variable = vel_x
+  #   momentum_component='y'
+  #   boundary = 'bottom'
+  #   value = 0.
+  # []
+  [dirichlet_bottom_y]
+    type = FVDirichletBC
     variable = vel_y
-    momentum_component='y'
-    boundary = 'bottom'
-    value = 1e6
-  []
-  [compression_bottom_xx]
-    type = INSFVStressMomentumFluxBC
-    variable = vel_x
-    momentum_component='x'
     boundary = 'bottom'
     value = 0.
   []
-  [compression_bottom_xy]
-    type = INSFVStressMomentumFluxBC
+
+  [dirichlet_left_x]
+    type = FVDirichletBC
     variable = vel_x
-    momentum_component='y'
-    boundary = 'bottom'
+    boundary = 'left'
     value = 0.
   []
-  
-  [compression_top_yy]
-    type = INSFVStressMomentumFluxBC
+
+  # [compression_top_yy]
+  #   type = INSFVStressMomentumFluxBC
+  #   variable = vel_y
+  #   momentum_component='y'
+  #   boundary = 'top'
+  #   value = 1e7
+  # []
+
+  [dirichlet_top_y]
+    type = FVDirichletBC
     variable = vel_y
-    momentum_component='y'
     boundary = 'top'
-    value = -1e6
+    value = -1e-10
   []
-  [compression_top_xx]
-    type = INSFVStressMomentumFluxBC
-    variable = vel_x
-    momentum_component='x'
-    boundary = 'top'
-    value = 0.
-  []
-  [compression_top_xy]
-    type = INSFVStressMomentumFluxBC
-    variable = vel_x
-    momentum_component='y'
-    boundary = 'top'
-    value = 0.
-  []
+
+  # [compression_top_xx]
+  #   type = INSFVStressMomentumFluxBC
+  #   variable = vel_x
+  #   momentum_component='x'
+  #   boundary = 'top'
+  #   value = 0.
+  # []
+  # [compression_top_xy]
+  #   type = INSFVStressMomentumFluxBC
+  #   variable = vel_x
+  #   momentum_component='y'
+  #   boundary = 'top'
+  #   value = 0.
+  # []
   
 []
 
