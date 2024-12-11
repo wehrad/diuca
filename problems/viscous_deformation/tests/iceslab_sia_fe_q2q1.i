@@ -1,11 +1,18 @@
 # ------------------------
 
-# # slope of the bottom boundary (in degrees)
-# bed_slope = 10.
+# slope of the bottom boundary (in degrees)
+bed_slope = 10.
 
-# # change coordinate system to add a slope
-# gravity_y = '${fparse sin(bed_slope / 180 * pi) * 9.81 }'
-# gravity_z = '${fparse - cos(bed_slope / 180 * pi) * 9.81}'
+# change coordinate system to add a slope
+gravity_x = '${fparse sin(bed_slope / 180 * pi) * 9.81 }'
+gravity_y = '${fparse - cos(bed_slope / 180 * pi) * 9.81}'
+
+#  geometry of the ice slab
+# length = 1000.
+# thickness = 100.
+
+length = 500.
+thickness = 100.
 
 # dt associated with rest time associated with the
 # geometry (in seconds)
@@ -14,36 +21,29 @@
 nb_years = 0.01 # 0.1
 _dt = '${fparse nb_years * 3600 * 24 * 365}'
 
-inlet_mph = 0.5 # 0.01 # mh-1
-inlet_mps = ${fparse
-             inlet_mph / 3600
-            } # ms-1
+# inlet_mph = 0.01 # mh-1
+# inlet_mps = ${fparse
+#              inlet_mph / 3600
+#             } # ms-1
 
 # initial_II_eps_min = 1e-22 constant
 # initial_II_eps_min = 1e-07 decay = 2e-6 was the safest
 # initial_II_eps_min = 1e-07 decay = 1e-5 aggressive
 
-initial_II_eps_min = 1e-13
-# initial_II_eps_min = 1e-12
-
-# initial_II_eps_min = 1e-10
-# initial_II_eps_min = 1e-17
+initial_II_eps_min = 1e-9
 
 # ------------------------
 
-[GlobalParams]
-  order = FIRST
-  # https://github.com/idaholab/moose/discussions/26157
-  # integrate_p_by_parts = true
-  integrate_p_by_parts = false
-[]
+# [GlobalParams]
+#   # order = FIRST
+#   # integrate_p_by_parts = true
+# []
 
 [Functions]
-  [ocean_pressure]
-    type = ParsedFunction
-    expression = 'if(z < 0, -1028 * 9.81 * z, 1e5)' # -1e5 * 9.81 * z)'
-    # expression = '917 * 9.81 * (100 - z)' # -1e5 * 9.81 * z)'
-  []
+  # [ocean_pressure]
+  #   type = ParsedFunction
+  #   expression = 'if(z < 0, 1e5 -1028 * 9.81 * z, 1e5)' # -1e5 * 9.81 * z)'
+  # []
   [viscosity_rampup]
     type = ParsedFunction
     expression = 'initial_II_eps_min * exp(-(t-_dt) * 2e-6)' # 3e-6 # 2e-6
@@ -51,13 +51,12 @@ initial_II_eps_min = 1e-13
     symbol_names = '_dt initial_II_eps_min'
     symbol_values = '${_dt} ${initial_II_eps_min}'
   []
-  [influx]
-    type = ParsedFunction
-    expression = 'inlet_mps * sin((2*pi / 20000) * y)' # * (z / 433.2)'
-    # expression = 'inlet_mps' # * (z / 433.2)'
-    symbol_names = 'inlet_mps'
-    symbol_values = '${inlet_mps}'
-  []
+  # [influx]
+  #   type = ParsedFunction
+  #   expression = 'inlet_mps * sin((2*pi / 20000) * y)'
+  #   symbol_names = 'inlet_mps'
+  #   symbol_values = '${inlet_mps}'
+  # []
 []
 
 [Controls]
@@ -70,52 +69,30 @@ initial_II_eps_min = 1e-13
 []
 
 [Mesh]
-
-  [channel]      
-  type = FileMeshGenerator
-  file = ../../../meshes/mesh_icestream_4xd_sed.e
+  [base_mesh]
+    type = GeneratedMeshGenerator
+    dim = 2
+    xmin = 0
+    xmax = '${length}'
+    ymin = 0
+    ymax = '${thickness}'
+    nx = 50
+    ny = 20
+    elem_type = QUAD9
   []
-
-  # delete sediment block for now (below bedrock)
-  [delete_sediment_block]
-    type = BlockDeletionGenerator
-    input = channel
-    block = '3'
-  []
-  [frontal_zone]
-    type = SubdomainBoundingBoxGenerator
-    input = 'delete_sediment_block'
-    block_id = 10
-    bottom_left = '20000 -1000 -3000'
-    top_right = '18000  15000 3000'
-  []
-  [refined_front]
-    type = RefineBlockGenerator
-    input = "frontal_zone"
-    block = '10'
-    refinement = '1'
-    enable_neighbor_refinement = true
-  []
-  # [mesh_combined_interm]
-  #   type = CombinerGenerator
-  #   inputs = 'channel refined_front'
-  # []
   # [pin_pressure_node]
   #   type = BoundingBoxNodeSetGenerator
-  #   input = 'delete_sediment_block'
-  #   bottom_left = '19599 4999 99'
-  #   top_right = '19601 5001 101'
+  #   input = 'base_mesh'
+  #   bottom_left = '-0.0001 -0.00001 0'
+  #   top_right = '0.000001 0.000001 0'
   #   new_boundary = 'pressure_pin_node'
   # []
 []
-
 
 [AuxVariables]
   [vel_x]
   []
   [vel_y]
-  []
-  [vel_z]
   []
 []
 
@@ -132,27 +109,20 @@ initial_II_eps_min = 1e-13
     vector_variable = velocity
     component = 'y'
   []
-  [vel_z]
-    type = VectorVariableComponentAux
-    variable = vel_z
-    vector_variable = velocity
-    component = 'z'
-  []
 []
 
 [Variables]
   [velocity]
     family = LAGRANGE_VEC
-    # order = SECOND
+    order = SECOND
+    # scaling = 1e-6
     scaling = 1e-6
-    # scaling = 1e6
     # initial_condition = 1e-6
   []
   [p]
-    # scaling = 1e6
     family = LAGRANGE
+    order = FIRST
     scaling = 1e-6
-    # initial_condition = 1e6
   []
 []
 
@@ -190,19 +160,34 @@ initial_II_eps_min = 1e-13
   [gravity]
     type = INSADGravityForce
     variable = velocity
-    gravity = '0. 0. -9.81'
+    gravity = '${gravity_x} ${gravity_y} 0.'
   []
 []
 
 [BCs]
 
+  [Periodic]
+    [up_down_velocity]
+      primary = left
+      secondary = right
+      translation = '${length} 0 0'
+      variable = 'velocity'
+    []
+    [up_down_p]
+      primary = left
+      secondary = right
+      translation = '${length} 0 0'
+      variable = 'p'
+    []
+  []
+
   # we need to pin the pressure to remove the singular value
-  # [pin_pressure]
+  #[pin_pressure]
   #  type = DirichletBC
   #  variable = p
   #  boundary = 'pressure_pin_node'
   #  value = 1e5
-  # []
+  #[]
 
   # [inlet]
   #   type = ADVectorFunctionDirichletBC
@@ -212,44 +197,21 @@ initial_II_eps_min = 1e-13
   #   function_x=0
   #   # function_y = 0.
   # []
-
-  [inlet]
-    type = ADVectorFunctionDirichletBC
-    variable = velocity
-    boundary = 'upstream'
-    function_x = influx
-    function_y = 0.
-    function_z = 0.
-  []
-  
-  [no_lateral_sliding]
-    type = ADVectorFunctionDirichletBC
-    variable = velocity
-    boundary = 'left right'
-    function_x = 0.
-    function_y = 0.
-    function_z = 0.
-    # set_x_comp = False
-  []
-
-  [no_basal_penetration]
+  [noslip]
     type = ADVectorFunctionDirichletBC
     variable = velocity
     boundary = 'bottom'
-    function_z = 0.
-    # function_x = 1e-6
-    # function_y = 0.
-    set_x_comp = False
-    set_y_comp = False
+    function_x = 1e-7 # "${inlet_mps}"
+    function_y = 0.
+    # set_x_comp = False
   []
 
-  [oulet]
-    type = ADFunctionDirichletBC
-    variable = p
-    boundary = 'downstream'
-    function = ocean_pressure
-  []
-
+  # [oulet]
+  #   type = ADFunctionDirichletBC
+  #   variable = p
+  #   boundary = 'right'
+  #   function = ocean_pressure
+  # []
   # [freesurface]
   #   type = INSADMomentumNoBCBC
   #   variable = velocity
@@ -264,7 +226,6 @@ initial_II_eps_min = 1e-13
     type = ADIceMaterialSI
     velocity_x = "vel_x"
     velocity_y = "vel_y"
-    velocity_z = "vel_z"
     pressure = "p"
     output_properties = "rho mu"
     outputs = "out"
@@ -278,7 +239,7 @@ initial_II_eps_min = 1e-13
 
 
 [Preconditioning]
-  active = 'SMP'
+  active = 'FSP'
   [FSP]
     type = FSP
     # It is the starting point of splitting
@@ -313,7 +274,7 @@ initial_II_eps_min = 1e-13
       petsc_options_value = 'full                            selfp                             300                1e-4      fgmres'
     []
     [u]
-      vars = 'vel_x vel_y vel_z'
+      vars = 'vel_x vel_y'
       petsc_options_iname = '-pc_type -pc_hypre_type -ksp_type -ksp_rtol -ksp_gmres_restart -ksp_pc_side'
       petsc_options_value = 'hypre    boomeramg      gmres    5e-1      300                 right'
     []
@@ -333,7 +294,7 @@ initial_II_eps_min = 1e-13
 
 [Executioner]
   type = Transient
-  num_steps = 100 # 100
+  num_steps = 100
 
   petsc_options_iname = '-pc_type -pc_factor_shift_type'
   petsc_options_value = 'lu       NONZERO'
@@ -350,27 +311,22 @@ initial_II_eps_min = 1e-13
 
   # l_tol = 1e-6
   l_tol = 1e-6
-  
-  nl_rel_tol = 1e-05
-  nl_abs_tol = 1e-05
 
-  nl_max_its = 40 # 100
+  nl_rel_tol = 1e-04 # in the initial SSA test
+  nl_abs_tol = 1e-04
+
+  # nl_rel_tol = 1e-05
+  # nl_abs_tol = 1e-05
+
+  nl_max_its = 100
   nl_forced_its = 3
   line_search = none
 
   dt = '${_dt}'
   steady_state_detection = true
-  steady_state_tolerance = 1e-20
+  steady_state_tolerance = 1e-10
   check_aux = true
-
-  # [Adaptivity]
-  #   interval = 1
-  #   refine_fraction = 0.5
-  #   coarsen_fraction = 0.3
-  #   max_h_level = 10
-  #   cycles_per_step = 2
-  # []
-
+ 
 []
 
 [Outputs]
