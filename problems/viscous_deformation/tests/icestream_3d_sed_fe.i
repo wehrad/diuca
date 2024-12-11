@@ -50,7 +50,7 @@ initial_II_eps_min = 1e-07
 
   [channel]
     type = FileMeshGenerator
-    file = ../../meshes/mesh_icestream_sed.e
+    file = ../../../meshes/mesh_icestream_4xd_sed.e
   []
 
   [delete_sediment_block]
@@ -380,7 +380,7 @@ initial_II_eps_min = 1e-07
     velocity_x = "vel_x"
     velocity_y = "vel_y"
     velocity_z = "vel_z"
-    pressure = "pressure"
+    pressure = "p"
     density  = 1850.
     sliding_law = ${sliding_law}
     SlipperinessCoefficient = ${slipperiness_coefficient}

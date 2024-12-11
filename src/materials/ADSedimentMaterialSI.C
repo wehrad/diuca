@@ -20,10 +20,10 @@ ADSedimentMaterialSI::validParams()
   params.addParam<Real>("LayerThickness", 1.0, "Sediment layer thickness"); // m
   params.declareControllable("LayerThickness");
 
-  // Get velocity gradients to compute viscosity based on second invariant
-  params.addParam<MooseFunctorName>("velocity_x", "Velocity in x dimension");
-  params.addParam<MooseFunctorName>("velocity_y", "Velocity in y dimension");
-  params.addParam<MooseFunctorName>("velocity_z", "Velocity in z dimension");
+  // Get velocity gradients to compute viscosity based on the effective strain rate
+  params.addRequiredCoupledVar("velocity_x", "Velocity in x dimension");
+  params.addCoupledVar("velocity_y", "Velocity in y dimension");
+  params.addCoupledVar("velocity_z", "Velocity in z dimension");
 
   // Mean pressure
   params.addRequiredCoupledVar("pressure", "Mean stress");
