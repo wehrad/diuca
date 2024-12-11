@@ -1,11 +1,23 @@
-# ------------------------
+# a large glacier flowing towards the ocean (hydrostatic pressure at
+# the glacier front, i.e. downstream boundary) in the influence of the
+# driving stress (surface slope), over a flat bed.
+# The mesh includes a sediment block which is the last layer of
+# elements before the bottom boundary (where zero velocity is
+# applied): the viscosity of the sediment layer is modulating basal
+# sliding through a friction coefficient.
+# An influx of ice is applied at the top of the domain (upstream
+# boundary) to take into account the ice coming from the inner part of
+# the ice sheet.
 
-# # slope of the bottom boundary (in degrees)
-# bed_slope = 10.
+# ------------------------ domain settings
 
-# # change coordinate system to add a slope
-# gravity_y = '${fparse sin(bed_slope / 180 * pi) * 9.81 }'
-# gravity_z = '${fparse - cos(bed_slope / 180 * pi) * 9.81}'
+# sediment rheology
+sliding_law = "GudmundssonRaymond"
+sediment_layer_thickness = 50.
+slipperiness_coefficient_mmpaa = 3e3 # 3e4 # 3e3 # 9.512937595129376e-11
+slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (365*24*3600)}' # 
+
+# ------------------------ simulation settings
 
 # dt associated with rest time associated with the
 # geometry (in seconds)
@@ -19,15 +31,11 @@ inlet_mps = ${fparse
              inlet_mph / 3600
             } # ms-1
 
-# initial_II_eps_min = 1e-22 constant
-# initial_II_eps_min = 1e-07 decay = 2e-6 was the safest
-# initial_II_eps_min = 1e-07 decay = 1e-5 aggressive
+# Material properties
+rho = 'rho_combined'
+mu = 'mu_combined'
 
-initial_II_eps_min = 1e-15
-# initial_II_eps_min = 1e-12
-
-# initial_II_eps_min = 1e-10
-# initial_II_eps_min = 1e-17
+initial_II_eps_min = 1e-07
 
 # ------------------------
 
@@ -36,6 +44,141 @@ initial_II_eps_min = 1e-15
   # https://github.com/idaholab/moose/discussions/26157
   # integrate_p_by_parts = true
   integrate_p_by_parts = false
+[]
+
+[Mesh]
+
+  [channel]
+    type = FileMeshGenerator
+    file = ../../meshes/mesh_icestream_sed.e
+  []
+
+  [delete_sediment_block]
+    type = BlockDeletionGenerator
+    input = channel
+    block = '3'
+  []
+
+  # Create sediment layer by projecting glacier bed by
+  # the sediment thickness
+  [lowerDblock_sediment]
+    type = LowerDBlockFromSidesetGenerator
+    input = "delete_sediment_block"
+    new_block_name = "block_0"
+    sidesets = "bottom"
+  []
+  [separateMesh_sediment]
+    type = BlockToMeshConverterGenerator
+    input = lowerDblock_sediment
+    target_blocks = "block_0"
+  []
+  [extrude_sediment]
+    type = MeshExtruderGenerator
+    input = separateMesh_sediment
+    num_layers = 1
+    extrusion_vector = '0. 0. -${sediment_layer_thickness}'
+    # bottom/top swap is (correct and) due to inverse extrusion
+    top_sideset = 'top_sediment'
+    bottom_sideset = 'bottom_sediment'
+  []
+  [stitch_sediment]
+    type = StitchedMeshGenerator
+    inputs = 'delete_sediment_block extrude_sediment'
+    stitch_boundaries_pairs = 'bottom bottom_sediment'
+  []
+
+  [add_sediment_lateral_sides]
+    type = ParsedGenerateSideset
+    combinatorial_geometry = 'y > 9999.99 | y < 0.01'
+    included_subdomains = 0
+    new_sideset_name = 'left_right_sediment'
+    input = 'stitch_sediment'
+    replace = True
+  []
+
+  [add_sediment_upstream_side]
+    type = ParsedGenerateSideset
+    combinatorial_geometry = 'x < 0.01'
+    included_subdomains = 0
+    new_sideset_name = 'upstream_sediment'
+    input = 'add_sediment_lateral_sides'
+    replace = True
+  []
+  [add_sediment_downstream_side]
+    type = ParsedGenerateSideset
+    combinatorial_geometry = 'x > 19599.99'
+    included_subdomains = 0
+    new_sideset_name = 'downstream_sediment'
+    input = 'add_sediment_upstream_side'
+    replace = True
+  []
+
+
+
+
+  # [frontal_zone]
+  #   type = SubdomainBoundingBoxGenerator
+  #   input = 'channel'
+  #   block_id = "10"
+  #   bottom_left = '20000 -1000 -3000'
+  #   top_right = '19000 15000 3000'
+  #   restricted_subdomains = 'eleblock1 eleblock2'
+  # []
+  # [refined_front]
+  #   type = RefineBlockGenerator
+  #   input = "add_sediment_downstream_side"
+  #   block = "0"
+  #   refinement = '1'
+  #   enable_neighbor_refinement = true
+  #   max_element_volume = 1e100
+  # []
+
+  # [fast_zone]
+  #   type = SubdomainBoundingBoxGenerator
+  #   input = 'add_sediment_downstream_side'
+  #   block_id = "10"
+  #   bottom_left = '20000 3749.99 -200.' # 99.99'
+  #   top_right = '13000  6700.99 434'
+  #   restricted_subdomains = 'eleblock2'
+  # []
+  # [refined_fastzone]
+  #   type = RefineBlockGenerator
+  #   input = "fast_zone"
+  #   block = "10"
+  #   refinement = '1'
+  #   enable_neighbor_refinement = false
+  #   max_element_volume = 1e100
+  # []
+
+  # [refined_surface]
+  #   type = RefineSidesetGenerator
+  #   input = "add_sediment_downstream_side"
+  #   boundaries = "surface"
+  #   refinement = '1'
+  #   enable_neighbor_refinement = false
+  #   boundary_side = "primary"
+  # []
+
+
+
+
+  [add_nodesets]
+    type = NodeSetsFromSideSetsGenerator
+    input = 'add_sediment_downstream_side'
+  []
+
+
+
+
+  # [refined_sediments]
+  #   type = RefineBlockGenerator
+  #   input = "add_nodesets"
+  #   block = "0"
+  #   refinement = '1'
+  #   enable_neighbor_refinement = true
+  #   max_element_volume = 1e100
+  # []
+
 []
 
 [Functions]
@@ -69,52 +212,6 @@ initial_II_eps_min = 1e-15
   []
 []
 
-[Mesh]
-
-  [channel]      
-  type = FileMeshGenerator
-  file = ../../../meshes/mesh_icestream_4xd_sed.e
-  []
-
-  # delete sediment block for now (below bedrock)
-  [delete_sediment_block]
-    type = BlockDeletionGenerator
-    input = channel
-    block = '3'
-  []
-  # [frontal_zone]
-  #   type = SubdomainBoundingBoxGenerator
-  #   input = 'delete_sediment_block'
-  #   block_id = 10
-  #   bottom_left = '20000 -1000 -3000'
-  #   top_right = '18000  15000 3000'
-  # []
-  # [refined_front]
-  #   type = RefineBlockGenerator
-  #   input = "frontal_zone"
-  #   block = '10'
-  #   refinement = '1'
-  #   enable_neighbor_refinement = true
-  # []
-  # [refine_icestream]
-  #   type = RefineBlockGenerator
-  #   input = "delete_sediment_block"
-  #   block = '1 2'
-  #   refinement = '1 1'
-  #   enable_neighbor_refinement = true
-  # []
-  # [mesh_combined_interm]
-  #   type = CombinerGenerator
-  #   inputs = 'channel refined_front'
-  # []
-  # [pin_pressure_node]
-  #   type = BoundingBoxNodeSetGenerator
-  #   input = 'delete_sediment_block'
-  #   bottom_left = '19599 4999 99'
-  #   top_right = '19601 5001 101'
-  #   new_boundary = 'pressure_pin_node'
-  # []
-[]
 
 
 [AuxVariables]
@@ -197,7 +294,7 @@ initial_II_eps_min = 1e-15
   [gravity]
     type = INSADGravityForce
     variable = velocity
-    gravity = '0. 0. -9.81'
+    gravity = '0. 0. -3' #9.81
   []
 []
 
@@ -220,6 +317,16 @@ initial_II_eps_min = 1e-15
   #   # function_y = 0.
   # []
 
+  # no slip at the sediment base nor on the sides
+  [no_slip_x]
+    type = ADVectorFunctionDirichletBC
+    variable = velocity
+    boundary = 'top_sediment left right left_right_sediment'
+    function_x = 0.
+    function_y = 0.
+    function_z = 0.
+  []
+
   [inlet]
     type = ADVectorFunctionDirichletBC
     variable = velocity
@@ -229,16 +336,6 @@ initial_II_eps_min = 1e-15
     function_z = 0.
   []
   
-  [no_lateral_sliding]
-    type = ADVectorFunctionDirichletBC
-    variable = velocity
-    boundary = 'left right'
-    function_x = 0.
-    function_y = 0.
-    function_z = 0.
-    # set_x_comp = False
-  []
-
   [no_basal_penetration]
     type = ADVectorFunctionDirichletBC
     variable = velocity
@@ -269,6 +366,7 @@ initial_II_eps_min = 1e-15
 [Materials]
   [ice]
     type = ADIceMaterialSI
+    block = 'eleblock1 eleblock2' #  10
     velocity_x = "vel_x"
     velocity_y = "vel_y"
     velocity_z = "vel_z"
@@ -276,6 +374,36 @@ initial_II_eps_min = 1e-15
     output_properties = "rho mu"
     outputs = "out"
   []
+  [sediment]
+    type = ADSedimentMaterialSI
+    block = '0'
+    velocity_x = "vel_x"
+    velocity_y = "vel_y"
+    velocity_z = "vel_z"
+    pressure = "pressure"
+    density  = 1850.
+    sliding_law = ${sliding_law}
+    SlipperinessCoefficient = ${slipperiness_coefficient}
+    LayerThickness = ${sediment_layer_thickness}
+    output_properties = 'mu_sediment rho_sediment'
+    outputs = "out"
+  []
+
+  [mu_combined]
+    type = ADPiecewiseByBlockFunctorMaterial
+    prop_name = 'mu_combined'
+    subdomain_to_prop_value = 'eleblock1 mu_ice
+                               eleblock2 mu_ice
+                               0 mu_sediment' #                                10  mu_ice
+  []
+  [rho_combined]
+    type = ADPiecewiseByBlockFunctorMaterial
+    prop_name = 'rho_combined'
+    subdomain_to_prop_value = 'eleblock1 rho_ice
+                               eleblock2 rho_ice
+                               0 rho_sediment'  #                                10  rho_ice
+  []
+
   [ins_mat]
     type = INSADTauMaterial
     velocity = velocity
