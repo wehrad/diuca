@@ -101,7 +101,6 @@ ADSedimentMaterialSI::computeQpProperties()
       ADReal v_x = _grad_velocity_y[_qp](0);
       ADReal v_y = _grad_velocity_y[_qp](1);
       ADReal v_z = _grad_velocity_y[_qp](2);
-
       ADReal w_x = _grad_velocity_z[_qp](0);
       ADReal w_y = _grad_velocity_z[_qp](1);
       ADReal w_z = _grad_velocity_z[_qp](2);
