@@ -54,8 +54,8 @@ ADIceMaterial::ADIceMaterial(const InputParameters & parameters)
     _pressure(adCoupledValue("pressure")),
 
     // Ice properties created by this object
-    _viscosity(declareADProperty<Real>("mu")),
-    _density(declareADProperty<Real>("rho"))
+    _viscosity(declareADProperty<Real>("mu_ice")),
+    _density(declareADProperty<Real>("rho_ice"))
 {
 }
 

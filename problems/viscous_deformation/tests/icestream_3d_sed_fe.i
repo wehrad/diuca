@@ -50,7 +50,7 @@ initial_II_eps_min = 1e-07
 
   [channel]
     type = FileMeshGenerator
-    file = ../../../meshes/mesh_icestream_4xd_sed.e
+    file = ../../../meshes/mesh_icestream_sed.e
   []
 
   [delete_sediment_block]
@@ -264,37 +264,53 @@ initial_II_eps_min = 1e-07
   [mass]
     type = INSADMass
     variable = p
+    rho = ${rho}
+    mu = ${mu}
   []
   [mass_stab]
     type = INSADMassPSPG
     variable = p
+    rho_name = ${rho}
+    mu_name = ${mu}
   []
   [momentum_time]
     type = INSADMomentumTimeDerivative
     variable = velocity
+    rho = ${rho}
+    mu = ${mu}
   []
   [momentum_advection]
     type = INSADMomentumAdvection
     variable = velocity
+    rho = ${rho}
+    mu = ${mu}
   []
   [momentum_viscous]
     type = INSADMomentumViscous
     variable = velocity
+    rho_name = ${rho}
+    mu_name= ${mu}
   []
   [momentum_pressure]
     type = INSADMomentumPressure
     variable = velocity
     pressure = p
+    rho = ${rho}
+    mu = ${mu}
   []
   [momentum_supg]
     type = INSADMomentumSUPG
     variable = velocity
     velocity = velocity
+    rho = ${rho}
+    mu = ${mu}
   []
   [gravity]
     type = INSADGravityForce
     variable = velocity
-    gravity = '0. 0. -3' #9.81
+    rho = ${rho}
+    mu = ${mu}
+    gravity = '0. 0. -9.81'
   []
 []
 
@@ -388,6 +404,8 @@ initial_II_eps_min = 1e-07
     type = INSADTauMaterial
     velocity = velocity
     pressure = p
+    rho_name = ${rho}
+    mu_name = ${mu}
   []
 []
 
@@ -493,4 +511,8 @@ initial_II_eps_min = 1e-07
   [out]
     type = Exodus
   []
+[]
+
+[Debug]
+  show_var_residual_norms = true
 []
