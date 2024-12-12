@@ -29,7 +29,7 @@ ADSedimentMaterialSI::validParams()
   params.addRequiredCoupledVar("pressure", "Mean stress");
 
   // Sediment density (https://tc.copernicus.org/articles/14/261/2020/)
-  params.addParam<Real>("density", 1850., "Ice density"); // kgm-3
+  params.addParam<Real>("density", 1850., "Sediment density"); // kgm-3
   params.declareControllable("density"); // kgm-3
 
   // Convergence parameters
@@ -50,7 +50,7 @@ ADSedimentMaterialSI::ADSedimentMaterialSI(const InputParameters & parameters)
     _mesh_dimension(_mesh.dimension()),
 
     // Sediment density
-    _rho(getParam<ADReal>("density")),
+    _rho(getParam<Real>("density")),
 
     // Velocity gradients
     _grad_velocity_x(adCoupledGradient("velocity_x")),
@@ -76,8 +76,8 @@ ADSedimentMaterialSI::ADSedimentMaterialSI(const InputParameters & parameters)
     _pressure(adCoupledValue("pressure")),
 
     // Ice properties created by this object
-    _density(declareADProperty<Real>("rho")),
-    _viscosity(declareADProperty<Real>("mu"))
+    _density(declareADProperty<Real>("rho_sediment")),
+    _viscosity(declareADProperty<Real>("mu_sediment"))
 {
 }
 
@@ -88,6 +88,9 @@ ADSedimentMaterialSI::computeQpProperties()
   // Constant density
   _density[_qp] = _rho;
 
+  // Viscosity at previous timestep
+  ADReal eta = _viscosity[_qp];
+  
   if (_sliding_law == "DruckerPrager")
     {
       // Get current velocity gradients at quadrature point
@@ -109,8 +112,6 @@ ADSedimentMaterialSI::computeQpProperties()
 
       // Get pressure
       ADReal sig_m = _pressure[_qp];
-
-      ADReal eta = _viscosity[_qp];
 
       // Compute stresses
       ADReal sxx = 2 * eta * u_x + sig_m;

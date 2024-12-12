@@ -307,21 +307,12 @@ initial_II_eps_min = 1e-07
   #  boundary = 'pressure_pin_node'
   #  value = 1e5
   # []
-
-  # [inlet]
-  #   type = ADVectorFunctionDirichletBC
-  #   variable = velocity
-  #   boundary = 'left'
-  #   # function_x = "${inlet_mps}"
-  #   function_x=0
-  #   # function_y = 0.
-  # []
-
+  
   # no slip at the sediment base nor on the sides
-  [no_slip_x]
+  [no_slip]
     type = ADVectorFunctionDirichletBC
     variable = velocity
-    boundary = 'top_sediment left right left_right_sediment'
+    boundary = 'left right left_right_sediment top_sediment'
     function_x = 0.
     function_y = 0.
     function_z = 0.
@@ -330,23 +321,12 @@ initial_II_eps_min = 1e-07
   [inlet]
     type = ADVectorFunctionDirichletBC
     variable = velocity
-    boundary = 'upstream'
+    boundary = 'upstream upstream_sediment'
     function_x = influx
     function_y = 0.
     function_z = 0.
   []
   
-  [no_basal_penetration]
-    type = ADVectorFunctionDirichletBC
-    variable = velocity
-    boundary = 'bottom'
-    function_z = 0.
-    # function_x = 1e-6
-    # function_y = 0.
-    set_x_comp = False
-    set_y_comp = False
-  []
-
   [oulet]
     type = ADFunctionDirichletBC
     variable = p
@@ -371,7 +351,7 @@ initial_II_eps_min = 1e-07
     velocity_y = "vel_y"
     velocity_z = "vel_z"
     pressure = "p"
-    output_properties = "rho mu"
+    output_properties = 'mu_ice rho_ice'
     outputs = "out"
   []
   [sediment]
