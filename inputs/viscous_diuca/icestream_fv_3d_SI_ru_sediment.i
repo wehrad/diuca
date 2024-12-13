@@ -63,7 +63,11 @@ initial_II_eps_min = 1e-03
 
   [channel]
     type = FileMeshGenerator
+<<<<<<< HEAD
     file = ../mesh_icestream_wtsed.e
+=======
+    file = mesh_icestream.e
+>>>>>>> main
   []
 
   

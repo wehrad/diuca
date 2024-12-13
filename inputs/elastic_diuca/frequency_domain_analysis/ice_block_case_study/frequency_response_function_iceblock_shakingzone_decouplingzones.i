@@ -1,4 +1,4 @@
-# from moose/modules/solid_mechanics/examples/wave_propagation/cantilever_sweepi.
+# from moose/modules/solid_mechanics/examples/wave_propagation/cantilever_sweep.i
 
 # choose if bed is coupled or not
 # bed_coupled = 0
@@ -9,43 +9,71 @@
     elem_type = HEX8
     dim = 3
     xmin = 0
-    xmax = 4000.
-    nx = 20
+    xmax = 5000.
+    nx = 25 # 50
     zmin = 0
-    zmax = 4000.
-    nz = 20
-    ymin = 100.
-    ymax = 700.
-    ny = 10
+    zmax = 5000.
+    nz = 25 # 50
+    ymin = 0.
+    ymax = 600.
+    ny = 3 # 6
   []
 
-  [wide_decoupling_zone]
+  [shaking_zone]
     type = SubdomainBoundingBoxGenerator
     input = 'block'
     block_id = 4
-    bottom_left = '1750 99 1750'
-    top_right = '2250 161 2250'
+    bottom_left = '2200 -1 2200'
+    top_right = '2700 101 2700'
+  []
+  [decoupling_zone_left]
+    type = SubdomainBoundingBoxGenerator
+    input = 'shaking_zone'
+    block_id = 5
+    bottom_left = '2200 -1 950'
+    top_right = '2700 101 1550'
+  []
+  [decoupling_zone_right]
+    type = SubdomainBoundingBoxGenerator
+    input = 'decoupling_zone_left'
+    block_id = 6
+    bottom_left = '2200 -1 3450'
+    top_right = '2700 101 4050'
+  []
+  [decoupling_zone_top]
+    type = SubdomainBoundingBoxGenerator
+    input = 'decoupling_zone_right'
+    block_id = 7
+    bottom_left = '3450 -1 2200'
+    top_right = '4050 101 2700'
+  []
+  [decoupling_zone_bottom]
+    type = SubdomainBoundingBoxGenerator
+    input = 'decoupling_zone_top'
+    block_id = 8
+    bottom_left = '950 -1 2200'
+    top_right = '1550 101 2700'
   []
   [mesh_combined_interm]
     type = CombinerGenerator
-    inputs = 'block wide_decoupling_zone'
+    inputs = 'block decoupling_zone_bottom'
   []
-  [wide_decoupling_zone_refined]
-    type = RefineBlockGenerator
-    input = "mesh_combined_interm"
+  [shaking_bottom]
+    type = SideSetsAroundSubdomainGenerator
+    input = 'mesh_combined_interm'
     block = '4'
-    refinement = '2'
-    enable_neighbor_refinement = true
+    new_boundary = 'shaking_bottom'
+    replace = true
+    normal = '0 1 0'
   []
   [decoupling_bottom]
     type = SideSetsAroundSubdomainGenerator
-    input = 'wide_decoupling_zone_refined' # 'wide_decoupling_zone_refined'
-    block = '4'
+    input = 'shaking_bottom'
+    block = '5 6 7 8'
     new_boundary = 'decoupling_bottom'
     replace = true
-    normal = '0 -1 0'
+    normal = '0 1 0'
   []
-
   [delete_bottom]
     type=BoundaryDeletionGenerator
     input='decoupling_bottom'
@@ -55,13 +83,20 @@
   [add_bottom_back]
     type = ParsedGenerateSideset
     input = 'delete_bottom'
-    combinatorial_geometry = '(x < 1750 | x > 2250 | z < 1750 | z > 2250) & (y < 101)'
+    combinatorial_geometry = '((x<2200 & z<2200) | (x>2700 & z>2700)) & (y<1)|
+                              ((x>2700 & z<2200) | (x<2200 & z>2700)) & (y<1)|
+                              ((z<950) | (z>4050)) & (y<1)|
+                              ((x<950) | (x>4050)) & (y<1)|
+                              (z>1550) & (z<2200) & (y < 1)|
+                              (z>2700) & (z<3450) & (y < 1)|
+                              (x>2700) & (x<3450) & (y < 1)|
+                              (x>1550) & (x<2200) & (y < 1)' 
     included_subdomains = '0'
     normal = '0 -1 0'
     new_sideset_name = 'bottom'
     replace=true
   []
-  
+
 []
 
 [GlobalParams]
@@ -97,21 +132,21 @@
         variable = disp_x
         rate = 0# filled by controller
         extra_vector_tags = 'ref'
-        block = '0 4'
+        block = '0' # 4'
     []
     [reaction_realy]
         type = Reaction
         variable = disp_y
         rate = 0# filled by controller
         extra_vector_tags = 'ref'
-        block = '0 4'
+        block = '0' # 4'
     []
     [reaction_realz]
         type = Reaction
         variable = disp_z
         rate = 0# filled by controller
         extra_vector_tags = 'ref'
-        block = '0 4'
+        block = '0' # 4'
     []
 []
 
@@ -130,153 +165,71 @@
 []
 
 [BCs]
-  [dirichlet_bottom_x]
+  [dirichlet_bottom1_x]
     type = DirichletBC
     variable = disp_x
     value = 0
-    boundary = 'bottom'
+    boundary = 'decoupling_bottom'
   []
-  [dirichlet_bottom_y]
+  [dirichlet_bottom1_y]
     type = DirichletBC
     variable = disp_y
     value = 0
-    boundary = 'bottom'
+    boundary = 'decoupling_bottom'
   []
-  [dirichlet_bottom_z]
+  [dirichlet_bottom1_z]
     type = DirichletBC
     variable = disp_z
     value = 0
-    boundary = 'bottom'
-  []
-
-  [dirichlet_decoupling_bottom_x]
-    type = DirichletBC
-    variable = disp_x
-    value = 0.
     boundary = 'decoupling_bottom'
   []
-  [dirichlet_decoupling_bottom_y]
-    type = DirichletBC
-    variable = disp_y
-    value = 0.
-    boundary = 'decoupling_bottom'
-  []
-  [dirichlet_decoupling_bottom_z]
-    type = DirichletBC
-    variable = disp_z
-    value = 0.
-    boundary = 'decoupling_bottom'
-  []
+  # [dirichlet_bottom_x]
+  #   type = DirichletBC
+  #   variable = disp_x
+  #   value = 0
+  #   boundary = 'bottom'
+  # []
+  # [dirichlet_bottom_y]
+  #   type = DirichletBC
+  #   variable = disp_y
+  #   value = 0
+  #   boundary = 'bottom'
+  # []
+  # [dirichlet_bottom_z]
+  #   type = DirichletBC
+  #   variable = disp_z
+  #   value = 0
+  #   boundary = 'bottom'
+  # []
 
-  [right_xreal]
+  [bottom_xreal]
     type = NeumannBC
     variable = disp_x
-    boundary = 'right'
-    value = 1000
+    boundary = 'shaking_bottom'
+    value = 1
   []
-  [right_yreal]
+  [bottom_yreal]
     type = NeumannBC
     variable = disp_y
-    boundary = 'right'
-    value = 1000
+    boundary = 'shaking_bottom'
+    value = 1
   []
-  [right_zreal]
+  [bottom_zreal]
     type = NeumannBC
     variable = disp_z
-    boundary = 'right'
-    value = 1000
+    boundary = 'shaking_bottom'
+    value = 1
   []
-
-  [left_xreal]
-    type = NeumannBC
-    variable = disp_x
-    boundary = 'left'
-    value = 1000
-  []
-  [left_yreal]
-    type = NeumannBC
-    variable = disp_y
-    boundary = 'left'
-    value = 1000
-  []
-  [left_zreal]
-    type = NeumannBC
-    variable = disp_z
-    boundary = 'left'
-    value = 1000
-  []
-
-  [front_xreal]
-    type = NeumannBC
-    variable = disp_x
-    boundary = 'front'
-    value = 1000
-  []
-  [front_yreal]
-    type = NeumannBC
-    variable = disp_y
-    boundary = 'front'
-    value = 1000
-  []
-  [front_zreal]
-    type = NeumannBC
-    variable = disp_z
-    boundary = 'front'
-    value = 1000
-  []
-
-  [back_xreal]
-    type = NeumannBC
-    variable = disp_x
-    boundary = 'back'
-    value = 1000
-  []
-  [back_yreal]
-    type = NeumannBC
-    variable = disp_y
-    boundary = 'back'
-    value = 1000
-  []
-  [back_zreal]
-    type = NeumannBC
-    variable = disp_z
-    boundary = 'back'
-    value = 1000
-  []
-
 
   # [Periodic]
   #   [periodic_x]
   #     variable = disp_x
   #     auto_direction = 'x'
   #   []
-  #   [periodic_y]
-  #     variable = disp_y
-  #     auto_direction = 'x'
-  #   []
   #   [periodic_z]
   #     variable = disp_z
-  #     auto_direction = 'x'
+  #     auto_direction = 'z'
   #   []
-  # []
-
-  # [bottom_xreal]
-  #   type = NeumannBC
-  #   variable = disp_x
-  #   boundary = 'bottom'
-  #   value = 1000
-  # []
-  # [bottom_yreal]
-  #   type = NeumannBC
-  #   variable = disp_y
-  #   boundary = 'bottom'
-  #   value = 1000
-  # []
-  # [bottom_zreal]
-  #   type = NeumannBC
-  #   variable = disp_z
-  #   boundary = 'bottom'
-  #   value = 1000
   # []
 
 []
@@ -295,10 +248,15 @@
 
 [Postprocessors]
   [dispMag]
-    type = NodalExtremeValue
-    value_type = max
+    type = AverageNodalVariableValue
+    boundary = 'top'
     variable = disp_mag
   []
+  # [dispMag]
+  #   type = NodalExtremeValue
+  #   value_type = max
+  #   variable = disp_mag
+  # []
 []
 
 [Functions]
@@ -334,12 +292,12 @@
   solve_type=LINEAR
   petsc_options_iname = ' -pc_type'
   petsc_options_value = 'lu'
-  start_time = 4 #starting frequency
-  end_time =  6.  #ending frequency
+  start_time = 0.1 #starting frequency
+  end_time =  10.  #ending frequency
   nl_abs_tol = 1e-6
   [TimeStepper]
     type = ConstantDT
-    dt = 0.1  #frequency stepsize
+    dt = 0.01  #frequency stepsize
   []
 []
 
