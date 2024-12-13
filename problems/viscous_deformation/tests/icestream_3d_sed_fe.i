@@ -31,10 +31,6 @@ inlet_mps = ${fparse
              inlet_mph / 3600
             } # ms-1
 
-# Material properties
-rho = 'rho_combined'
-mu = 'mu_combined'
-
 initial_II_eps_min = 1e-07
 
 # ------------------------
@@ -113,71 +109,10 @@ initial_II_eps_min = 1e-07
     replace = True
   []
 
-
-
-
-  # [frontal_zone]
-  #   type = SubdomainBoundingBoxGenerator
-  #   input = 'channel'
-  #   block_id = "10"
-  #   bottom_left = '20000 -1000 -3000'
-  #   top_right = '19000 15000 3000'
-  #   restricted_subdomains = 'eleblock1 eleblock2'
-  # []
-  # [refined_front]
-  #   type = RefineBlockGenerator
-  #   input = "add_sediment_downstream_side"
-  #   block = "0"
-  #   refinement = '1'
-  #   enable_neighbor_refinement = true
-  #   max_element_volume = 1e100
-  # []
-
-  # [fast_zone]
-  #   type = SubdomainBoundingBoxGenerator
-  #   input = 'add_sediment_downstream_side'
-  #   block_id = "10"
-  #   bottom_left = '20000 3749.99 -200.' # 99.99'
-  #   top_right = '13000  6700.99 434'
-  #   restricted_subdomains = 'eleblock2'
-  # []
-  # [refined_fastzone]
-  #   type = RefineBlockGenerator
-  #   input = "fast_zone"
-  #   block = "10"
-  #   refinement = '1'
-  #   enable_neighbor_refinement = false
-  #   max_element_volume = 1e100
-  # []
-
-  # [refined_surface]
-  #   type = RefineSidesetGenerator
-  #   input = "add_sediment_downstream_side"
-  #   boundaries = "surface"
-  #   refinement = '1'
-  #   enable_neighbor_refinement = false
-  #   boundary_side = "primary"
-  # []
-
-
-
-
   [add_nodesets]
     type = NodeSetsFromSideSetsGenerator
     input = 'add_sediment_downstream_side'
   []
-
-
-
-
-  # [refined_sediments]
-  #   type = RefineBlockGenerator
-  #   input = "add_nodesets"
-  #   block = "0"
-  #   refinement = '1'
-  #   enable_neighbor_refinement = true
-  #   max_element_volume = 1e100
-  # []
 
 []
 
@@ -261,57 +196,126 @@ initial_II_eps_min = 1e-07
 []
 
 [Kernels]
-  [mass]
+  [mass_ice]
     type = INSADMass
+    block = 'eleblock1 eleblock2'
     variable = p
-    rho = ${rho}
-    mu = ${mu}
+    rho = rho_ice
+    mu = mu_ice
   []
-  [mass_stab]
+  [mass_stab_ice]
     type = INSADMassPSPG
+    block = 'eleblock1 eleblock2'
     variable = p
-    rho_name = ${rho}
-    mu_name = ${mu}
+    rho_name = rho_ice
+    mu_name = mu_ice
   []
-  [momentum_time]
+  [momentum_time_ice]
     type = INSADMomentumTimeDerivative
+    block = 'eleblock1 eleblock2'
     variable = velocity
-    rho = ${rho}
-    mu = ${mu}
+    rho = rho_ice
+    mu = mu_ice
   []
-  [momentum_advection]
+  [momentum_advection_ice]
     type = INSADMomentumAdvection
+    block = 'eleblock1 eleblock2'
     variable = velocity
-    rho = ${rho}
-    mu = ${mu}
+    rho = rho_ice
+    mu = mu_ice
   []
-  [momentum_viscous]
+  [momentum_viscous_ice]
     type = INSADMomentumViscous
+    block = 'eleblock1 eleblock2'
     variable = velocity
-    rho_name = ${rho}
-    mu_name= ${mu}
+    rho_name = rho_ice
+    mu_name= mu_ice
   []
-  [momentum_pressure]
+  [momentum_pressure_ice]
     type = INSADMomentumPressure
+    block = 'eleblock1 eleblock2'
     variable = velocity
     pressure = p
-    rho = ${rho}
-    mu = ${mu}
+    rho = rho_ice
+    mu = mu_ice
   []
-  [momentum_supg]
+  [momentum_supg_ice]
     type = INSADMomentumSUPG
+    block = 'eleblock1 eleblock2'
     variable = velocity
     velocity = velocity
-    rho = ${rho}
-    mu = ${mu}
+    rho = rho_ice
+    mu = mu_ice
   []
-  [gravity]
+  [gravity_ice]
     type = INSADGravityForce
+    block = 'eleblock1 eleblock2'
     variable = velocity
-    rho = ${rho}
-    mu = ${mu}
+    rho = rho_ice
+    mu = mu_ice
     gravity = '0. 0. -9.81'
   []
+
+  [mass_sediment]
+    type = INSADMass
+    block = '0'
+    variable = p
+    rho = rho_sediment
+    mu = mu_sediment
+  []
+  [mass_stab_sediment]
+    type = INSADMassPSPG
+    block = '0'
+    variable = p
+    rho_name = rho_sediment
+    mu_name = mu_sediment
+  []
+  [momentum_time_sediment]
+    type = INSADMomentumTimeDerivative
+    block = '0'
+    variable = velocity
+    rho = rho_sediment
+    mu = mu_sediment
+  []
+  [momentum_advection_sediment]
+    type = INSADMomentumAdvection
+    block = '0'
+    variable = velocity
+    rho = rho_sediment
+    mu = mu_sediment
+  []
+  [momentum_viscous_sediment]
+    type = INSADMomentumViscous
+    block = '0'
+    variable = velocity
+    rho_name = rho_sediment
+    mu_name= mu_sediment
+  []
+  [momentum_pressure_sediment]
+    type = INSADMomentumPressure
+    block = '0'
+    variable = velocity
+    pressure = p
+    rho = rho_sediment
+    mu = mu_sediment
+  []
+  [momentum_supg_sediment]
+    type = INSADMomentumSUPG
+    block = '0'
+    variable = velocity
+    velocity = velocity
+    rho = rho_sediment
+    mu = mu_sediment
+  []
+  [gravity_sediment]
+    type = INSADGravityForce
+    block = '0'
+    variable = velocity
+    rho = rho_sediment
+    mu = mu_sediment
+    gravity = '0. 0. -9.81'
+  []
+
 []
 
 [BCs]
@@ -385,27 +389,22 @@ initial_II_eps_min = 1e-07
     outputs = "out"
   []
 
-  [mu_combined]
-    type = ADPiecewiseByBlockFunctorMaterial
-    prop_name = 'mu_combined'
-    subdomain_to_prop_value = 'eleblock1 mu_ice
-                               eleblock2 mu_ice
-                               0 mu_sediment' #                                10  mu_ice
-  []
-  [rho_combined]
-    type = ADPiecewiseByBlockFunctorMaterial
-    prop_name = 'rho_combined'
-    subdomain_to_prop_value = 'eleblock1 rho_ice
-                               eleblock2 rho_ice
-                               0 rho_sediment'  #                                10  rho_ice
-  []
-
-  [ins_mat]
+  [ins_mat_ice]
     type = INSADTauMaterial
+    block = 'eleblock1 eleblock2'
     velocity = velocity
     pressure = p
-    rho_name = ${rho}
-    mu_name = ${mu}
+    rho_name = "rho_ice"
+    mu_name = "mu_ice"
+  []
+
+  [ins_mat_sediment]
+    type = INSADTauMaterial
+    block = '0'
+    velocity = velocity
+    pressure = p
+    rho_name = "rho_sediment"
+    mu_name = "mu_sediment"
   []
 []
 
@@ -515,4 +514,5 @@ initial_II_eps_min = 1e-07
 
 [Debug]
   show_var_residual_norms = true
+  show_material_props = true
 []
