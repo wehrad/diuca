@@ -23,8 +23,9 @@ ADIceMaterial::validParams()
   params.addParam<ADReal>("density", 917., "Ice density"); // kgm-3
 
   // Convergence parameters
-  params.addParam<ADReal>("II_eps_min", 5.98e-6, "Finite strain rate parameter"); // a-1
-
+  params.addParam<Real>("II_eps_min", 5.98e-6, "Finite strain rate parameter"); // a-1
+  params.declareControllable("II_eps_min");
+  
   return params;
 }
 
@@ -47,14 +48,14 @@ ADIceMaterial::ADIceMaterial(const InputParameters & parameters)
     _grad_velocity_z(_mesh_dimension == 3 ? adCoupledGradient("velocity_z") : _ad_grad_zero),
 
     // Finite strain rate parameter
-    _II_eps_min(getParam<ADReal>("II_eps_min")),
+    _II_eps_min(getParam<Real>("II_eps_min")),
 
     // Mean stress
     _pressure(adCoupledValue("pressure")),
 
     // Ice properties created by this object
-    _viscosity(declareADProperty<Real>("mu")),
-    _density(declareADProperty<Real>("rho"))
+    _viscosity(declareADProperty<Real>("mu_ice")),
+    _density(declareADProperty<Real>("rho_ice"))
 {
 }
 
@@ -98,5 +99,6 @@ ADIceMaterial::computeQpProperties()
   _density[_qp] = _rho;
 
   // std::cout << "p=" << _pressure[_qp] << "   mu=" << _viscosity[_qp] << "  v_y=" <<  v_y << std::endl;
-  
+
+  std::cout << "mu=" << _viscosity[_qp] << std::endl;
 }

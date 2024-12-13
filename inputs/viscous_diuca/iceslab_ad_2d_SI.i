@@ -33,7 +33,7 @@ inlet_mps = ${fparse
     xmax = '${length}'
     ymin = 0
     ymax = '${thickness}'
-    nx = 10
+    nx = 50
     ny = 5
     elem_type = QUAD9
   []

@@ -1,44 +1,37 @@
-# ------------------------
+# ------------------------ domain settings
 
-# slope of the bottom boundary (in degrees)
-bed_slope = 5.
-
-# change coordinate system to add a slope
-gravity_x = '${fparse sin(bed_slope / 180 * pi) * 9.81 }'
-gravity_y = '${fparse - cos(bed_slope / 180 * pi) * 9.81}'
-
-#  geometry of the ice slab
-length = 1000.
-thickness = 100.
+# ------------------------ simulation settings
 
 # dt associated with rest time associated with the
 # geometry (in seconds)
 # ice has a high viscosity and hence response times
 # of years
-nb_years = 0.1
-_dt = '${fparse nb_years * 3600 * 24 * 365}'
-
-inlet_mph = 0.1 # mh-1
-inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
-
-# ------------------------
+nb_years = 0.075
+# mult = 1
+# mult = 0.5
+mult = 0.5
+_dt = '${fparse nb_years * 3600 * 24 * 365 * mult}'
 
 # Numerical scheme parameters
 velocity_interp_method = 'rc'
 advected_interp_method = 'upwind'
 
-# velocity scaling
-vel_scaling = 1e-7
+vel_scaling = 1e-6
 
 # Material properties
 rho = 'rho_ice'
 mu = 'mu_ice'
 
-# Initial finite strain rate for viscosity rampup
-initial_II_eps_min = 1e-07 # 1e-07
+initial_II_eps_min = 1e-07
 
 # ------------------------
 
+[Problem]
+  type = FEProblem
+  # near_null_space_dimension = 1
+  # null_space_dimension = 1
+  # transpose_null_space_dimension = 1
+[]
 [GlobalParams]
   rhie_chow_user_object = 'rc'
 []
@@ -56,12 +49,12 @@ initial_II_eps_min = 1e-07 # 1e-07
   type = GeneratedMesh
   dim = 2
   xmin = 0
-  xmax = '${length}'
+  xmax = 1
   ymin = 0
-  ymax = '${thickness}'
-  nx = 50
-  ny = 5
-  elem_type = QUAD4
+  ymax = 1
+  nx = 3
+  ny = 3
+  elem_type = QUAD9
 []
 
 [Variables]
@@ -116,14 +109,14 @@ initial_II_eps_min = 1e-07 # 1e-07
     pressure = pressure
     momentum_component = 'x'
   []
-  [u_gravity]
-    type = INSFVMomentumGravity
-    variable = vel_x
-    momentum_component = 'x'
-    rho = ${rho}
-    gravity = '${gravity_x} ${gravity_y} 0.'
-  []
-
+  # [u_gravity]
+  #   type = INSFVMomentumGravity
+  #   variable = vel_x
+  #   rho = ${rho}
+  #   momentum_component = 'x'
+  #   gravity = '0 -9.81 0'
+  # []
+ 
   [v_time]
     type = INSFVMomentumTimeDerivative
     variable = vel_y
@@ -150,75 +143,81 @@ initial_II_eps_min = 1e-07 # 1e-07
     pressure = pressure
     momentum_component = 'y'
   []
-  [v_gravity]
-    type = INSFVMomentumGravity
-    variable = vel_y
-    momentum_component = 'y'
-    rho = ${rho}
-    gravity = '${gravity_x} ${gravity_y} 0.'
+  # [v_buoyant]
+  #   type = INSFVMomentumGravity
+  #   variable = vel_y
+  #   rho = ${rho}
+  #   momentum_component = 'y'
+  #   gravity = '0 -9.81 0'
+  # []
+ [stress]
+   type = INSFVIceStress
+   variable = vel_x
+   mu = ${mu}
+   momentum_component = 'x'
+   velocity_x = "vel_x"
+   velocity_y = "vel_y"
+   pressure=pressure
   []
-
 []
 
 [FVBCs]
-
-  [inlet_x]
-    type = INSFVInletVelocityBC
-    variable = vel_x
-    boundary = 'left'
-    functor = '${inlet_mps}'
-  []
   
-  [inlet_y]
-    type = INSFVInletVelocityBC
-    variable = vel_y
-    boundary = 'left'
-    functor = 0
-  []
-  
-  [noslip_x]
-    type = INSFVNoSlipWallBC
-    variable = vel_x
-    boundary = 'bottom'
-    function = 0
-  []
-
-  # [back_x]
-  #   type = INSFVNoSlipWallBC
+  # [free_slip_x]
+  #   type = INSFVNaturalFreeSlipBC
   #   variable = vel_x
-  #   boundary = 'left'
-  #   function = 0
+  #   momentum_component = 'x'
+  #   boundary = 'left right'
+  # []
+  # [free_slip_y]
+  #   type = INSFVNaturalFreeSlipBC
+  #   variable = vel_y
+  #   momentum_component = 'y'
+  #   boundary = 'left right'
   # []
 
-  # [noslip_y]
+  # [no_slip_bottom_x]
   #   type = INSFVNoSlipWallBC
-  #   variable = vel_y
+  #   variable = vel_x
   #   boundary = 'bottom'
   #   function = 0
   # []
-
-  # [freeslip_x]
-  #   type = INSFVNaturalFreeSlipBC
+  # [no_slip_top_x]
+  #   type = INSFVNoSlipWallBC
   #   variable = vel_x
   #   boundary = 'top'
-  #   momentum_component = 'x'
+  #   function = 0
   # []
-  # [freeslip_y]
-  #   type = INSFVNaturalFreeSlipBC
-  #   variable = vel_y
-  #   boundary = 'top'
-  #   momentum_component = 'y'
-  # []
+  [slip_bottom_y]
+    type = INSFVNoSlipWallBC
+    variable = vel_y
+    boundary = 'bottom'
+    function = 1e-5
+  []
+  [slip_top]
+    type = INSFVNoSlipWallBC
+    variable = vel_y
+    boundary = 'top'
+    function = -1e-5
+  []
 
-  # [outlet_p]
+  # [inlet_top]
   #   type = INSFVOutletPressureBC
   #   variable = pressure
-  #   boundary = 'right'
-  #   functor = ocean_pressure
+  #   boundary = 'top'
+  #   function = -100 # Pa
   # []
-
+  # [outlet_bottom]
+  #   type = INSFVOutletPressureBC
+  #   variable = pressure
+  #   boundary = 'bottom'
+  #   function = 100 # Pa
+  # []
+  
+  
 []
 
+# ------------------------
 
 [Functions]
   [viscosity_rampup]
@@ -241,13 +240,28 @@ initial_II_eps_min = 1e-07 # 1e-07
 [FunctorMaterials]
   [ice]
     type = FVIceMaterialSI
-    block = '0'
+    block = '0' #  10
     velocity_x = "vel_x"
     velocity_y = "vel_y"
     pressure = "pressure"
-    output_properties = 'mu_ice rho_ice eps_xx eps_yy sig_xx sig_yy eps_xy sig_xy'
+    output_properties = 'mu_ice rho_ice'
     outputs = "out"
   []
+
+  # [mu_combined]
+  #   type = ADPiecewiseByBlockFunctorMaterial
+  #   prop_name = 'mu_combined'
+  #   subdomain_to_prop_value = 'eleblock1 mu_ice
+  #                              eleblock2 mu_ice
+  #                              0 mu_sediment' #                                10  mu_ice
+  # []
+  # [rho_combined]
+  #   type = ADPiecewiseByBlockFunctorMaterial
+  #   prop_name = 'rho_combined'
+  #   subdomain_to_prop_value = 'eleblock1 rho_ice
+  #                              eleblock2 rho_ice
+  #                              0 rho_sediment'  #                                10  rho_ice
+  # []
 
 []
 
@@ -309,6 +323,9 @@ initial_II_eps_min = 1e-07 # 1e-07
   type = Transient
   num_steps = 100
 
+  # petsc_options_iname = '-pc_type -pc_factor_shift'
+  # petsc_options_value = 'lu       NONZERO'
+
   petsc_options_iname = '-pc_type -pc_factor_shift_type'
   petsc_options_value = 'lu       NONZERO'
   
@@ -326,7 +343,7 @@ initial_II_eps_min = 1e-07 # 1e-07
   nl_abs_tol = 2e-05
 
   # l_tol = 1e-6
-  l_tol = 1e-4
+  l_tol = 1e-5
 
   nl_max_its = 100
   nl_forced_its = 3

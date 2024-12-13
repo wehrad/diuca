@@ -1,44 +1,28 @@
-# ------------------------
+# ------------------------ simulation settings
 
-# slope of the bottom boundary (in degrees)
-bed_slope = 5.
-
-# change coordinate system to add a slope
-gravity_x = '${fparse sin(bed_slope / 180 * pi) * 9.81 }'
-gravity_y = '${fparse - cos(bed_slope / 180 * pi) * 9.81}'
-
-#  geometry of the ice slab
-length = 1000.
-thickness = 100.
-
-# dt associated with rest time associated with the
-# geometry (in seconds)
-# ice has a high viscosity and hence response times
-# of years
-nb_years = 0.1
-_dt = '${fparse nb_years * 3600 * 24 * 365}'
-
-inlet_mph = 0.1 # mh-1
-inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
-
-# ------------------------
+nb_years = 0.075
+mult = 0.5
+_dt = '${fparse nb_years * 3600 * 24 * 365 * mult}'
 
 # Numerical scheme parameters
 velocity_interp_method = 'rc'
 advected_interp_method = 'upwind'
 
 # velocity scaling
-vel_scaling = 1e-7
+vel_scaling = 1e-6
 
 # Material properties
 rho = 'rho_ice'
 mu = 'mu_ice'
 
 # Initial finite strain rate for viscosity rampup
-initial_II_eps_min = 1e-07 # 1e-07
+initial_II_eps_min = 1e-07
 
 # ------------------------
 
+[Problem]
+  type = FEProblem
+[]
 [GlobalParams]
   rhie_chow_user_object = 'rc'
 []
@@ -56,12 +40,12 @@ initial_II_eps_min = 1e-07 # 1e-07
   type = GeneratedMesh
   dim = 2
   xmin = 0
-  xmax = '${length}'
+  xmax = 1
   ymin = 0
-  ymax = '${thickness}'
-  nx = 50
-  ny = 5
-  elem_type = QUAD4
+  ymax = 1
+  nx = 10
+  ny = 10
+  elem_type = QUAD9
 []
 
 [Variables]
@@ -116,13 +100,12 @@ initial_II_eps_min = 1e-07 # 1e-07
     pressure = pressure
     momentum_component = 'x'
   []
-  [u_gravity]
-    type = INSFVMomentumGravity
-    variable = vel_x
-    momentum_component = 'x'
-    rho = ${rho}
-    gravity = '${gravity_x} ${gravity_y} 0.'
-  []
+  # [u_gravity]
+  #   type = INSFVMomentumGravity
+  #   variable = vel_x
+  #   momentum_component = 'x'
+  #   gravity = '${gravity_x} ${gravity_y} 0.'
+  # []
 
   [v_time]
     type = INSFVMomentumTimeDerivative
@@ -150,73 +133,83 @@ initial_II_eps_min = 1e-07 # 1e-07
     pressure = pressure
     momentum_component = 'y'
   []
-  [v_gravity]
-    type = INSFVMomentumGravity
-    variable = vel_y
-    momentum_component = 'y'
-    rho = ${rho}
-    gravity = '${gravity_x} ${gravity_y} 0.'
-  []
+  # [v_buoyant]
+  #   type = INSFVMomentumGravity
+  #   variable = vel_y
+  #   rho = ${rho}
+  #   momentum_component = 'y'
+  #   gravity = '0 -9.81 0'
+  # []
 
 []
 
 [FVBCs]
-
-  [inlet_x]
-    type = INSFVInletVelocityBC
-    variable = vel_x
-    boundary = 'left'
-    functor = '${inlet_mps}'
-  []
   
-  [inlet_y]
-    type = INSFVInletVelocityBC
-    variable = vel_y
-    boundary = 'left'
-    functor = 0
-  []
-  
-  [noslip_x]
-    type = INSFVNoSlipWallBC
-    variable = vel_x
-    boundary = 'bottom'
-    function = 0
-  []
-
-  # [back_x]
-  #   type = INSFVNoSlipWallBC
-  #   variable = vel_x
-  #   boundary = 'left'
-  #   function = 0
-  # []
-
-  # [noslip_y]
-  #   type = INSFVNoSlipWallBC
+  # [compression_bottom_yy]
+  #   type = INSFVStressMomentumFluxBC
   #   variable = vel_y
+  #   momentum_component='y'
   #   boundary = 'bottom'
-  #   function = 0
+  #   value = 1e6
   # []
-
-  # [freeslip_x]
-  #   type = INSFVNaturalFreeSlipBC
+  # [compression_bottom_xx]
+  #   type = INSFVStressMomentumFluxBC
   #   variable = vel_x
-  #   boundary = 'top'
-  #   momentum_component = 'x'
+  #   momentum_component='x'
+  #   boundary = 'bottom'
+  #   value = 0.
   # []
-  # [freeslip_y]
-  #   type = INSFVNaturalFreeSlipBC
+  # [compression_bottom_xy]
+  #   type = INSFVStressMomentumFluxBC
+  #   variable = vel_x
+  #   momentum_component='y'
+  #   boundary = 'bottom'
+  #   value = 0.
+  # []
+  [dirichlet_bottom_y]
+    type = FVDirichletBC
+    variable = vel_y
+    boundary = 'bottom'
+    value = 0.
+  []
+
+  [dirichlet_left_x]
+    type = FVDirichletBC
+    variable = vel_x
+    boundary = 'left'
+    value = 0.
+  []
+
+  # [compression_top_yy]
+  #   type = INSFVStressMomentumFluxBC
   #   variable = vel_y
+  #   momentum_component='y'
   #   boundary = 'top'
-  #   momentum_component = 'y'
+  #   value = 1e7
   # []
 
-  # [outlet_p]
-  #   type = INSFVOutletPressureBC
-  #   variable = pressure
-  #   boundary = 'right'
-  #   functor = ocean_pressure
-  # []
+  [dirichlet_top_y]
+    type = FVDirichletBC
+    variable = vel_y
+    boundary = 'top'
+    value = -1e-10
+  []
 
+  # [compression_top_xx]
+  #   type = INSFVStressMomentumFluxBC
+  #   variable = vel_x
+  #   momentum_component='x'
+  #   boundary = 'top'
+  #   value = 0.
+  # []
+  # [compression_top_xy]
+  #   type = INSFVStressMomentumFluxBC
+  #   variable = vel_x
+  #   momentum_component='y'
+  #   boundary = 'top'
+  #   value = 0.
+  # []
+  
 []
 
 
@@ -326,7 +319,7 @@ initial_II_eps_min = 1e-07 # 1e-07
   nl_abs_tol = 2e-05
 
   # l_tol = 1e-6
-  l_tol = 1e-4
+  l_tol = 1e-5
 
   nl_max_its = 100
   nl_forced_its = 3

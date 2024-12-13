@@ -8,12 +8,12 @@
  * Their job is to declare properties for use by other objects in the
  * calculation such as Kernels and BoundaryConditions.
  */
-class FVIceMaterialSI : public FunctorMaterial
+class FVIceMaterialSI2 : public FunctorMaterial
 {
 public:
   static InputParameters validParams();
 
-  FVIceMaterialSI(const InputParameters & parameters);
+  FVIceMaterialSI2(const InputParameters & parameters);
 
 protected:
   const unsigned int _mesh_dimension;
@@ -23,16 +23,13 @@ protected:
   const Real _nGlen;
 
   // density of the fluid
-  const Real & _rho;
+  const ADReal & _rho;
 
   // velocity
   const Moose::Functor<ADReal> & _vel_x;
-  const Moose::Functor<ADReal> * const _vel_y;
-  const Moose::Functor<ADReal> * const _vel_z;
+  const Moose::Functor<ADReal> & _vel_y;
+  const Moose::Functor<ADReal> & _vel_z;
 
-  // pressure
-  const Moose::Functor<ADReal> & _pressure;
-  
   // Finite strain rate parameter
   const Real & _II_eps_min;
 
