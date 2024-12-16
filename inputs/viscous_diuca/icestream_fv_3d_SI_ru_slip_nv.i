@@ -50,6 +50,8 @@ mu = 'mu_combined'
 
 initial_II_eps_min = 1e-07
 
+# initial_file = 'save_1e-19.e'
+
 # ------------------------
 
 [Problem]
@@ -71,6 +73,14 @@ initial_II_eps_min = 1e-07
     pressure = pressure
   []
 []
+
+# [Mesh]
+#   [channel]
+#     type = FileMeshGenerator
+#     file = ${initial_file}
+#     use_for_exodus_restart = true
+#   []
+# []
 
 [Mesh]
 
@@ -226,7 +236,7 @@ initial_II_eps_min = 1e-07
   [pressure]
     type = INSFVPressureVariable
     two_term_boundary_expansion = true
-    scaling = ${vel_scaling}
+    # scaling = ${vel_scaling}
   []
 []
 
@@ -374,19 +384,19 @@ initial_II_eps_min = 1e-07
   [no_slip_x]
     type = INSFVNoSlipWallBC
     variable = vel_x
-    boundary = 'top_sediment left right left_right_sediment'
+    boundary = 'top_sediment' # left right left_right_sediment
     function = 0
   []
   [no_slip_y]
     type = INSFVNoSlipWallBC
     variable = vel_y
-    boundary = 'left right left_right_sediment top_sediment'
+    boundary = 'top_sediment left right left_right_sediment'
     function = 0
   []
   [no_slip_z]
     type = INSFVNoSlipWallBC
     variable = vel_z
-    boundary = 'left right left_right_sediment top_sediment'
+    boundary = 'top_sediment left right left_right_sediment'
     function = 0
   []
 
@@ -480,7 +490,7 @@ initial_II_eps_min = 1e-07
     sliding_law = ${sliding_law}
     SlipperinessCoefficient = ${slipperiness_coefficient}
     LayerThickness = ${sediment_layer_thickness}
-    output_properties = 'mu_sediment rho_sediment'
+    output_properties = 'mu_sediment rho_sediment II_eps'
     outputs = "out"
   []
 
@@ -561,7 +571,7 @@ initial_II_eps_min = 1e-07
 
 [Executioner]
   type = Transient
-  num_steps = 100
+  num_steps = 18
 
   # petsc_options_iname = '-pc_type -pc_factor_shift'
   # petsc_options_value = 'lu       NONZERO'
@@ -593,7 +603,15 @@ initial_II_eps_min = 1e-07
   # steady_state_detection = true
   # steady_state_tolerance = 1e-100
   check_aux = true
- 
+
+  [Adaptivity]
+    interval = 1
+    refine_fraction = 0.5
+    coarsen_fraction = 0.3
+    max_h_level = 10
+    cycles_per_step = 2
+  []
+
 []
 
 [Outputs]
