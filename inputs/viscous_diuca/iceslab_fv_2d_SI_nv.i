@@ -49,6 +49,17 @@ initial_II_eps_min = 1e-07 # 1e-07
     symbol_names = '_dt initial_II_eps_min'
     symbol_values = '${_dt} ${initial_II_eps_min}'
   []
+
+  [transform_x]
+    type = ParsedFunction
+    expression = 'x + length'
+    symbol_names = 'length'
+    symbol_values = '${length}'
+  []
+  [transform_y]
+    type = ParsedFunction
+    expression = 'y'
+  []
 []
 
 [Controls]
@@ -184,28 +195,6 @@ initial_II_eps_min = 1e-07 # 1e-07
 
 []
 
-[BCs]
-  [Periodic]
-    [up_down_velocity_x]
-      primary = left
-      secondary = right
-      translation = '${length} 0 0'
-      variable = 'vel_x'
-    []
-    [up_down_velocity_y]
-      primary = left
-      secondary = right
-      translation = '${length} 0 0'
-      variable = 'vel_y'
-    []
-    [up_down_p]
-      primary = left
-      secondary = right
-      translation = '${length} 0 0'
-      variable = 'pressure'
-    []
-  []
-[]
 
 [FVBCs]
   
@@ -254,7 +243,14 @@ initial_II_eps_min = 1e-07 # 1e-07
     output_properties = 'mu_ice rho_ice eps_xx eps_yy sig_xx sig_yy eps_xy sig_xy'
     outputs = "out"
   []
-
+  [translate]
+    type = ADFunctorTransformFunctorMaterial
+    prop_names = 'transformed'
+    prop_values = 'ice'
+    x_functor = 'transform_x'
+    y_functor = 'transform_y'
+    z_functor = '0'
+  []
 []
 
 [Preconditioning]
