@@ -48,9 +48,18 @@ vel_scaling = 1e-6
 rho = 'rho_combined'
 mu = 'mu_combined'
 
-initial_II_eps_min = 1e-07
+# Mercernier et al 2018 uses 1.9e-13
+# initial_II_eps_min = 1e-07
+initial_II_eps_min = 1.53914e-19
 
-# initial_file = 'save_1e-19.e'
+initial_file = 'icestream_fv_3d_SI_ru_slip_steady_out.e'
+
+# mpiexec -n 6 ./diuca-opt 
+# steady state:
+# II_eps_min = 1.53914e-19
+# t_noactive = 93s
+# t_SMP = 94s
+# t_FSP = 61s
 
 # ------------------------
 
@@ -74,168 +83,38 @@ initial_II_eps_min = 1e-07
   []
 []
 
-# [Mesh]
-#   [channel]
-#     type = FileMeshGenerator
-#     file = ${initial_file}
-#     use_for_exodus_restart = true
-#   []
-# []
-
 [Mesh]
-
   [channel]
     type = FileMeshGenerator
-    file = ../../meshes/mesh_icestream_sed.e
+    file = ${initial_file}
+    use_for_exodus_restart = true
+    
   []
-
-  [delete_sediment_block]
-    type = BlockDeletionGenerator
-    input = channel
-    block = '3'
-  []
-
-  # Create sediment layer by projecting glacier bed by
-  # the sediment thickness
-  [lowerDblock_sediment]
-    type = LowerDBlockFromSidesetGenerator
-    input = "delete_sediment_block"
-    new_block_name = "block_0"
-    sidesets = "bottom"
-  []
-  [separateMesh_sediment]
-    type = BlockToMeshConverterGenerator
-    input = lowerDblock_sediment
-    target_blocks = "block_0"
-  []
-  [extrude_sediment]
-    type = MeshExtruderGenerator
-    input = separateMesh_sediment
-    num_layers = 1
-    extrusion_vector = '0. 0. -${sediment_layer_thickness}'
-    # bottom/top swap is (correct and) due to inverse extrusion
-    top_sideset = 'top_sediment'
-    bottom_sideset = 'bottom_sediment'
-  []
-  [stitch_sediment]
-    type = StitchedMeshGenerator
-    inputs = 'delete_sediment_block extrude_sediment'
-    stitch_boundaries_pairs = 'bottom bottom_sediment'
-  []
-
-  [add_sediment_lateral_sides]
-    type = ParsedGenerateSideset
-    combinatorial_geometry = 'y > 9999.99 | y < 0.01'
-    included_subdomains = 0
-    new_sideset_name = 'left_right_sediment'
-    input = 'stitch_sediment'
-    replace = True
-  []
-
-  [add_sediment_upstream_side]
-    type = ParsedGenerateSideset
-    combinatorial_geometry = 'x < 0.01'
-    included_subdomains = 0
-    new_sideset_name = 'upstream_sediment'
-    input = 'add_sediment_lateral_sides'
-    replace = True
-  []
-  [add_sediment_downstream_side]
-    type = ParsedGenerateSideset
-    combinatorial_geometry = 'x > 19599.99'
-    included_subdomains = 0
-    new_sideset_name = 'downstream_sediment'
-    input = 'add_sediment_upstream_side'
-    replace = True
-  []
-
-
-
-
-  # [frontal_zone]
-  #   type = SubdomainBoundingBoxGenerator
-  #   input = 'channel'
-  #   block_id = "10"
-  #   bottom_left = '20000 -1000 -3000'
-  #   top_right = '19000 15000 3000'
-  #   restricted_subdomains = 'eleblock1 eleblock2'
-  # []
-  # [refined_front]
-  #   type = RefineBlockGenerator
-  #   input = "add_sediment_downstream_side"
-  #   block = "0"
-  #   refinement = '1'
-  #   enable_neighbor_refinement = true
-  #   max_element_volume = 1e100
-  # []
-
-  # [fast_zone]
-  #   type = SubdomainBoundingBoxGenerator
-  #   input = 'add_sediment_downstream_side'
-  #   block_id = "10"
-  #   bottom_left = '20000 3749.99 -200.' # 99.99'
-  #   top_right = '13000  6700.99 434'
-  #   restricted_subdomains = 'eleblock2'
-  # []
-  # [refined_fastzone]
-  #   type = RefineBlockGenerator
-  #   input = "fast_zone"
-  #   block = "10"
-  #   refinement = '1'
-  #   enable_neighbor_refinement = false
-  #   max_element_volume = 1e100
-  # []
-
-  # [refined_surface]
-  #   type = RefineSidesetGenerator
-  #   input = "add_sediment_downstream_side"
-  #   boundaries = "surface"
-  #   refinement = '1'
-  #   enable_neighbor_refinement = false
-  #   boundary_side = "primary"
-  # []
-
-
-
-
-  [add_nodesets]
-    type = NodeSetsFromSideSetsGenerator
-    input = 'add_sediment_downstream_side'
-  []
-
-
-
-
-  # [refined_sediments]
-  #   type = RefineBlockGenerator
-  #   input = "add_nodesets"
-  #   block = "0"
-  #   refinement = '1'
-  #   enable_neighbor_refinement = true
-  #   max_element_volume = 1e100
-  # []
-
 []
 
 [Variables]
   [vel_x]
     type = INSFVVelocityVariable
     two_term_boundary_expansion = true
+    initial_from_file_var = vel_x
     scaling = ${vel_scaling }
   []
   [vel_y]
     type = INSFVVelocityVariable
     two_term_boundary_expansion = true
+    initial_from_file_var = vel_y
     scaling = ${vel_scaling}
   []
   [vel_z]
     type = INSFVVelocityVariable
     two_term_boundary_expansion = true
+    initial_from_file_var = vel_z
     scaling = ${vel_scaling}
   []
   [pressure]
     type = INSFVPressureVariable
     two_term_boundary_expansion = true
+    initial_from_file_var = pressure
     # scaling = ${vel_scaling}
   []
 []
@@ -438,7 +317,8 @@ initial_II_eps_min = 1e-07
   []
   [viscosity_rampup]
     type = ParsedFunction
-    expression = 'initial_II_eps_min * exp(-(t-_dt) * 1e-6)'
+    # expression = 'initial_II_eps_min * exp(-(t-_dt) * 1e-6)'
+    expression = 'initial_II_eps_min'
     symbol_names = '_dt initial_II_eps_min'
     symbol_values = '${_dt} ${initial_II_eps_min}'
   []
@@ -467,7 +347,7 @@ initial_II_eps_min = 1e-07
     velocity_y = "vel_y"
     velocity_z = "vel_z"
     pressure = "pressure"
-    output_properties = 'mu_ice rho_ice'
+    output_properties = 'mu_ice rho_ice II_eps_min'
     outputs = "out"
   []
   
@@ -490,7 +370,7 @@ initial_II_eps_min = 1e-07
     sliding_law = ${sliding_law}
     SlipperinessCoefficient = ${slipperiness_coefficient}
     LayerThickness = ${sediment_layer_thickness}
-    output_properties = 'mu_sediment rho_sediment II_eps'
+    output_properties = 'mu_sediment rho_sediment'
     outputs = "out"
   []
 
@@ -516,7 +396,7 @@ initial_II_eps_min = 1e-07
 []
 
 [Preconditioning]
-  active = ''
+  active = 'FSP'
   [FSP]
     type = FSP
     # It is the starting point of splitting
@@ -571,7 +451,7 @@ initial_II_eps_min = 1e-07
 
 [Executioner]
   type = Transient
-  num_steps = 18
+  num_steps = 24
 
   # petsc_options_iname = '-pc_type -pc_factor_shift'
   # petsc_options_value = 'lu       NONZERO'
@@ -603,15 +483,7 @@ initial_II_eps_min = 1e-07
   # steady_state_detection = true
   # steady_state_tolerance = 1e-100
   check_aux = true
-
-  [Adaptivity]
-    interval = 1
-    refine_fraction = 0.5
-    coarsen_fraction = 0.3
-    max_h_level = 10
-    cycles_per_step = 2
-  []
-
+ 
 []
 
 [Outputs]
