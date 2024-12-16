@@ -52,13 +52,13 @@ initial_II_eps_min = 1e-07 # 1e-07
 
   [transform_x]
     type = ParsedFunction
-    expression = 'x + length'
+    expression = 'length'
     symbol_names = 'length'
     symbol_values = '${length}'
   []
   [transform_y]
     type = ParsedFunction
-    expression = 'y'
+    expression = '1'
   []
 []
 
@@ -243,10 +243,26 @@ initial_II_eps_min = 1e-07 # 1e-07
     output_properties = 'mu_ice rho_ice eps_xx eps_yy sig_xx sig_yy eps_xy sig_xy'
     outputs = "out"
   []
-  [translate]
+  [translate_vel_x]
     type = ADFunctorTransformFunctorMaterial
-    prop_names = 'transformed'
-    prop_values = 'ice'
+    prop_names = 'transformed_vel_x'
+    prop_values = 'vel_x'
+    x_functor = 'transform_x'
+    y_functor = 'transform_y'
+    z_functor = '0'
+  []
+  [translate_vel_y]
+    type = ADFunctorTransformFunctorMaterial
+    prop_names = 'transformed_vel_y'
+    prop_values = 'vel_y'
+    x_functor = 'transform_x'
+    y_functor = 'transform_y'
+    z_functor = '0'
+  []
+  [translate_pressure]
+    type = ADFunctorTransformFunctorMaterial
+    prop_names = 'transformed_pressure'
+    prop_values = 'pressure'
     x_functor = 'transform_x'
     y_functor = 'transform_y'
     z_functor = '0'
