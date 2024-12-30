@@ -52,13 +52,17 @@ initial_II_eps_min = 1e-07 # 1e-07
 
   [transform_x]
     type = ParsedFunction
-    expression = 'length'
+    expression = 'x + length'
     symbol_names = 'length'
     symbol_values = '${length}'
   []
   [transform_y]
     type = ParsedFunction
-    expression = '1'
+    expression = 'y'
+  []
+  [transform_z]
+    type = ParsedFunction
+    expression = 'z'
   []
 []
 
@@ -197,7 +201,25 @@ initial_II_eps_min = 1e-07 # 1e-07
 
 
 [FVBCs]
-  
+  [periodic_vel_x]
+    type = FVADFunctorDirichletBC
+    variable = vel_x
+    boundary = 'right'
+    functor = transformed_vel_x
+  []
+  [periodic_vel_y]
+    type = FVADFunctorDirichletBC
+    variable = vel_y
+    boundary = 'right'
+    functor = transformed_vel_y
+  []
+  [periodic_pressure]
+    type = FVADFunctorDirichletBC
+    variable = pressure
+    boundary = 'right'
+    functor = transformed_pressure
+  []
+
   [noslip_x]
     type = INSFVNoSlipWallBC
     variable = vel_x
@@ -211,7 +233,7 @@ initial_II_eps_min = 1e-07 # 1e-07
     boundary = 'bottom'
     function = 0
   []
-
+  
   # [freeslip_x]
   #   type = INSFVNaturalFreeSlipBC
   #   variable = vel_x
@@ -249,7 +271,7 @@ initial_II_eps_min = 1e-07 # 1e-07
     prop_values = 'vel_x'
     x_functor = 'transform_x'
     y_functor = 'transform_y'
-    z_functor = '0'
+    z_functor = 'transform_z'
   []
   [translate_vel_y]
     type = ADFunctorTransformFunctorMaterial
@@ -257,7 +279,7 @@ initial_II_eps_min = 1e-07 # 1e-07
     prop_values = 'vel_y'
     x_functor = 'transform_x'
     y_functor = 'transform_y'
-    z_functor = '0'
+    z_functor = 'transform_z'
   []
   [translate_pressure]
     type = ADFunctorTransformFunctorMaterial
@@ -265,7 +287,7 @@ initial_II_eps_min = 1e-07 # 1e-07
     prop_values = 'pressure'
     x_functor = 'transform_x'
     y_functor = 'transform_y'
-    z_functor = '0'
+    z_functor = 'transform_z'
   []
 []
 
