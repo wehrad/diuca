@@ -52,17 +52,9 @@ initial_II_eps_min = 1e-07 # 1e-07
 
   [transform_x]
     type = ParsedFunction
-    expression = 'x + length'
+    expression = 'x - length'
     symbol_names = 'length'
     symbol_values = '${length}'
-  []
-  [transform_y]
-    type = ParsedFunction
-    expression = 'y'
-  []
-  [transform_z]
-    type = ParsedFunction
-    expression = 'z'
   []
 []
 
@@ -270,29 +262,23 @@ initial_II_eps_min = 1e-07 # 1e-07
     prop_names = 'transformed_vel_x'
     prop_values = 'vel_x'
     x_functor = 'transform_x'
-    y_functor = 'transform_y'
-    z_functor = 'transform_z'
   []
   [translate_vel_y]
     type = ADFunctorTransformFunctorMaterial
     prop_names = 'transformed_vel_y'
     prop_values = 'vel_y'
     x_functor = 'transform_x'
-    y_functor = 'transform_y'
-    z_functor = 'transform_z'
   []
   [translate_pressure]
     type = ADFunctorTransformFunctorMaterial
     prop_names = 'transformed_pressure'
     prop_values = 'pressure'
     x_functor = 'transform_x'
-    y_functor = 'transform_y'
-    z_functor = 'transform_z'
   []
 []
 
 [Preconditioning]
-  active = 'FSP'
+  active = ''
   [FSP]
     type = FSP
     # It is the starting point of splitting
