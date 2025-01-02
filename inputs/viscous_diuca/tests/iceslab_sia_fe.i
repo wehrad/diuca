@@ -176,6 +176,7 @@ mu = 'mu_ice'
       translation = '${length} 0 0'
       variable = 'velocity'
     []
+
     [up_down_p]
       primary = left
       secondary = right
@@ -204,7 +205,7 @@ mu = 'mu_ice'
     type = ADVectorFunctionDirichletBC
     variable = velocity
     boundary = 'bottom'
-    function_x = 1e-7 # "${inlet_mps}"
+    function_x = 0. # "${inlet_mps}"
     function_y = 0.
     # set_x_comp = False
   []
@@ -299,7 +300,7 @@ mu = 'mu_ice'
 
 [Executioner]
   type = Transient
-  num_steps = 100
+  num_steps = 28
 
   petsc_options_iname = '-pc_type -pc_factor_shift_type'
   petsc_options_value = 'lu       NONZERO'
