@@ -49,7 +49,6 @@ initial_II_eps_min = 1e-07 # 1e-07
     symbol_names = '_dt initial_II_eps_min'
     symbol_values = '${_dt} ${initial_II_eps_min}'
   []
-
   [transform_x]
     type = ParsedFunction
     expression = 'x - length'
@@ -93,6 +92,7 @@ initial_II_eps_min = 1e-07 # 1e-07
     elem_type = QUAD9
   []
 []
+
 
 [Variables]
   [vel_x]
@@ -191,7 +191,6 @@ initial_II_eps_min = 1e-07 # 1e-07
 
 []
 
-
 [FVBCs]
   [periodic_vel_x]
     type = FVADFunctorDirichletBC
@@ -205,12 +204,12 @@ initial_II_eps_min = 1e-07 # 1e-07
     boundary = 'right'
     functor = transformed_vel_y
   []
-  [periodic_pressure]
-    type = FVADFunctorDirichletBC
-    variable = pressure
-    boundary = 'right'
-    functor = transformed_pressure
-  []
+  # [periodic_pressure]
+  #   type = FVADFunctorDirichletBC
+  #   variable = pressure
+  #   boundary = 'right'
+  #   functor = transformed_pressure
+  # []
 
   [noslip_x]
     type = INSFVNoSlipWallBC
@@ -222,7 +221,7 @@ initial_II_eps_min = 1e-07 # 1e-07
   [noslip_y]
     type = INSFVNoSlipWallBC
     variable = vel_y
-    boundary = 'bottom'
+    boundary = 'bottom' # bottom
     function = 0
   []
   
@@ -269,12 +268,12 @@ initial_II_eps_min = 1e-07 # 1e-07
     prop_values = 'vel_y'
     x_functor = 'transform_x'
   []
-  [translate_pressure]
-    type = ADFunctorTransformFunctorMaterial
-    prop_names = 'transformed_pressure'
-    prop_values = 'pressure'
-    x_functor = 'transform_x'
-  []
+  # [translate_pressure]
+  #   type = ADFunctorTransformFunctorMaterial
+  #   prop_names = 'transformed_pressure'
+  #   prop_values = 'pressure'
+  #   x_functor = 'transform_x'
+  # []
 []
 
 [Preconditioning]
