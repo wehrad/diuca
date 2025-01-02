@@ -32,6 +32,10 @@ _dt = '${fparse nb_years * 3600 * 24 * 365}'
 
 initial_II_eps_min = 1e-07
 
+# Material properties
+rho = 'rho_ice'
+mu = 'mu_ice'
+
 # ------------------------
 
 [Functions]
@@ -131,6 +135,7 @@ initial_II_eps_min = 1e-07
   [mass_stab]
     type = INSADMassPSPG
     variable = p
+    rho_name = ${rho}
   []
   [momentum_time]
     type = INSADMomentumTimeDerivative
@@ -143,6 +148,7 @@ initial_II_eps_min = 1e-07
   [momentum_viscous]
     type = INSADMomentumViscous
     variable = velocity
+    mu_name = ${mu}
   []
   [momentum_pressure]
     type = INSADMomentumPressure
@@ -224,13 +230,15 @@ initial_II_eps_min = 1e-07
     velocity_x = "vel_x"
     velocity_y = "vel_y"
     pressure = "p"
-    output_properties = "rho mu"
+    output_properties = "rho_ice mu_ice"
     outputs = "out"
   []
   [ins_mat]
     type = INSADTauMaterial
     velocity = velocity
     pressure = p
+    rho_name = ${rho}
+    mu_name = ${mu}
   []
 []
 
