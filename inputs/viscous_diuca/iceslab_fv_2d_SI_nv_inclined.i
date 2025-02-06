@@ -1,7 +1,8 @@
 # ------------------------
 
 # slope of the bottom boundary (in degrees)
-# bed_slope = 10.
+bed_slope_degree = 10.
+bed_slope = '${fparse bed_slope_degree / 180 * pi}'
 
 #  geometry of the ice slab
 # length = 1000.
@@ -44,15 +45,22 @@ initial_II_eps_min = 1e-07 # 1e-07
   [viscosity_rampup]
     type = ParsedFunction
     expression = 'initial_II_eps_min * exp(-(t-_dt) * 5e-6)'
+    # expression = 'initial_II_eps_min'
     symbol_names = '_dt initial_II_eps_min'
     symbol_values = '${_dt} ${initial_II_eps_min}'
   []
-  [transform_x]
-    type = ParsedFunction
-    expression = 'x - length'
-    symbol_names = 'length'
-    symbol_values = '${length}'
-  []
+  # [transform_x]
+  #   type = ParsedFunction
+  #   expression = 'x + length'
+  #   symbol_names = 'length'
+  #   symbol_values = '${length}'
+  # []
+  # [transform_y]
+  #   type = ParsedFunction
+  #   expression = 'y - bed_slope * length'
+  #   symbol_names = 'length bed_slope'
+  #   symbol_values = '${length} ${bed_slope}'
+  # []
 []
 
 
@@ -82,18 +90,18 @@ initial_II_eps_min = 1e-07 # 1e-07
   [pcg1]
     type = ParsedCurveGenerator
     x_formula = 't'
-    y_formula = 'thickness - 0.05 * t'
-    constant_names = 'length thickness'
-    constant_expressions = '${length} ${thickness}'
+    y_formula = 'thickness - bed_slope * t'
+    constant_names = 'length thickness bed_slope'
+    constant_expressions = '${length} ${thickness} ${bed_slope}'
     section_bounding_t_values = '0 ${length}'
     nums_segments = 50
   []
   [pcg2]
     type = ParsedCurveGenerator
     x_formula = 't'
-    y_formula = '0 - 0.05 * t'
-    constant_names = 'length thickness'
-    constant_expressions = '${length} ${thickness}'
+    y_formula = '0 - bed_slope * t'
+    constant_names = 'length thickness bed_slope'
+    constant_expressions = '${length} ${thickness} ${bed_slope}'
     section_bounding_t_values = '0 ${length}'
     nums_segments = 50
   []
@@ -108,32 +116,34 @@ initial_II_eps_min = 1e-07 # 1e-07
   []
 
   [add_bottom]
-    type = ParsedGenerateNodeset
+    type = ParsedGenerateSideset
     input = fbcg
-    expression = 'y = 0 - 0.05 * x'
-    new_nodeset_name = 'bottom'
+    combinatorial_geometry = 'y = 0 - bed_slope * x'
+    constant_names = 'bed_slope'
+    constant_expressions = '${bed_slope}'
+    new_sideset_name = 'bottom'
   []
   [add_top]
-    type = ParsedGenerateNodeset
+    type = ParsedGenerateSideset
     input = add_bottom
-    expression = 'y = thickness - 0.05 * x'
-    constant_names = 'thickness'
-    constant_expressions = '${thickness}'
-    new_nodeset_name = 'top'
+    combinatorial_geometry = 'y = thickness - bed_slope * x'
+    constant_names = 'thickness bed_slope'
+    constant_expressions = '${thickness} ${bed_slope}'
+    new_sideset_name = 'top'
   []
   [add_left]
-    type = ParsedGenerateNodeset
+    type = ParsedGenerateSideset
     input = add_top
-    expression = 'x = 0'
-    new_nodeset_name = 'left'
+    combinatorial_geometry = 'x = 0'
+    new_sideset_name = 'left'
   []
   [add_right]
-    type = ParsedGenerateNodeset
+    type = ParsedGenerateSideset
     input = add_left
-    expression = 'x = length'
+    combinatorial_geometry = 'x = length'
     constant_names = 'length'
     constant_expressions = '${length}'
-    new_nodeset_name = 'right'
+    new_sideset_name = 'right'
   []
 
   construct_side_list_from_node_list=true
@@ -241,13 +251,13 @@ initial_II_eps_min = 1e-07 # 1e-07
   # [periodic_vel_x]
   #   type = FVADFunctorDirichletBC
   #   variable = vel_x
-  #   boundary = 'right'
+  #   boundary = 'left'
   #   functor = transformed_vel_x
   # []
   # [periodic_vel_y]
   #   type = FVADFunctorDirichletBC
   #   variable = vel_y
-  #   boundary = 'right'
+  #   boundary = 'left'
   #   functor = transformed_vel_y
   # []
   # [periodic_pressure]
@@ -257,20 +267,34 @@ initial_II_eps_min = 1e-07 # 1e-07
   #   functor = transformed_pressure
   # []
 
+  # [noslip_x]
+  #   type = INSFVNoSlipWallBC
+  #   variable = vel_x
+  #   boundary = 'bottom'
+  #   function = 0.
+  # []
+
+  # [noslip_y]
+  #   type = INSFVNoSlipWallBC
+  #   variable = vel_y
+  #   boundary = 'bottom' # bottom
+  #   function = 0.
+  # []
+
   [noslip_x]
-    type = INSFVNoSlipWallBC
+    type = FVDirichletBC
     variable = vel_x
     boundary = 'bottom'
-    function = 0
+    value = 0.
   []
 
   [noslip_y]
-    type = INSFVNoSlipWallBC
+    type = FVDirichletBC
     variable = vel_y
     boundary = 'bottom' # bottom
-    function = 0
+    value = 0.
   []
-  
+
   # [freeslip_x]
   #   type = INSFVNaturalFreeSlipBC
   #   variable = vel_x
@@ -302,28 +326,31 @@ initial_II_eps_min = 1e-07 # 1e-07
     output_properties = 'mu_ice rho_ice eps_xx eps_yy sig_xx sig_yy eps_xy sig_xy'
     outputs = "out"
   []
-  [translate_vel_x]
-    type = ADFunctorTransformFunctorMaterial
-    prop_names = 'transformed_vel_x'
-    prop_values = 'vel_x'
-    x_functor = 'transform_x'
-  []
-  [translate_vel_y]
-    type = ADFunctorTransformFunctorMaterial
-    prop_names = 'transformed_vel_y'
-    prop_values = 'vel_y'
-    x_functor = 'transform_x'
-  []
+  # [translate_vel_x]
+  #   type = ADFunctorTransformFunctorMaterial
+  #   prop_names = 'transformed_vel_x'
+  #   prop_values = 'vel_x'
+  #   x_functor = 'transform_x'
+  #   y_functor = 'transform_y'
+  # []
+  # [translate_vel_y]
+  #   type = ADFunctorTransformFunctorMaterial
+  #   prop_names = 'transformed_vel_y'
+  #   prop_values = 'vel_y'
+  #   x_functor = 'transform_x'
+  #   y_functor = 'transform_y'
+  # []
   # [translate_pressure]
   #   type = ADFunctorTransformFunctorMaterial
   #   prop_names = 'transformed_pressure'
   #   prop_values = 'pressure'
   #   x_functor = 'transform_x'
+  #   y_functor = 'transform_y'
   # []
 []
 
 [Preconditioning]
-  active = ''
+  active = 'FSP'
   [FSP]
     type = FSP
     # It is the starting point of splitting
@@ -378,11 +405,11 @@ initial_II_eps_min = 1e-07 # 1e-07
 
 [Executioner]
   type = Transient
-  num_steps = 100
+  num_steps = 53
 
   petsc_options_iname = '-pc_type -pc_factor_shift_type'
   petsc_options_value = 'lu       NONZERO'
-  
+
   # petsc_options = '-pc_svd_monitor'
   # petsc_options_iname = '-pc_type'
   # petsc_options_value = 'svd'

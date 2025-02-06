@@ -215,7 +215,7 @@ initial_II_eps_min = 1e-07 # 1e-07
     type = INSFVNoSlipWallBC
     variable = vel_x
     boundary = 'bottom'
-    function = 0
+    function = 1e-7
   []
 
   [noslip_y]
@@ -224,7 +224,7 @@ initial_II_eps_min = 1e-07 # 1e-07
     boundary = 'bottom' # bottom
     function = 0
   []
-  
+
   # [freeslip_x]
   #   type = INSFVNaturalFreeSlipBC
   #   variable = vel_x
