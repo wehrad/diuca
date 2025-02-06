@@ -1,7 +1,35 @@
-# from moose/modules/solid_mechanics/examples/wave_propagation/cantilever_sweep.i
+# adapted from
+# moose/modules/solid_mechanics/examples/wave_propagation/cantilever_sweep.i
 
-# choose if bed is coupled or not
-# bed_coupled = 0
+# This input file simulates the frequency response of a block of ice
+# of side length 5km and thickness 0.6km, for different ice-bedrock
+# coupling states. The displacement magnitude at the surface of the
+# block is stored in a csv file for each frequency (see simulation
+# settings).
+
+# ------------------------------------------------- Domain settings
+
+# Three ice-bedrock coupling states are currently available:
+
+# 0: the ice-bedrock interface is fully coupled (null Dirichlet)
+
+# 1: the ice-bedrock interface is only coupled on four zones of the
+# bed (see "add_bottom_back" object and van Ginkel et al 2025 for more
+# details)
+
+# 2: the ice-bedrock interface is fully decoupled (no boundary condition).
+
+# The state can be set below by setting it to 0, 1 or 2.
+icebedrock_coupling_state = 0
+
+# ------------------------------------------------- Simulation settings
+
+# Frequency domain to sweep in Hertz (minimum, maximum and step)
+min_freq = 0.1
+max_freq = 10
+step_freq = 0.01
+
+# ------------------------------------------------- Simulation
 
 [Mesh]
   [block]
@@ -10,13 +38,13 @@
     dim = 3
     xmin = 0
     xmax = 5000.
-    nx = 25 # 50
+    nx = 25
     zmin = 0
     zmax = 5000.
-    nz = 25 # 50
+    nz = 25
     ymin = 0.
     ymax = 600.
-    ny = 3 # 6
+    ny = 3
   []
 
   [shaking_zone]
@@ -165,42 +193,44 @@
 []
 
 [BCs]
-  [dirichlet_bottom1_x]
+
+  [dirichlet_partialbottom_x]
     type = DirichletBC
     variable = disp_x
     value = 0
     boundary = 'decoupling_bottom'
   []
-  [dirichlet_bottom1_y]
+  [dirichlet_partialbottom_y]
     type = DirichletBC
     variable = disp_y
     value = 0
     boundary = 'decoupling_bottom'
   []
-  [dirichlet_bottom1_z]
+  [dirichlet_partialbottom_z]
     type = DirichletBC
     variable = disp_z
     value = 0
     boundary = 'decoupling_bottom'
   []
-  # [dirichlet_bottom_x]
-  #   type = DirichletBC
-  #   variable = disp_x
-  #   value = 0
-  #   boundary = 'bottom'
-  # []
-  # [dirichlet_bottom_y]
-  #   type = DirichletBC
-  #   variable = disp_y
-  #   value = 0
-  #   boundary = 'bottom'
-  # []
-  # [dirichlet_bottom_z]
-  #   type = DirichletBC
-  #   variable = disp_z
-  #   value = 0
-  #   boundary = 'bottom'
-  # []
+
+  [dirichlet_bottom_x]
+    type = DirichletBC
+    variable = disp_x
+    value = 0
+    boundary = 'bottom'
+  []
+  [dirichlet_bottom_y]
+    type = DirichletBC
+    variable = disp_y
+    value = 0
+    boundary = 'bottom'
+  []
+  [dirichlet_bottom_z]
+    type = DirichletBC
+    variable = disp_z
+    value = 0
+    boundary = 'bottom'
+  []
 
   [bottom_xreal]
     type = NeumannBC
@@ -220,17 +250,6 @@
     boundary = 'shaking_bottom'
     value = 1
   []
-
-  # [Periodic]
-  #   [periodic_x]
-  #     variable = disp_x
-  #     auto_direction = 'x'
-  #   []
-  #   [periodic_z]
-  #     variable = disp_z
-  #     auto_direction = 'z'
-  #   []
-  # []
 
 []
 
@@ -252,11 +271,6 @@
     boundary = 'top'
     variable = disp_mag
   []
-  # [dispMag]
-  #   type = NodalExtremeValue
-  #   value_type = max
-  #   variable = disp_mag
-  # []
 []
 
 [Functions]
@@ -266,10 +280,15 @@
     symbol_values = 917 # ice, kg/m3
     expression = '-t*t*density'
   []
-  # [bed_coupling_function]
-  #   type = ParsedFunction
-  #   expression = '${bed_coupled} = 0'
-  # []
+  # no need for state 0 since it's the default state
+  [icebedrock_state_1]
+    type = ParsedFunction
+    expression = '${icebedrock_coupling_state} = 1'
+  []
+  [icebedrock_state_2]
+    type = ParsedFunction
+    expression = '${icebedrock_coupling_state} = 2'
+  []
 []
 
 [Controls]
@@ -279,12 +298,25 @@
     function = 'freq2'
     execute_on = 'initial timestep_begin'
   []
-  # [bed_not_coupled]
-  #   type = ConditionalFunctionEnableControl
-  #   conditional_function = bed_coupling_function
-  #   disable_objects = 'BCs::dirichlet_decoupling_bottom_x BCs::dirichlet_decoupling_bottom_y BCs::dirichlet_decoupling_bottom_z'
-  #   execute_on = 'INITIAL TIMESTEP_BEGIN'
-  # []
+  [control_icebedrock_state_1]
+    type = ConditionalFunctionEnableControl
+    conditional_function = icebedrock_state_1
+    disable_objects = 'BCs::dirichlet_bottom_x
+                       BCs::dirichlet_bottom_y
+                       BCs::dirichlet_bottom_z'
+    execute_on = 'INITIAL TIMESTEP_BEGIN'
+  []
+  [control_icebedrock_state_2]
+    type = ConditionalFunctionEnableControl
+    conditional_function = icebedrock_state_1
+    disable_objects = 'BCs::dirichlet_bottom_x
+                       BCs::dirichlet_bottom_y
+                       BCs::dirichlet_bottom_z
+                       BCs::dirichlet_partialbottom_x
+                       BCs::dirichlet_partialbottom_y
+                       BCs::dirichlet_partialbottom_z'
+    execute_on = 'INITIAL TIMESTEP_BEGIN'
+  []
 []
 
 [Executioner]
@@ -292,12 +324,12 @@
   solve_type=LINEAR
   petsc_options_iname = ' -pc_type'
   petsc_options_value = 'lu'
-  start_time = 0.1 #starting frequency
-  end_time =  10.  #ending frequency
+  start_time = '${min_freq}'
+  end_time =  '${max_freq}'
   nl_abs_tol = 1e-6
   [TimeStepper]
     type = ConstantDT
-    dt = 0.01  #frequency stepsize
+    dt = '${step_freq}'
   []
 []
 
