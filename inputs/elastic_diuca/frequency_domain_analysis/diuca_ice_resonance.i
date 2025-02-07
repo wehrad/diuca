@@ -1,3 +1,7 @@
+# This input file is part of the DIUCA MOOSE application
+# https://github.com/AdrienWehrle/diuca
+# https://github.com/idaholab/moose
+
 # adapted from
 # moose/modules/solid_mechanics/examples/wave_propagation/cantilever_sweep.i
 
@@ -5,22 +9,23 @@
 # of side length 5km and thickness 0.6km, for different ice-bedrock
 # coupling states. The displacement magnitude at the surface of the
 # block is stored in a csv file for each frequency (see simulation
-# settings).
+# settings). The frequency response for the different states are
+# presented in van Ginkel et al 2025 where more details about model
+# setup and research questions can be found too.
 
 # ------------------------------------------------- Domain settings
 
 # Three ice-bedrock coupling states are currently available:
-
 # 0: the ice-bedrock interface is fully coupled (null Dirichlet)
-
 # 1: the ice-bedrock interface is only coupled on four zones of the
-# bed (see "add_bottom_back" object and van Ginkel et al 2025 for more
-# details)
-
+# bed (see "add_bottom_back" object).
 # 2: the ice-bedrock interface is fully decoupled (no boundary condition).
-
 # The state can be set below by setting it to 0, 1 or 2.
-icebedrock_coupling_state = 0
+icebedrock_coupling_state = 2
+
+# ice parameters
+_youngs_modulus = 8.7e9 # Pa
+_poissons_ratio = 0.32
 
 # ------------------------------------------------- Simulation settings
 
@@ -257,8 +262,8 @@ step_freq = 0.01
 [Materials]
   [elastic_tensor_Al]
     type = ComputeIsotropicElasticityTensor
-    youngs_modulus = 8.7e9 # Pa
-    poissons_ratio = 0.32
+    youngs_modulus = '${_youngs_modulus}'
+    poissons_ratio = '${_poissons_ratio}'
   []
   [compute_stress]
     type = ComputeLagrangianLinearElasticStress
@@ -304,11 +309,15 @@ step_freq = 0.01
     disable_objects = 'BCs::dirichlet_bottom_x
                        BCs::dirichlet_bottom_y
                        BCs::dirichlet_bottom_z'
+    enable_objects = 'BCs::dirichlet_partialbottom_x
+                      BCs::dirichlet_partialbottom_y
+                      BCs::dirichlet_partialbottom_z'
     execute_on = 'INITIAL TIMESTEP_BEGIN'
+    reverse_on_false = False
   []
   [control_icebedrock_state_2]
     type = ConditionalFunctionEnableControl
-    conditional_function = icebedrock_state_1
+    conditional_function = icebedrock_state_2
     disable_objects = 'BCs::dirichlet_bottom_x
                        BCs::dirichlet_bottom_y
                        BCs::dirichlet_bottom_z
@@ -316,6 +325,7 @@ step_freq = 0.01
                        BCs::dirichlet_partialbottom_y
                        BCs::dirichlet_partialbottom_z'
     execute_on = 'INITIAL TIMESTEP_BEGIN'
+    reverse_on_false = False
   []
 []
 
