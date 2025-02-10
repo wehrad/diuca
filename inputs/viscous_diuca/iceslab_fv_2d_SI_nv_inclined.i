@@ -49,18 +49,18 @@ initial_II_eps_min = 1e-07 # 1e-07
     symbol_names = '_dt initial_II_eps_min'
     symbol_values = '${_dt} ${initial_II_eps_min}'
   []
-  # [transform_x]
-  #   type = ParsedFunction
-  #   expression = 'x + length'
-  #   symbol_names = 'length'
-  #   symbol_values = '${length}'
-  # []
-  # [transform_y]
-  #   type = ParsedFunction
-  #   expression = 'y - bed_slope * length'
-  #   symbol_names = 'length bed_slope'
-  #   symbol_values = '${length} ${bed_slope}'
-  # []
+  [transform_x]
+    type = ParsedFunction
+    expression = 'x - length'
+    symbol_names = 'length'
+    symbol_values = '${length}'
+  []
+  [transform_y]
+    type = ParsedFunction
+    expression = 'y + bed_slope * length'
+    symbol_names = 'length bed_slope'
+    symbol_values = '${length} ${bed_slope}'
+  []
 []
 
 
@@ -248,18 +248,18 @@ initial_II_eps_min = 1e-07 # 1e-07
 []
 
 [FVBCs]
-  # [periodic_vel_x]
-  #   type = FVADFunctorDirichletBC
-  #   variable = vel_x
-  #   boundary = 'left'
-  #   functor = transformed_vel_x
-  # []
-  # [periodic_vel_y]
-  #   type = FVADFunctorDirichletBC
-  #   variable = vel_y
-  #   boundary = 'left'
-  #   functor = transformed_vel_y
-  # []
+  [periodic_vel_x]
+    type = FVADFunctorDirichletBC
+    variable = vel_x
+    boundary = 'right'
+    functor = transformed_vel_x
+  []
+  [periodic_vel_y]
+    type = FVADFunctorDirichletBC
+    variable = vel_y
+    boundary = 'right'
+    functor = transformed_vel_y
+  []
   # [periodic_pressure]
   #   type = FVADFunctorDirichletBC
   #   variable = pressure
@@ -326,20 +326,20 @@ initial_II_eps_min = 1e-07 # 1e-07
     output_properties = 'mu_ice rho_ice eps_xx eps_yy sig_xx sig_yy eps_xy sig_xy'
     outputs = "out"
   []
-  # [translate_vel_x]
-  #   type = ADFunctorTransformFunctorMaterial
-  #   prop_names = 'transformed_vel_x'
-  #   prop_values = 'vel_x'
-  #   x_functor = 'transform_x'
-  #   y_functor = 'transform_y'
-  # []
-  # [translate_vel_y]
-  #   type = ADFunctorTransformFunctorMaterial
-  #   prop_names = 'transformed_vel_y'
-  #   prop_values = 'vel_y'
-  #   x_functor = 'transform_x'
-  #   y_functor = 'transform_y'
-  # []
+  [translate_vel_x]
+    type = ADFunctorTransformFunctorMaterial
+    prop_names = 'transformed_vel_x'
+    prop_values = 'vel_x'
+    x_functor = 'transform_x'
+    y_functor = 'transform_y'
+  []
+  [translate_vel_y]
+    type = ADFunctorTransformFunctorMaterial
+    prop_names = 'transformed_vel_y'
+    prop_values = 'vel_y'
+    x_functor = 'transform_x'
+    y_functor = 'transform_y'
+  []
   # [translate_pressure]
   #   type = ADFunctorTransformFunctorMaterial
   #   prop_names = 'transformed_pressure'
