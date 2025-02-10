@@ -30,7 +30,7 @@ mu = 'mu_ice'
 nb_years = 0.01 # 0.1
 _dt = '${fparse nb_years * 3600 * 24 * 365}'
 
-inlet_mph = 0.1 # 0.01 # mh-1
+inlet_mph = 0.75 # 0.01 # mh-1
 inlet_mps = ${fparse
              inlet_mph / 3600
             } # ms-1
@@ -58,6 +58,28 @@ initial_II_eps_min = 1e-07
     input = channel
     block = '3'
   []
+
+  [final_mesh]
+    type = SubdomainBoundingBoxGenerator
+    input = delete_sediment_block
+    block_id = 255
+    block_name = deactivated
+    bottom_left = '19000 1875 -1800'
+    top_right = '20100 8125 150'
+  []
+
+  [refined_mesh]
+    type = RefineBlockGenerator
+    input = "final_mesh"
+    block = "255"
+    refinement = '1'
+    enable_neighbor_refinement = true
+    max_element_volume = 1e100
+  []
+
+  final_generator = refined_mesh
+
+
 []
 
 [Functions]
@@ -142,46 +164,46 @@ initial_II_eps_min = 1e-07
 [Kernels]
   [mass]
     type = INSADMass
-    block = 'eleblock1 eleblock2'
+    block = 'eleblock1 eleblock2 255'
     variable = p
   []
   [mass_stab]
     type = INSADMassPSPG
-    block = 'eleblock1 eleblock2'
+    block = 'eleblock1 eleblock2 255'
     variable = p
     rho_name = ${rho}
   []
   [momentum_time]
     type = INSADMomentumTimeDerivative
-    block = 'eleblock1 eleblock2'
+    block = 'eleblock1 eleblock2 255'
     variable = velocity
   []
   [momentum_advection]
     type = INSADMomentumAdvection
-    block = 'eleblock1 eleblock2'
+    block = 'eleblock1 eleblock2 255'
     variable = velocity
   []
   [momentum_viscous]
     type = INSADMomentumViscous
-    block = 'eleblock1 eleblock2'
+    block = 'eleblock1 eleblock2 255'
     variable = velocity
     mu_name = ${mu}
   []
   [momentum_pressure]
     type = INSADMomentumPressure
-    block = 'eleblock1 eleblock2'
+    block = 'eleblock1 eleblock2 255'
     variable = velocity
     pressure = p
   []
   [momentum_supg]
     type = INSADMomentumSUPG
-    block = 'eleblock1 eleblock2'
+    block = 'eleblock1 eleblock2 255'
     variable = velocity
     velocity = velocity
   []
   [gravity]
     type = INSADGravityForce
-    block = 'eleblock1 eleblock2'
+    block = 'eleblock1 eleblock2 255'
     variable = velocity
     gravity = '0. 0. -9.81'
   []
@@ -244,7 +266,7 @@ initial_II_eps_min = 1e-07
 [Materials]
   [ice]
     type = ADIceMaterialSI
-    block = 'eleblock1 eleblock2' #  10
+    block = 'eleblock1 eleblock2 255' #  10
     velocity_x = "vel_x"
     velocity_y = "vel_y"
     velocity_z = "vel_z"
@@ -255,7 +277,7 @@ initial_II_eps_min = 1e-07
 
   [ins_mat_ice]
     type = INSADTauMaterial
-    block = 'eleblock1 eleblock2'
+    block = 'eleblock1 eleblock2 255'
     velocity = velocity
     pressure = p
     rho_name = "rho_ice"
@@ -352,6 +374,14 @@ initial_II_eps_min = 1e-07
   steady_state_detection = true
   steady_state_tolerance = 1e-10
   check_aux = true
+
+  # [Adaptivity]
+  #   interval = 1
+  #   refine_fraction = 0.5
+  #   coarsen_fraction = 0.3
+  #   max_h_level = 10
+  #   cycles_per_step = 2
+  # []
 
 []
 

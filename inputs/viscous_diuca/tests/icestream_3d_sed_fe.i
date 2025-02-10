@@ -176,7 +176,7 @@ initial_II_eps_min = 1e-07
     variable = vel_z
     vector_variable = velocity
     component = 'z'
-  []
+x  []
 []
 
 [Variables]
