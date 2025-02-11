@@ -32,7 +32,7 @@ protected:
   // const ADVariableValue & _pressure;
 
   // Friction coefficient (DruckerPrager model)
-  const Real & _FrictionCoefficient;
+  // const Real & _FrictionCoefficient;
 
   // Slipperiness coefficient (Slip model)
   const Real & _SlipperinessCoefficient;

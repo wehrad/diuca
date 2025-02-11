@@ -9,8 +9,8 @@ ADSedimentMaterialSI::validParams()
   InputParameters params = ADMaterial::validParams();
 
   // Friction coefficient (DruckerPrager model)
-  params.addParam<Real>("FrictionCoefficient", 1.0, "Sediment friction coefficient");
-  params.declareControllable("FrictionCoefficient");
+  // params.addParam<Real>("FrictionCoefficient", 1.0, "Sediment friction coefficient");
+  // params.declareControllable("FrictionCoefficient");
 
   // Friction coefficient (Slip model)
   params.addParam<Real>("SlipperinessCoefficient", 1.0, "Sediment slipperiness coefficient");
@@ -58,7 +58,7 @@ ADSedimentMaterialSI::ADSedimentMaterialSI(const InputParameters & parameters)
     // _grad_velocity_z(_mesh_dimension == 3 ? adCoupledGradient("velocity_z") : _ad_grad_zero),
 
     // Friction coefficient (DruckerPrager model)
-    _FrictionCoefficient(getParam<Real>("FrictionCoefficient")),
+    // _FrictionCoefficient(getParam<Real>("FrictionCoefficient")),
 
     // Slipperiness coefficient (GudmundssonRaymond model)
     _SlipperinessCoefficient(getParam<Real>("SlipperinessCoefficient")),
