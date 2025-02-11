@@ -88,57 +88,58 @@ ADSedimentMaterialSI::computeQpProperties()
   // Constant density
   _density[_qp] = _rho;
 
-  // Viscosity at previous timestep
-  ADReal eta = _viscosity[_qp];
-  
-  if (_sliding_law == "DruckerPrager")
-    {
-      // Get current velocity gradients at quadrature point
-      ADReal u_x = _grad_velocity_x[_qp](0);
-      ADReal u_y = _grad_velocity_x[_qp](1);
-      ADReal u_z = _grad_velocity_x[_qp](2);
-
-      ADReal v_x = _grad_velocity_y[_qp](0);
-      ADReal v_y = _grad_velocity_y[_qp](1);
-      ADReal v_z = _grad_velocity_y[_qp](2);
-      ADReal w_x = _grad_velocity_z[_qp](0);
-      ADReal w_y = _grad_velocity_z[_qp](1);
-      ADReal w_z = _grad_velocity_z[_qp](2);
-
-      ADReal eps_xy = 0.5 * (u_y + v_x);
-      ADReal eps_xz = 0.5 * (u_z + w_x);
-      ADReal eps_yz = 0.5 * (v_z + w_y);
-
-      // Get pressure
-      ADReal sig_m = _pressure[_qp];
-
-      // Compute stresses
-      ADReal sxx = 2 * eta * u_x + sig_m;
-      ADReal syy = 2 * eta * v_y + sig_m;
-      ADReal szz = 2 * eta * w_z + sig_m;
-
-      ADReal sxy = eta * (u_y + v_x);
-      ADReal sxz = eta * (u_z + w_x);
-      ADReal syz = eta * (v_z + w_y);
-
-      // Compute deviatoric stresses
-      ADReal sxx_dev = 2 * eta * u_x;
-      ADReal syy_dev = 2 * eta * v_y;
-      ADReal szz_dev = 2 * eta * w_z;
-
-      // von Mises stress (second invariant)
-      ADReal sig_e = std::sqrt(3. / 2. * (sxx_dev * sxx_dev + syy_dev * syy_dev + 2 * sxy * sxy));
-      
-      // Compute viscosity
-      _viscosity[_qp] = (_FrictionCoefficient * sig_m) / std::abs(sig_e);
-      // _viscosity[_qp] = 3.;
-    }
-
   if (_sliding_law == "GudmundssonRaymond")
     {
       _viscosity[_qp] = _LayerThickness / _SlipperinessCoefficient;
       // ADReal viscosity = 1e10;
+      // std::cout << "SEDIMENT  " << _viscosity[_qp] << "  " << _pressure[_qp] << std::endl;
     }
 
   // std::cout << "SEDIMENT  " << _viscosity[_qp] << "  " << _pressure[_qp] << std::endl;
+  // Viscosity at previous timestep
+  // ADReal eta = _viscosity[_qp];
+  
+  // if (_sliding_law == "DruckerPrager")
+  //   {
+  //     // Get current velocity gradients at quadrature point
+  //     ADReal u_x = _grad_velocity_x[_qp](0);
+  //     ADReal u_y = _grad_velocity_x[_qp](1);
+  //     ADReal u_z = _grad_velocity_x[_qp](2);
+
+  //     ADReal v_x = _grad_velocity_y[_qp](0);
+  //     ADReal v_y = _grad_velocity_y[_qp](1);
+  //     ADReal v_z = _grad_velocity_y[_qp](2);
+  //     ADReal w_x = _grad_velocity_z[_qp](0);
+  //     ADReal w_y = _grad_velocity_z[_qp](1);
+  //     ADReal w_z = _grad_velocity_z[_qp](2);
+
+  //     ADReal eps_xy = 0.5 * (u_y + v_x);
+  //     ADReal eps_xz = 0.5 * (u_z + w_x);
+  //     ADReal eps_yz = 0.5 * (v_z + w_y);
+
+  //     // Get pressure
+  //     ADReal sig_m = _pressure[_qp];
+
+  //     // Compute stresses
+  //     ADReal sxx = 2 * eta * u_x + sig_m;
+  //     ADReal syy = 2 * eta * v_y + sig_m;
+  //     ADReal szz = 2 * eta * w_z + sig_m;
+
+  //     ADReal sxy = eta * (u_y + v_x);
+  //     ADReal sxz = eta * (u_z + w_x);
+  //     ADReal syz = eta * (v_z + w_y);
+
+  //     // Compute deviatoric stresses
+  //     ADReal sxx_dev = 2 * eta * u_x;
+  //     ADReal syy_dev = 2 * eta * v_y;
+  //     ADReal szz_dev = 2 * eta * w_z;
+
+  //     // von Mises stress (second invariant)
+  //     ADReal sig_e = std::sqrt(3. / 2. * (sxx_dev * sxx_dev + syy_dev * syy_dev + 2 * sxy * sxy));
+      
+  //     // Compute viscosity
+  //     _viscosity[_qp] = (_FrictionCoefficient * sig_m) / std::abs(sig_e);
+  //     // _viscosity[_qp] = 3.;
+  //   }
+
 }

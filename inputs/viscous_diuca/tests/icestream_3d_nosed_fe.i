@@ -233,9 +233,11 @@ initial_II_eps_min = 1e-07
     type = ADVectorFunctionDirichletBC
     variable = velocity
     boundary = 'bottom'
-    # function_x = 0.
-    # function_y = 0.
+    function_x = 0.
+    function_y = 0.
     function_z = 0.
+    # set_y_comp = false
+    # set_x_comp = false
   []
 
   [inlet]
