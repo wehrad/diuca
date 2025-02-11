@@ -24,12 +24,12 @@ protected:
   const ADReal & _rho;
 
   // Velocity gradients
-  const ADVariableGradient & _grad_velocity_x;
-  const ADVariableGradient & _grad_velocity_y;
-  const ADVariableGradient & _grad_velocity_z;
+  // const ADVariableGradient & _grad_velocity_x;
+  // const ADVariableGradient & _grad_velocity_y;
+  // const ADVariableGradient & _grad_velocity_z;
 
   // Pressure
-  const ADVariableValue & _pressure;
+  // const ADVariableValue & _pressure;
 
   // Friction coefficient (DruckerPrager model)
   const Real & _FrictionCoefficient;

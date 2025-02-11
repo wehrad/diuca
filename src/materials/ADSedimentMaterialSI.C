@@ -21,12 +21,12 @@ ADSedimentMaterialSI::validParams()
   params.declareControllable("LayerThickness");
 
   // Get velocity gradients to compute viscosity based on the effective strain rate
-  params.addRequiredCoupledVar("velocity_x", "Velocity in x dimension");
-  params.addCoupledVar("velocity_y", "Velocity in y dimension");
-  params.addCoupledVar("velocity_z", "Velocity in z dimension");
+  // params.addRequiredCoupledVar("velocity_x", "Velocity in x dimension");
+  // params.addCoupledVar("velocity_y", "Velocity in y dimension");
+  // params.addCoupledVar("velocity_z", "Velocity in z dimension");
 
   // Mean pressure
-  params.addRequiredCoupledVar("pressure", "Mean stress");
+  // params.addRequiredCoupledVar("pressure", "Mean stress");
 
   // Sediment density (https://tc.copernicus.org/articles/14/261/2020/)
   params.addParam<Real>("density", 1850., "Sediment density"); // kgm-3
@@ -53,9 +53,9 @@ ADSedimentMaterialSI::ADSedimentMaterialSI(const InputParameters & parameters)
     _rho(getParam<Real>("density")),
 
     // Velocity gradients
-    _grad_velocity_x(adCoupledGradient("velocity_x")),
-    _grad_velocity_y(_mesh_dimension >= 2 ? adCoupledGradient("velocity_y") : _ad_grad_zero),
-    _grad_velocity_z(_mesh_dimension == 3 ? adCoupledGradient("velocity_z") : _ad_grad_zero),
+    // _grad_velocity_x(adCoupledGradient("velocity_x")),
+    // _grad_velocity_y(_mesh_dimension >= 2 ? adCoupledGradient("velocity_y") : _ad_grad_zero),
+    // _grad_velocity_z(_mesh_dimension == 3 ? adCoupledGradient("velocity_z") : _ad_grad_zero),
 
     // Friction coefficient (DruckerPrager model)
     _FrictionCoefficient(getParam<Real>("FrictionCoefficient")),
@@ -73,7 +73,7 @@ ADSedimentMaterialSI::ADSedimentMaterialSI(const InputParameters & parameters)
     _II_eps_min(getParam<Real>("II_eps_min")),
 
     // Mean stress
-    _pressure(adCoupledValue("pressure")),
+    // _pressure(adCoupledValue("pressure")),
 
     // Ice properties created by this object
     _density(declareADProperty<Real>("rho_sediment")),
