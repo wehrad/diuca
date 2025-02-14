@@ -347,7 +347,7 @@ initial_file = 'icestream_fv_3d_SI_ru_slip_steady_out.e'
     velocity_y = "vel_y"
     velocity_z = "vel_z"
     pressure = "pressure"
-    output_properties = 'mu_ice rho_ice II_eps_min'
+    output_properties = 'mu_ice rho_ice'
     outputs = "out"
   []
   

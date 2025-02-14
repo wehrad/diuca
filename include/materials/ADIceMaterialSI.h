@@ -34,10 +34,12 @@ protected:
 
   // Finite strain rate parameter
   const Real & _II_eps_min;
+  
   const ADVariableValue & _pressure;
 
   /// viscosity of the fluid (mu)
   ADMaterialProperty<Real> & _viscosity;
   /// density of the fluid (rho)
   ADMaterialProperty<Real> & _density;
+
 };

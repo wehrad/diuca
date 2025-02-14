@@ -97,5 +97,5 @@ ADIceMaterialSI::computeQpProperties()
   
   // Constant density
   _density[_qp] = _rho;
-
+  
 }
