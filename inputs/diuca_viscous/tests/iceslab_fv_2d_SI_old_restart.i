@@ -1,58 +1,43 @@
-# a large glacier flowing towards the ocean (hydrostatic pressure at
-# the glacier front, i.e. downstream boundary) in the influence of the
-# driving stress (surface slope), over a flat bed.
-# The mesh includes a sediment block which is the last layer of
-# elements before the bottom boundary (where zero velocity is
-# applied): the viscosity of the sediment layer is modulating basal
-# sliding through a friction coefficient.
-# An influx of ice is applied at the top of the domain (upstream
-# boundary) to take into account the ice coming from the inner part of
-# the ice sheet.
+# ------------------------
 
-# NOTE: the sediment block is considered as ice for now
+# slope of the bottom boundary (in degrees)
+bed_slope = 0.
+bed_slope_pressure = 5.
 
-# ------------------------ domain settings
+# change coordinate system to add a slope
+gravity_x = '${fparse sin(bed_slope / 180 * pi) * 9.81 }'
+gravity_y = '${fparse - cos(bed_slope / 180 * pi) * 9.81}'
 
-# sediment rheology
-# sliding_law = "GudmundssonRaymond"
-# sediment_layer_thickness = 300.
-# slipperiness_coefficient_mmpaa = 3000. # 3000.
-# slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (365*24*3600)}'
-
-# ------------------------ simulation settings
+#  geometry of the ice slab
+length = 1000.
+thickness = 100.
 
 # dt associated with rest time associated with the
 # geometry (in seconds)
 # ice has a high viscosity and hence response times
 # of years
-nb_years = 0.075
-mult = 1
-_dt = '${fparse nb_years * 3600 * 24 * 365 * mult}'
+nb_years = 0.1
+_dt = '${fparse nb_years * 3600 * 24 * 365}'
 
-# upstream inlet (ice influx from the ice sheet interior)
-inlet_mph = 0.5 # mh-1
-inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
+# inlet_mph = 0. # 0.01 # mh-1
+# inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
+
+# ------------------------
 
 # Numerical scheme parameters
 velocity_interp_method = 'rc'
 advected_interp_method = 'upwind'
-
-vel_scaling = 1e-6
+vel_scaling = 1e-7
 
 # Material properties
 rho = 'rho_ice'
 mu = 'mu_ice'
 
-initial_II_eps_min = 1e-03
+# Initial finite strain rate for viscosity rampup
+initial_II_eps_min = 1e-07 # 1e-07
 
 # ------------------------
 
-[Problem]
-  type = FEProblem
-  # near_null_space_dimension = 1
-  # null_space_dimension = 1
-  # transpose_null_space_dimension = 1
-[]
 [GlobalParams]
   rhie_chow_user_object = 'rc'
 []
@@ -62,24 +47,8 @@ initial_II_eps_min = 1e-03
     type = INSFVRhieChowInterpolator
     u = vel_x
     v = vel_y
-    w = vel_z
     pressure = pressure
   []
-[]
-
-[Mesh]
-
-  [channel]
-    type = FileMeshGenerator
-    file = mesh_icestream.e
-  []
-
-  [delete_sediment_block]
-    type = BlockDeletionGenerator
-    input = channel
-    block = '3'
-  []
-
 []
 
 [Variables]
@@ -93,15 +62,22 @@ initial_II_eps_min = 1e-03
     two_term_boundary_expansion = true
     scaling = ${vel_scaling}
   []
-  [vel_z]
-    type = INSFVVelocityVariable
-    two_term_boundary_expansion = true
-    scaling = ${vel_scaling}
-  []
   [pressure]
     type = INSFVPressureVariable
     two_term_boundary_expansion = true
   []
+[]
+
+[Mesh]
+  type = GeneratedMesh
+  dim = 2
+  xmin = 0
+  xmax = '${length}'
+  ymin = 0
+  ymax = '${thickness}'
+  nx = 40
+  ny = 10
+  elem_type = QUAD4
 []
 
 [FVKernels]
@@ -142,9 +118,9 @@ initial_II_eps_min = 1e-03
   [u_gravity]
     type = INSFVMomentumGravity
     variable = vel_x
-    rho = ${rho}
     momentum_component = 'x'
-    gravity = '0 0 -9.81'
+    rho = ${rho}
+    gravity = '${gravity_x} ${gravity_y} 0.'
   []
 
   [v_time]
@@ -173,133 +149,133 @@ initial_II_eps_min = 1e-03
     pressure = pressure
     momentum_component = 'y'
   []
-  [v_buoyant]
+  [v_gravity]
     type = INSFVMomentumGravity
     variable = vel_y
-    rho = ${rho}
     momentum_component = 'y'
-    gravity = '0 0 -9.81'
-  []
-
-  [w_time]
-    type = INSFVMomentumTimeDerivative
-    variable = vel_z
     rho = ${rho}
-    momentum_component = 'z'
-  []
-  [w_advection]
-    type = INSFVMomentumAdvection
-    variable = vel_z
-    advected_interp_method = ${advected_interp_method}
-    velocity_interp_method = ${velocity_interp_method}
-    rho = ${rho}
-    momentum_component = 'z'
-  []
-  [w_viscosity]
-    type = INSFVMomentumDiffusion
-    variable = vel_z
-    mu = ${mu}
-    momentum_component = 'z'
-  []
-  [w_pressure]
-    type = INSFVMomentumPressure
-    variable = vel_z
-    pressure = pressure
-    momentum_component = 'z'
-  []
-  [w_buoyant]
-    type = INSFVMomentumGravity
-    variable = vel_z
-    rho = ${rho}
-    momentum_component = 'z'
-    gravity = '0 0 -9.81'
+    gravity = '${gravity_x} ${gravity_y} 0.'
   []
 []
 
 [FVBCs]
-
-  # ice and sediment influx
-  [ice_inlet_x]
-    type = INSFVInletVelocityBC
-    variable = vel_x
-    boundary = 'upstream'
-    functor = ${inlet_mps}
-  []
-  [ice_inlet_y]
-    type = INSFVInletVelocityBC
-    variable = vel_y
-    boundary = 'upstream'
-    functor = 0
-  []
-  [ice_inlet_z]
-    type = INSFVInletVelocityBC
-    variable = vel_z
-    boundary = 'upstream'
-    functor = 0
-  []
-
-  # no slip at the sediment base nor on the sides
-  # [no_slip_x]
-  #   type = INSFVNoSlipWallBC
+  # [inlet_x]
+  #   type = INSFVInletVelocityBC
   #   variable = vel_x
-  #   boundary = 'left right' # bottom
-  #   function = 0
+  #   boundary = 'left'
+  #   functor = '${inlet_mps}'
   # []
-  # [no_slip_y]
-  #   type = INSFVNoSlipWallBC
+  # [inlet_y]
+  #   type = INSFVInletVelocityBC
   #   variable = vel_y
-  #   boundary = 'left right' # bottom
-  #   function = 0
+  #   boundary = 'left'
+  #   functor = 0
   # []
-  # [no_slip_z]
-  #   type = INSFVNoSlipWallBC
-  #   variable = vel_z
-  #   boundary = 'left right bottom'
-  #   function = 0
-  # []
-
-  # free slip
-  [free_slip_x]
+  [noslip_x]
+    type = INSFVNoSlipWallBC
+    variable = vel_x
+    boundary = 'bottom'
+    function = 0
+  []
+  [noslip_y]
+    type = INSFVNoSlipWallBC
+    variable = vel_y
+    boundary = 'bottom'
+    function = 0
+  []
+  [freeslip_x]
     type = INSFVNaturalFreeSlipBC
     variable = vel_x
+    boundary = 'top'
     momentum_component = 'x'
-    boundary = 'surface'
   []
-  [free_slip_y]
+  [freeslip_y]
     type = INSFVNaturalFreeSlipBC
     variable = vel_y
+    boundary = 'top'
     momentum_component = 'y'
-    boundary = 'surface'
-  []
-  [free_slip_z]
-    type = INSFVNaturalFreeSlipBC
-    variable = vel_z
-    momentum_component = 'z'
-    boundary = 'surface'
   []
 
-  # ocean pressure at the glacier front
+
   [outlet_p]
     type = INSFVOutletPressureBC
     variable = pressure
-    boundary = 'downstream'
-    function = ocean_pressure
+    boundary = 'right'
+    functor = outlet_pressure
   []
+  [inlet_p]
+    type = INSFVOutletPressureBC
+    variable = pressure
+    boundary = 'left'
+    functor = inlet_pressure
+  []
+
+  # [periodic_vel_x]
+  #   type = FVADFunctorDirichletBC
+  #   variable = vel_x
+  #   boundary = 'right'
+  #   functor = transformed_vel_x
+  # []
+  # [periodic_vel_y]
+  #   type = FVADFunctorDirichletBC
+  #   variable = vel_y
+  #   boundary = 'right'
+  #   functor = transformed_vel_y
+  # []
 []
 
 # ------------------------
 
 [Functions]
-  [ocean_pressure]
-    type = ParsedFunction
-    expression = 'if(z < 0, 1e5 -1028 * 9.81 * z, 1e5)' # -1e5 * 9.81 * z)'
-  []
   [viscosity_rampup]
     type = ParsedFunction
-    expression = 'initial_II_eps_min * exp(-(t-_dt) * 1e-6)'
+    expression = 'initial_II_eps_min * exp(-(t-_dt) * 5e-6)'
     symbol_names = '_dt initial_II_eps_min'
     symbol_values = '${_dt} ${initial_II_eps_min}'
   []
+  [inlet_pressure]
+    type = ParsedFunction
+    expression = '917 * 9.81 * ( ((thickness - y) * cos(bed_slope_pressure / 180 * pi)) ) * 1.1'
+    symbol_names = 'bed_slope thickness'
+    symbol_values = '${bed_slope} ${thickness}'
+  []
+  [outlet_pressure]
+    type = ParsedFunction
+    expression = '917 * 9.81 * ( ((thickness - y) * cos(bed_slope_pressure / 180 * pi)) ) *
+1.0'
+    symbol_names = 'bed_slope thickness'
+    symbol_values = '${bed_slope} ${thickness}'
+  []
+  # [transform_x]
+  #   type = ParsedFunction
+  #   expression = 'x - length'
+  #   symbol_names = 'length'
+  #   symbol_values = '${length}'
+  # []
+[]
+
+[FunctorMaterials]
+  [ice]
+    type = FVIceMaterialSI
+    velocity_x = "vel_x"
+    velocity_y = "vel_y"
+    pressure = "pressure"
+    output_properties = 'mu_ice rho_ice eps_xx eps_yy sig_xx sig_yy eps_xy sig_xy'
+    outputs = "out"
+    # II_eps_min = 1e-20
+  []
+  # [translate_vel_x]
+  #   type = ADFunctorTransformFunctorMaterial
+  #   prop_names = 'transformed_vel_x'
+  #   prop_values = 'vel_x'
+  #   x_functor = 'transform_x'
+  # []
+  # [translate_vel_y]
+  #   type = ADFunctorTransformFunctorMaterial
+  #   prop_names = 'transformed_vel_y'
+  #   prop_values = 'vel_y'
+  #   x_functor = 'transform_x'
+  # []
 []
 
 [Controls]
@@ -311,16 +287,9 @@ initial_II_eps_min = 1e-03
   []
 []
 
-[FunctorMaterials]
-  [ice]
-    type = FVIceMaterialSI
-    block = 'eleblock1 eleblock2' #  10
-    velocity_x = "vel_x"
-    velocity_y = "vel_y"
-    velocity_z = "vel_z"
-    pressure = "pressure"
-    output_properties = 'mu_ice rho_ice'
-    outputs = "out"
+[AuxVariables]
+  [vel_z]
+    type = MooseVariableFVReal
   []
 []
 
@@ -356,18 +325,25 @@ initial_II_eps_min = 1e-03
       # (2) p = (-S)^{-1} p*
       # (3) u = Auu^{-1}(f_u-Aup*p)
       petsc_options = '-pc_fieldsplit_detect_saddle_point'
-      petsc_options_iname = '-pc_fieldsplit_schur_fact_type  -pc_fieldsplit_schur_precondition -ksp_gmres_restart -ksp_rtol -ksp_type'
-      petsc_options_value = 'full                            selfp                             300                1e-4      fgmres'
+      # petsc_options = '-ksp_monitor -ksp_view -ksp_converged_reason'
+      petsc_options_iname = '-pc_fieldsplit_schur_fact_type  -pc_fieldsplit_schur_precondition  -ksp_gmres_restart -ksp_rtol -ksp_type'
+      petsc_options_value = 'full                            selfp                              100                1e-4      fgmres'
     []
     [u]
       vars = 'vel_x vel_y'
-      petsc_options_iname = '-pc_type -pc_hypre_type -ksp_type -ksp_rtol -ksp_gmres_restart -ksp_pc_side'
-      petsc_options_value = 'hypre    boomeramg      gmres    5e-1      300                 right'
+      # petsc_options_iname = '-pc_type -pc_hypre_type -ksp_type -ksp_rtol -ksp_gmres_restart -ksp_pc_side'
+      # petsc_options_value = 'hypre    boomeramg      gmres    5e-5      300                 right'
+      # petsc_options = '-ksp_monitor -ksp_converged_reason -ksp_monitor_true_residual -ksp_monitor_singular_value'
+      petsc_options_iname = '-pc_type -pc_factor_shift -pc_factor_mat_solver_type -pc_factor_pivot_in_blocks'
+      petsc_options_value = 'lu       NONZERO          mumps                      true'
     []
     [p]
       vars = 'pressure'
-      petsc_options_iname = '-ksp_type -ksp_gmres_restart -ksp_rtol -pc_type -ksp_pc_side'
-      petsc_options_value = 'gmres    300                5e-1      jacobi    right'
+      # petsc_options_iname = '-ksp_type -ksp_gmres_restart -ksp_rtol -pc_type -ksp_pc_side'
+      # petsc_options_value = 'gmres    300                5e-1      jacobi    right'
+      # petsc_options = '-ksp_monitor'
+      petsc_options_iname = '-pc_type -pc_factor_shift'
+      petsc_options_value = 'lu       NONZERO'
     []
   []
   [SMP]
@@ -380,7 +356,7 @@ initial_II_eps_min = 1e-03
 
 [Executioner]
   type = Transient
-  num_steps = 100
+  num_steps = 30
 
   petsc_options_iname = '-pc_type -pc_factor_shift'
   petsc_options_value = 'lu       NONZERO'
@@ -392,23 +368,22 @@ initial_II_eps_min = 1e-03
 
   # nl_rel_tol = 1e-08
   # nl_abs_tol = 1e-13
-  # nl_rel_tol = 1e-07
-
-  # nl_abs_tol = 2e-06
-  nl_abs_tol = 2e-05
-
-  # l_tol = 1e-6
-  l_tol = 1e-5
+  nl_rel_tol = 1e-07
+  nl_abs_tol = 1e-07
 
   nl_max_its = 100
-  nl_forced_its = 3
-  line_search = none
+  nl_forced_its = 2
+  # line_search = none
+
+  # The scaling is not working as expected, makes the matrix worse
+  # This is probably due to the lack of on-diagonals in pressure
+  automatic_scaling = false
+  # off_diagonals_in_auto_scaling = true
+  # compute_scaling_once = false
 
   dt = '${_dt}'
-  # steady_state_detection = true
-  # steady_state_tolerance = 1e-100
-  check_aux = true
- 
+  steady_state_detection = true
+  steady_state_tolerance = 1e-100
 []
 
 [Outputs]

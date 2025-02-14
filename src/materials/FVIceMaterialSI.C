@@ -71,6 +71,9 @@ FVIceMaterialSI::FVIceMaterialSI(const InputParameters & parameters)
   addFunctorProperty<ADReal>(
 			     "rho_ice", [this](const auto &, const auto &) -> ADReal { return _rho; });
 
+  addFunctorProperty<Real>(
+			     "II_eps_min", [this](const auto &, const auto &) -> Real { return _II_eps_min; });
+
   const auto & eps_x = addFunctorProperty<ADRealVectorValue>(
       "eps_x",
       [this](const auto & r, const auto & t) -> ADRealVectorValue

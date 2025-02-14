@@ -32,6 +32,10 @@ _dt = '${fparse nb_years * 3600 * 24 * 365}'
 
 initial_II_eps_min = 1e-07
 
+# Material properties
+rho = 'rho_ice'
+mu = 'mu_ice'
+
 # ------------------------
 
 [Functions]
@@ -131,6 +135,7 @@ initial_II_eps_min = 1e-07
   [mass_stab]
     type = INSADMassPSPG
     variable = p
+    rho_name = ${rho}
   []
   [momentum_time]
     type = INSADMomentumTimeDerivative
@@ -143,6 +148,7 @@ initial_II_eps_min = 1e-07
   [momentum_viscous]
     type = INSADMomentumViscous
     variable = velocity
+    mu_name = ${mu}
   []
   [momentum_pressure]
     type = INSADMomentumPressure
@@ -170,6 +176,7 @@ initial_II_eps_min = 1e-07
       translation = '${length} 0 0'
       variable = 'velocity'
     []
+
     [up_down_p]
       primary = left
       secondary = right
@@ -198,7 +205,7 @@ initial_II_eps_min = 1e-07
     type = ADVectorFunctionDirichletBC
     variable = velocity
     boundary = 'bottom'
-    function_x = 1e-7 # "${inlet_mps}"
+    function_x = 0. # "${inlet_mps}"
     function_y = 0.
     # set_x_comp = False
   []
@@ -224,13 +231,15 @@ initial_II_eps_min = 1e-07
     velocity_x = "vel_x"
     velocity_y = "vel_y"
     pressure = "p"
-    output_properties = "rho mu"
+    output_properties = "rho_ice mu_ice"
     outputs = "out"
   []
   [ins_mat]
     type = INSADTauMaterial
     velocity = velocity
     pressure = p
+    rho_name = ${rho}
+    mu_name = ${mu}
   []
 []
 
@@ -291,7 +300,7 @@ initial_II_eps_min = 1e-07
 
 [Executioner]
   type = Transient
-  num_steps = 100
+  num_steps = 28
 
   petsc_options_iname = '-pc_type -pc_factor_shift_type'
   petsc_options_value = 'lu       NONZERO'
