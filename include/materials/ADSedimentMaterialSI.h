@@ -44,7 +44,7 @@ protected:
   const Real & _II_eps_min;
 
   // Sediment sliding law
-  const std::string & _sliding_law;
+  // const std::string & _sliding_law;
 
   /// density of the fluid (rho)
   ADMaterialProperty<Real> & _density; 
@@ -52,5 +52,5 @@ protected:
   /// viscosity of the fluid (mu)
   ADMaterialProperty<Real> & _viscosity;
 
-  
+ 
 };

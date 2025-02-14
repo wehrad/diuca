@@ -37,8 +37,8 @@ ADSedimentMaterialSI::validParams()
   params.declareControllable("II_eps_min"); // s-1
 
   // Model to simulate sediments
-  params.addParam<std::string>("sliding_law", "GudmundssonRaymond", "Model to simulate sediment deformation (DruckerPrager or GudmundssonRaymond)");
-  params.declareControllable("sliding_law");
+  // params.addParam<std::string>("sliding_law", "GudmundssonRaymond", "Model to simulate sediment deformation (DruckerPrager or GudmundssonRaymond)");
+  // params.declareControllable("sliding_law");
 
   return params;
 }
@@ -67,7 +67,7 @@ ADSedimentMaterialSI::ADSedimentMaterialSI(const InputParameters & parameters)
     _LayerThickness(getParam<Real>("LayerThickness")),
 
     // Model to simulate sediments
-    _sliding_law(getParam<std::string>("sliding_law")),
+    // _sliding_law(getParam<std::string>("sliding_law")),
 
     // Finite strain rate parameter
     _II_eps_min(getParam<Real>("II_eps_min")),
@@ -88,12 +88,15 @@ ADSedimentMaterialSI::computeQpProperties()
   // Constant density
   _density[_qp] = _rho;
 
-  if (_sliding_law == "GudmundssonRaymond")
-    {
-      _viscosity[_qp] = _LayerThickness / _SlipperinessCoefficient;
+  // if (_sliding_law == "GudmundssonRaymond")
+  //   {
+  
+  // _viscosity[_qp] = _LayerThickness / _SlipperinessCoefficient;
+  _viscosity[_qp] = 1e10;
+  
       // ADReal viscosity = 1e10;
       // std::cout << "SEDIMENT  " << _viscosity[_qp] << "  " << _pressure[_qp] << std::endl;
-    }
+    // }
 
   // std::cout << "SEDIMENT  " << _viscosity[_qp] << "  " << _pressure[_qp] << std::endl;
   // Viscosity at previous timestep

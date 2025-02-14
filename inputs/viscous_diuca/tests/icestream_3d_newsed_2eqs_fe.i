@@ -14,7 +14,7 @@
 # sediment rheology
 # sliding_law = "GudmundssonRaymond"
 sediment_layer_thickness = 50.
-slipperiness_coefficient_mmpaa = 3e9 # 3e4 # 3e3 # 9.512937595129376e-11
+slipperiness_coefficient_mmpaa = 3e3 # 3e4 # 3e3 # 9.512937595129376e-11
 slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (365*24*3600)}' # 
 
 # ------------------------ simulation settings
@@ -120,26 +120,25 @@ initial_II_eps_min = 1e-07
     input = 'add_sediment_downstream_side'
   []
 
-  [final_mesh]
-    type = SubdomainBoundingBoxGenerator
-    restricted_subdomains="eleblock1 eleblock2"
-    input = add_nodesets
-    block_id = 255
-    block_name = deactivated
-    bottom_left = '18500 -100 -100'
-    top_right = '22000 11000 150'
-  []
+  # [final_mesh]
+  #   type = SubdomainBoundingBoxGenerator
+  #   input = delete_sediment_block
+  #   block_id = 255
+  #   block_name = deactivated
+  #   bottom_left = '19000 1875 -1800'
+  #   top_right = '20100 8125 150'
+  # []
 
-  [refined_mesh]
-    type = RefineBlockGenerator
-    input = "final_mesh"
-    block = "255"
-    refinement = '1'
-    enable_neighbor_refinement = true
-    max_element_volume = 1e100
-  []
+  # [refined_mesh]
+  #   type = RefineBlockGenerator
+  #   input = "final_mesh"
+  #   block = "255"
+  #   refinement = '1'
+  #   enable_neighbor_refinement = true
+  #   max_element_volume = 1e100
+  # []
 
-  final_generator = refined_mesh
+  # final_generator = refined_mesh
 
 
 []
@@ -176,147 +175,190 @@ initial_II_eps_min = 1e-07
 []
 
 
+
 [AuxVariables]
-  [vel_x]
+  [vel_ice_x]
   []
-  [vel_y]
+  [vel_ice_y]
   []
-  [vel_z]
+  [vel_ice_z]
+  []
+  [vel_sediment_x]
+  []
+  [vel_sediment_y]
+  []
+  [vel_sediment_z]
   []
 []
 
 [AuxKernels]
-  [vel_x]
+  [vel_ice_x]
     type = VectorVariableComponentAux
-    variable = vel_x
-    vector_variable = velocity
+    variable = vel_ice_x
+    vector_variable = velocity_ice
     component = 'x'
-    block = 'eleblock1 eleblock2 0 255'
+    block = 'eleblock1 eleblock2'
   []
-  [vel_y]
+  [vel_ice_y]
     type = VectorVariableComponentAux
-    variable = vel_y
-    vector_variable = velocity
+    variable = vel_ice_y
+    vector_variable = velocity_ice
     component = 'y'
-    block = 'eleblock1 eleblock2 0 255'
+    block = 'eleblock1 eleblock2'
   []
-  [vel_z]
+  [vel_ice_z]
     type = VectorVariableComponentAux
-    variable = vel_z
-    vector_variable = velocity
+    variable = vel_ice_z
+    vector_variable = velocity_ice
     component = 'z'
-    block = 'eleblock1 eleblock2 0 255'
+    block = 'eleblock1 eleblock2'
+  []
+  [vel_sediment_x]
+    type = VectorVariableComponentAux
+    variable = vel_sediment_x
+    vector_variable = velocity_sediment
+    component = 'x'
+    block = '0'
+  []
+  [vel_sediment_y]
+    type = VectorVariableComponentAux
+    variable = vel_sediment_y
+    vector_variable = velocity_sediment
+    component = 'y'
+    block = '0'
+  []
+  [vel_sediment_z]
+    type = VectorVariableComponentAux
+    variable = vel_sediment_z
+    vector_variable = velocity_sediment
+    component = 'z'
+    block = '0'
   []
 []
 
 [Variables]
-  [velocity]
+  [velocity_ice]
     family = LAGRANGE_VEC
     # order = SECOND
     scaling = 1e-6
     # scaling = 1e6
     # initial_condition = 1e-6
-    block = 'eleblock1 eleblock2 0 255'
+    block = 'eleblock1 eleblock2'
   []
-  [p]
+  [p_ice]
     # scaling = 1e6
     family = LAGRANGE
     # scaling = 1e-6
     # initial_condition = 1e6
-    block = 'eleblock1 eleblock2 0 255'
+    block = 'eleblock1 eleblock2'
+  []
+  [velocity_sediment]
+    family = LAGRANGE_VEC
+    # order = SECOND
+    scaling = 1e-6
+    # scaling = 1e6
+    # initial_condition = 1e-6
+    block = '0'
+  []
+  [p_sediment]
+    # scaling = 1e6
+    family = LAGRANGE
+    # scaling = 1e-6
+    # initial_condition = 1e6
+    block = '0'
   []
 []
 
 [Kernels]
   [mass_ice]
     type = INSADMass
-    block = 'eleblock1 eleblock2 255'
-    variable = p
+    block = 'eleblock1 eleblock2'
+    variable = p_ice
   []
   [mass_stab_ice_ice]
     type = INSADMassPSPG
-    block = 'eleblock1 eleblock2 255'
-    variable = p
+    block = 'eleblock1 eleblock2'
+    variable = p_ice
     rho_name = "rho_ice"
   []
   [momentum_time_ice]
     type = INSADMomentumTimeDerivative
-    block = 'eleblock1 eleblock2 255'
-    variable = velocity
+    block = 'eleblock1 eleblock2'
+    variable = velocity_ice
   []
   [momentum_advection_ice]
     type = INSADMomentumAdvection
-    block = 'eleblock1 eleblock2 255'
-    variable = velocity
+    block = 'eleblock1 eleblock2'
+    variable = velocity_ice
   []
   [momentum_viscous_ice]
     type = INSADMomentumViscous
-    block = 'eleblock1 eleblock2 255'
-    variable = velocity
+    block = 'eleblock1 eleblock2'
+    variable = velocity_ice
     mu_name = "mu_ice"
   []
   [momentum_pressure_ice]
     type = INSADMomentumPressure
-    block = 'eleblock1 eleblock2 255'
-    variable = velocity
-    pressure = p
+    block = 'eleblock1 eleblock2'
+    variable = velocity_ice
+    pressure = p_ice
   []
   [momentum_supg_ice]
     type = INSADMomentumSUPG
-    block = 'eleblock1 eleblock2 255'
-    variable = velocity
-    velocity = velocity
+    block = 'eleblock1 eleblock2'
+    variable = velocity_ice
+    velocity = velocity_ice
   []
   [gravity_ice]
     type = INSADGravityForce
-    block = 'eleblock1 eleblock2 255'
-    variable = velocity
+    block = 'eleblock1 eleblock2'
+    variable = velocity_ice
     gravity = '0. 0. -9.81'
   []
 
   [mass_sediment]
     type = INSADMass
     block = '0'
-    variable = p
+    variable = p_sediment
   []
   [mass_stab_sediment_sediment]
     type = INSADMassPSPG
     block = '0'
-    variable = p
+    variable = p_sediment
     rho_name = "rho_sediment"
   []
   [momentum_time_sediment]
     type = INSADMomentumTimeDerivative
     block = '0'
-    variable = velocity
+    variable = velocity_sediment
   []
   [momentum_advection_sediment]
     type = INSADMomentumAdvection
     block = '0'
-    variable = velocity
+    variable = velocity_sediment
   []
   [momentum_viscous_sediment]
     type = INSADMomentumViscous
     block = '0'
-    variable = velocity
+    variable = velocity_sediment
     mu_name = "mu_sediment"
   []
   [momentum_pressure_sediment]
     type = INSADMomentumPressure
     block = '0'
-    variable = velocity
-    pressure = p
+    variable = velocity_sediment
+    pressure = p_sediment
   []
   [momentum_supg_sediment]
     type = INSADMomentumSUPG
     block = '0'
-    variable = velocity
-    velocity = velocity
+    variable = velocity_sediment
+    velocity = velocity_sediment
   []
   [gravity_sediment]
     type = INSADGravityForce
     block = '0'
-    variable = velocity
+    variable = velocity_sediment
     gravity = '0. 0. -9.81'
   []
 []
@@ -332,28 +374,44 @@ initial_II_eps_min = 1e-07
   # []
   
     # no slip at the sediment base nor on the sides
-  [no_slip_sides]
+  [no_slip_sides_ice]
     type = ADVectorFunctionDirichletBC
-    variable = velocity
-    boundary = 'left right left_right_sediment top_sediment'
+    variable = velocity_ice
+    boundary = 'left right'
     function_x = 0.
     function_y = 0.
     function_z = 0.
   []
-
-  [inlet]
+  [inlet_ice]
     type = ADVectorFunctionDirichletBC
-    variable = velocity
-    boundary = 'upstream' # upstream_sediment not much diff. either
+    variable = velocity_ice
+    boundary = 'upstream'
+    function_x = influx
+    function_y = 0.
+    function_z = 0.
+  []
+
+  [no_slip_sides_sediment]
+    type = ADVectorFunctionDirichletBC
+    variable = velocity_sediment
+    boundary = 'left_right_sediment top_sediment'
+    function_x = 0.
+    function_y = 0.
+    function_z = 0.
+  []
+  [inlet_sediment]
+    type = ADVectorFunctionDirichletBC
+    variable = velocity_sediment
+    boundary = 'upstream_sediment'
     function_x = influx
     function_y = 0.
     function_z = 0.
   []
   
-  [oulet]
+  [oulet_ice]
     type = ADFunctionDirichletBC
-    variable = p
-    boundary = 'downstream' # downstream_sediment doesn't make much of a diff.
+    variable = p_ice
+    boundary = 'downstream'
     function = ocean_pressure
   []
 
@@ -369,21 +427,21 @@ initial_II_eps_min = 1e-07
 [Materials]
   [ice]
     type = ADIceMaterialSI
-    block = 'eleblock1 eleblock2 255'
-    velocity_x = "vel_x"
-    velocity_y = "vel_y"
-    velocity_z = "vel_z"
-    pressure = "p"
+    block = 'eleblock1 eleblock2' #  10
+    velocity_x = "vel_ice_x"
+    velocity_y = "vel_ice_y"
+    velocity_z = "vel_ice_z"
+    pressure = "p_ice"
     output_properties = 'mu_ice rho_ice'
     outputs = "out"
   []
   [sediment]
-    type = ADSedimentMaterialSI2
+    type = ADSedimentMaterialSI
     block = '0'
-    # velocity_x = "vel_x"
-    # velocity_y = "vel_y"
-    # velocity_z = "vel_z"
-    # pressure = "p"
+    velocity_x = "vel_sediment_x"
+    velocity_y = "vel_sediment_y"
+    velocity_z = "vel_sediment_z"
+    pressure = "p_sediment"
     # density  = 1850.
     # sliding_law = ${sliding_law}
     SlipperinessCoefficient = ${slipperiness_coefficient}
@@ -394,17 +452,17 @@ initial_II_eps_min = 1e-07
 
   [ins_mat_ice]
     type = INSADTauMaterial
-    block = 'eleblock1 eleblock2 255'
-    velocity = velocity
-    pressure = p
+    block = 'eleblock1 eleblock2'
+    velocity = velocity_ice
+    pressure = p_ice
     rho_name = "rho_ice"
     mu_name = "mu_ice"
   []
   [ins_mat_sediment]
     type = INSADTauMaterial
     block = '0'
-    velocity = velocity
-    pressure = p
+    velocity = velocity_sediment
+    pressure = p_sediment
     rho_name = "rho_sediment"
     mu_name = "mu_sediment"
   []
@@ -448,12 +506,12 @@ initial_II_eps_min = 1e-07
       petsc_options_value = 'full                            selfp                             300                1e-4      fgmres'
     []
     [u]
-      vars = 'vel_x vel_y vel_z'
+      vars = 'vel_ice_x vel_ice_y vel_ice_z vel_sediment_x vel_sediment_y vel_sediment_z'
       petsc_options_iname = '-pc_type -pc_hypre_type -ksp_type -ksp_rtol -ksp_gmres_restart -ksp_pc_side'
       petsc_options_value = 'hypre    boomeramg      gmres    5e-1      300                 right'
     []
     [p]
-      vars = 'p'
+      vars = 'p_ice p_sediment'
       petsc_options_iname = '-ksp_type -ksp_gmres_restart -ksp_rtol -pc_type -ksp_pc_side'
       petsc_options_value = 'gmres    300                5e-1      jacobi    right'
     []
