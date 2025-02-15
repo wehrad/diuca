@@ -26,7 +26,7 @@ ADSedimentMaterialSI::validParams()
   params.declareControllable("FloodAmplitude");
   params.addParam<Real>("FloodPeakTime", 1.0, "Sediment slipperiness coefficient");
   params.declareControllable("FloodPeakTime");
-  params.addParam<Real>("FloodSpreaTime", 1.0, "Sediment slipperiness coefficient");
+  params.addParam<Real>("FloodSpreadTime", 1.0, "Sediment slipperiness coefficient");
   params.declareControllable("FloodSpreadTime");
   params.addParam<Real>("FloodSpeed", 1.0, "Sediment slipperiness coefficient");
   params.declareControllable("FloodSpeed");
@@ -73,6 +73,7 @@ ADSedimentMaterialSI::computeQpProperties()
     }
   else if (_SlipperinessCoefficientVariations == "subglacialflood")
     {
+      Real time_offset =_q_point[_qp](0) / _FloodSpeed;
       _viscosity[_qp] = viscosity_baseline;
     }
   
