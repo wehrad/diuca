@@ -108,21 +108,21 @@ initial_II_eps_min = 1.10477e-18
     variable = vel_x
     vector_variable = velocity
     component = 'x'
-    block = 'eleblock1 eleblock2 0 255'
+    block = 'eleblock1 eleblock2 0 255 254'
   []
   [vel_y]
     type = VectorVariableComponentAux
     variable = vel_y
     vector_variable = velocity
     component = 'y'
-    block = 'eleblock1 eleblock2 0 255'
+    block = 'eleblock1 eleblock2 0 255 254'
   []
   [vel_z]
     type = VectorVariableComponentAux
     variable = vel_z
     vector_variable = velocity
     component = 'z'
-    block = 'eleblock1 eleblock2 0 255'
+    block = 'eleblock1 eleblock2 0 255 254'
   []
 []
 
@@ -133,7 +133,7 @@ initial_II_eps_min = 1.10477e-18
     scaling = 1e-6
     # scaling = 1e6
     # initial_condition = 1e-6
-    block = 'eleblock1 eleblock2 0 255'
+    block = 'eleblock1 eleblock2 0 255 254'
     # initial_from_file_var = "velocity_x velocity_y velocity_z"
   []
   [p]
@@ -141,7 +141,7 @@ initial_II_eps_min = 1.10477e-18
     family = LAGRANGE
     # scaling = 1e-6
     # initial_condition = 1e6
-    block = 'eleblock1 eleblock2 0 255'
+    block = 'eleblock1 eleblock2 0 255 254'
     initial_from_file_var = p
   []
 []
@@ -238,6 +238,52 @@ initial_II_eps_min = 1.10477e-18
     variable = velocity
     gravity = '0. 0. -9.81'
   []
+
+  [mass_floodedsediment]
+    type = INSADMass
+    block = '254'
+    variable = p
+  []
+  [mass_stab_floodedsediment_floodedsediment]
+    type = INSADMassPSPG
+    block = '254'
+    variable = p
+    rho_name = "rho_floodedsediment"
+  []
+  [momentum_time_floodedsediment]
+    type = INSADMomentumTimeDerivative
+    block = '254'
+    variable = velocity
+  []
+  [momentum_advection_floodedsediment]
+    type = INSADMomentumAdvection
+    block = '254'
+    variable = velocity
+  []
+  [momentum_viscous_floodedsediment]
+    type = INSADMomentumViscous
+    block = '254'
+    variable = velocity
+    mu_name = "mu_floodedsediment"
+  []
+  [momentum_pressure_floodedsediment]
+    type = INSADMomentumPressure
+    block = '254'
+    variable = velocity
+    pressure = p
+  []
+  [momentum_supg_floodedsediment]
+    type = INSADMomentumSUPG
+    block = '254'
+    variable = velocity
+    velocity = velocity
+  []
+  [gravity_floodedsediment]
+    type = INSADGravityForce
+    block = '254'
+    variable = velocity
+    gravity = '0. 0. -9.81'
+  []
 []
 
 [BCs]
@@ -307,7 +353,22 @@ initial_II_eps_min = 1.10477e-18
     # sliding_law = ${sliding_law}
     SlipperinessCoefficient = ${slipperiness_coefficient}
     LayerThickness = ${sediment_layer_thickness}
-    output_properties = 'mu_sediment rho_sediment'
+    output_properties = 'mu_floodedsediment rho_floodedsediment'
+    outputs = "out"
+  []
+  [flooded_sediment]
+    type = ADSedimentMaterialSI
+    block = '254'
+    # velocity_x = "vel_x"
+    # velocity_y = "vel_y"
+    # velocity_z = "vel_z"
+    # pressure = "p"
+    # density  = 1850.
+    # sliding_law = ${sliding_law}
+    SlipperinessCoefficientVariations = "subglacialflood"
+    SlipperinessCoefficient = ${slipperiness_coefficient}
+    LayerThickness = ${sediment_layer_thickness}
+    output_properties = 'mu_floodedsediment rho_floodedediment'
     outputs = "out"
   []
 
@@ -322,6 +383,14 @@ initial_II_eps_min = 1.10477e-18
   [ins_mat_sediment]
     type = INSADTauMaterial
     block = '0'
+    velocity = velocity
+    pressure = p
+    rho_name = "rho_sediment"
+    mu_name = "mu_sediment"
+  []
+  [ins_mat_floodedsediment]
+    type = INSADTauMaterial
+    block = '254'
     velocity = velocity
     pressure = p
     rho_name = "rho_sediment"
@@ -387,8 +456,8 @@ initial_II_eps_min = 1.10477e-18
 
 [Executioner]
   type = Transient
-  num_steps = 28
-
+  num_steps = 20
+  start_time = 0
   petsc_options_iname = '-pc_type -pc_factor_shift_type'
   petsc_options_value = 'lu       NONZERO'
   

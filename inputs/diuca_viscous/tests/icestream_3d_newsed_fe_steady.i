@@ -139,7 +139,17 @@ initial_II_eps_min = 1e-07
     max_element_volume = 1e100
   []
 
-  final_generator = refined_mesh
+  [final_mesh2]
+    type = SubdomainBoundingBoxGenerator
+    input = refined_mesh
+    restricted_subdomains="0"
+    block_id = 254
+    block_name = flood
+    bottom_left = '10000 4900 -1e4'
+    top_right = '22000  5700 1e4'
+  []
+
+  final_generator = final_mesh2
 
 
 []
@@ -191,21 +201,21 @@ initial_II_eps_min = 1e-07
     variable = vel_x
     vector_variable = velocity
     component = 'x'
-    block = 'eleblock1 eleblock2 0 255'
+    block = 'eleblock1 eleblock2 0 255 254'
   []
   [vel_y]
     type = VectorVariableComponentAux
     variable = vel_y
     vector_variable = velocity
     component = 'y'
-    block = 'eleblock1 eleblock2 0 255'
+    block = 'eleblock1 eleblock2 0 255 254'
   []
   [vel_z]
     type = VectorVariableComponentAux
     variable = vel_z
     vector_variable = velocity
     component = 'z'
-    block = 'eleblock1 eleblock2 0 255'
+    block = 'eleblock1 eleblock2 0 255 254'
   []
 []
 
@@ -216,14 +226,14 @@ initial_II_eps_min = 1e-07
     scaling = 1e-6
     # scaling = 1e6
     # initial_condition = 1e-6
-    block = 'eleblock1 eleblock2 0 255'
+    block = 'eleblock1 eleblock2 0 255 254'
   []
   [p]
     # scaling = 1e6
     family = LAGRANGE
     # scaling = 1e-6
     # initial_condition = 1e6
-    block = 'eleblock1 eleblock2 0 255'
+    block = 'eleblock1 eleblock2 0 255 254'
   []
 []
 
@@ -319,6 +329,52 @@ initial_II_eps_min = 1e-07
     variable = velocity
     gravity = '0. 0. -9.81'
   []
+
+  [mass_floodedsediment]
+    type = INSADMass
+    block = '254'
+    variable = p
+  []
+  [mass_stab_floodedsediment_floodedsediment]
+    type = INSADMassPSPG
+    block = '254'
+    variable = p
+    rho_name = "rho_floodedsediment"
+  []
+  [momentum_time_floodedsediment]
+    type = INSADMomentumTimeDerivative
+    block = '254'
+    variable = velocity
+  []
+  [momentum_advection_floodedsediment]
+    type = INSADMomentumAdvection
+    block = '254'
+    variable = velocity
+  []
+  [momentum_viscous_floodedsediment]
+    type = INSADMomentumViscous
+    block = '254'
+    variable = velocity
+    mu_name = "mu_floodedsediment"
+  []
+  [momentum_pressure_floodedsediment]
+    type = INSADMomentumPressure
+    block = '254'
+    variable = velocity
+    pressure = p
+  []
+  [momentum_supg_floodedsediment]
+    type = INSADMomentumSUPG
+    block = '254'
+    variable = velocity
+    velocity = velocity
+  []
+  [gravity_floodedsediment]
+    type = INSADGravityForce
+    block = '254'
+    variable = velocity
+    gravity = '0. 0. -9.81'
+  []
 []
 
 [BCs]
@@ -378,7 +434,7 @@ initial_II_eps_min = 1e-07
     outputs = "out"
   []
   [sediment]
-    type = ADSedimentMaterialSI2
+    type = ADSedimentMaterialSI
     block = '0'
     # velocity_x = "vel_x"
     # velocity_y = "vel_y"
@@ -389,6 +445,20 @@ initial_II_eps_min = 1e-07
     SlipperinessCoefficient = ${slipperiness_coefficient}
     LayerThickness = ${sediment_layer_thickness}
     output_properties = 'mu_sediment rho_sediment'
+    outputs = "out"
+  []
+  [floodedsediment]
+    type = ADSedimentMaterialSI
+    block = '254'
+    # velocity_x = "vel_x"
+    # velocity_y = "vel_y"
+    # velocity_z = "vel_z"
+    # pressure = "p"
+    # density  = 1850.
+    # sliding_law = ${sliding_law}
+    SlipperinessCoefficient = ${slipperiness_coefficient}
+    LayerThickness = ${sediment_layer_thickness}
+    output_properties = 'mu_floodedsediment rho_floodedsediment'
     outputs = "out"
   []
 
@@ -407,6 +477,14 @@ initial_II_eps_min = 1e-07
     pressure = p
     rho_name = "rho_sediment"
     mu_name = "mu_sediment"
+  []
+  [ins_mat_floodedsediment]
+    type = INSADTauMaterial
+    block = '254'
+    velocity = velocity
+    pressure = p
+    rho_name = "rho_floodedsediment"
+    mu_name = "mu_floodedsediment"
   []
   
 []

@@ -30,11 +30,12 @@ protected:
   const Real & _SlipperinessCoefficient;
 
   const std::string & _SlipperinessCoefficientVariations;
+  const Real & _FloodStartPosition;
   const Real & _FloodAmplitude;
   const Real & _FloodPeakTime;
   const Real & _FloodSpreadTime;
   const Real & _FloodSpeed;
-  
+
   /// viscosity of the fluid (mu)
   ADMaterialProperty<Real> & _viscosity;
   /// density of the fluid (rho)
