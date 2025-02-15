@@ -297,7 +297,7 @@ initial_II_eps_min = 1.10477e-18
     outputs = "out"
   []
   [sediment]
-    type = ADSedimentMaterialSI2
+    type = ADSedimentMaterialSI
     block = '0'
     # velocity_x = "vel_x"
     # velocity_y = "vel_y"
