@@ -29,7 +29,7 @@ slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (
 # # mult = 0.5
 # mult = 0.5
 # _dt = '${fparse nb_years * 3600 * 24 * 365 * mult}'
-nb_years = 0.01 # 0.1
+nb_years = 0.0001 # 0.01 # 0.1
 _dt = '${fparse nb_years * 3600 * 24 * 365}'
 
 inlet_mph = 0.75 # 0.01 # mh-1
@@ -457,7 +457,7 @@ initial_II_eps_min = 1.10477e-18
 
 [Executioner]
   type = Transient
-  num_steps = 20
+  num_steps = 60
   start_time = 0
   petsc_options_iname = '-pc_type -pc_factor_shift_type'
   petsc_options_value = 'lu       NONZERO'

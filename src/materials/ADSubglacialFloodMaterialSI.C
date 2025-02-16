@@ -26,9 +26,9 @@ ADSubglacialFloodMaterialSI::validParams()
   params.declareControllable("FloodStartPosition");
   params.addParam<Real>("FloodAmplitude", 1e-10, "Amplitude of variations in slipperiness coefficient");
   params.declareControllable("FloodAmplitude");
-  params.addParam<Real>("FloodPeakTime", 3600*24*24, "Timing of flood peak in seconds");
+  params.addParam<Real>("FloodPeakTime", 3600*24, "Timing of flood peak in seconds");
   params.declareControllable("FloodPeakTime");
-  params.addParam<Real>("FloodSpreadTime", 3600*24*3, "Flood spread (as std of a gaussian)");
+  params.addParam<Real>("FloodSpreadTime", 3600*3, "Flood spread (as std of a gaussian)");
   params.declareControllable("FloodSpreadTime");
   params.addParam<Real>("FloodSpeed", 0.83, "Propagation speed of the flood peak in m.s-1");
   params.declareControllable("FloodSpeed");
