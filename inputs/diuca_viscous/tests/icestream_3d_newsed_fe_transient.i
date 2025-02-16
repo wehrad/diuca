@@ -353,11 +353,11 @@ initial_II_eps_min = 1.10477e-18
     # sliding_law = ${sliding_law}
     SlipperinessCoefficient = ${slipperiness_coefficient}
     LayerThickness = ${sediment_layer_thickness}
-    output_properties = 'mu_floodedsediment rho_floodedsediment'
+    output_properties = 'mu_sediment rho_sediment'
     outputs = "out"
   []
   [flooded_sediment]
-    type = ADSedimentMaterialSI
+    type = ADSubglacialFloodMaterialSI
     block = '254'
     # velocity_x = "vel_x"
     # velocity_y = "vel_y"
@@ -367,6 +367,7 @@ initial_II_eps_min = 1.10477e-18
     # sliding_law = ${sliding_law}
     SlipperinessCoefficientVariations = "subglacialflood"
     SlipperinessCoefficient = ${slipperiness_coefficient}
+    FloodAmplitude = 1e-8
     LayerThickness = ${sediment_layer_thickness}
     output_properties = 'mu_floodedsediment rho_floodedediment'
     outputs = "out"
@@ -393,8 +394,8 @@ initial_II_eps_min = 1.10477e-18
     block = '254'
     velocity = velocity
     pressure = p
-    rho_name = "rho_sediment"
-    mu_name = "mu_sediment"
+    rho_name = "rho_floodedsediment"
+    mu_name = "mu_floodedsediment"
   []
   
 []

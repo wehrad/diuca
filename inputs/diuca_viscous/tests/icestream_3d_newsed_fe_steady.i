@@ -448,7 +448,7 @@ initial_II_eps_min = 1e-07
     outputs = "out"
   []
   [floodedsediment]
-    type = ADSedimentMaterialSI
+    type = ADSubglacialFloodMaterialSI
     block = '254'
     # velocity_x = "vel_x"
     # velocity_y = "vel_y"
