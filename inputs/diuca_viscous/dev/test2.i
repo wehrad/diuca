@@ -5,71 +5,91 @@ channel_depth = -800.
 channel_width_spread = 1200.
 side_elevation = 0.
 peak_position = 5000.
+surface_slope = 0.02
 
 [Mesh]
 
   # make the surface by filling between left and right
+  # [pcg1]
+  #   type = ParsedCurveGenerator
+  #   x_formula = 't'
+  #   y_formula = '300*sin((2*pi/10000)*t)'
+  #   constant_names = 'pi'
+  #   constant_expressions = '${fparse pi}'
+  #   section_bounding_t_values = '0 ${length}'
+  #   nums_segments = 20
+  # []
+  # [pcg2]
+  #   type = ParsedCurveGenerator
+  #   x_formula = 't'
+  #   y_formula = '(300*sin((2*pi/10000)*t)) + 5000.'
+  #   constant_names = 'pi'
+  #   constant_expressions = '${fparse pi}'
+  #   section_bounding_t_values = '0 ${length}'
+  #   nums_segments = 20
+  # []
+  # [fbcg]
+  #   type = FillBetweenCurvesGenerator
+  #   input_mesh_1 = pcg1
+  #   input_mesh_2 = pcg2
+  #   num_layers = 10
+  #   bias_parameter = 0.0
+  #   begin_side_boundary_id = 0
+  # []
+
+
+  # make the front face on the XY plane
   [pcg1]
     type = ParsedCurveGenerator
     x_formula = 't'
-    y_formula = '300*sin((2*pi/10000)*t)'
-    constant_names = 'pi'
-    constant_expressions = '${fparse pi}'
-    section_bounding_t_values = '0 ${length}'
+    y_formula = '(channel_depth * exp((-((t - peak_position) ^ 2)) / (2 * channel_width_spread^2))) + side_elevation'
+    constant_names = 'channel_depth peak_position channel_width_spread side_elevation'
+    constant_expressions = '${channel_depth} ${peak_position} ${channel_width_spread} ${side_elevation}'
+    section_bounding_t_values = '0 ${width}'
     nums_segments = 20
   []
   [pcg2]
     type = ParsedCurveGenerator
     x_formula = 't'
-    y_formula = '(300*sin((2*pi/10000)*t)) + 5000.'
-    constant_names = 'pi'
-    constant_expressions = '${fparse pi}'
-    section_bounding_t_values = '0 ${length}'
-    nums_segments = 20
-  []
-  [fbcg]
-    type = FillBetweenCurvesGenerator
-    input_mesh_1 = pcg1
-    input_mesh_2 = pcg2
-    num_layers = 10
-    bias_parameter = 0.0
-    begin_side_boundary_id = 0
-  []
-
-
-  # make the bed by filling between back and front
-  [pcg3]
-    type = ParsedCurveGenerator
-    x_formula = '20000'
-    y_formula = 't'
-    z_formula = '(channel_depth * exp((-((t - peak_position) ^ 2)) / (2 * channel_width_spread^2))) + side_elevation'
-    # constant_names = 'length thickness'
-    # constant_expressions = '${length} ${thickness}'
-    constant_names = 'channel_depth peak_position channel_width_spread side_elevation'
-    constant_expressions = '${channel_depth} ${peak_position} ${channel_width_spread} ${side_elevation}'
-    section_bounding_t_values = '0 ${width}'
-    nums_segments = 20
-  []
-  [pcg4]
-    type = ParsedCurveGenerator
-    x_formula = '0'
-    y_formula = 't'
-    z_formula = '(channel_depth * exp((-((t - peak_position) ^ 2)) / (2 * channel_width_spread^2))) + side_elevation'
-    constant_names = 'channel_depth peak_position channel_width_spread side_elevation'
-    constant_expressions = '${channel_depth} ${peak_position} ${channel_width_spread} ${side_elevation}'
+    y_formula = '100'
     section_bounding_t_values = '0 ${width}'
     nums_segments = 20
   []
   [fbcg2]
     type = FillBetweenCurvesGenerator
-    input_mesh_1 = pcg3
-    input_mesh_2 = pcg4
-    num_layers = 10
+    input_mesh_1 = pcg1
+    input_mesh_2 = pcg2
+    num_layers = 5
     bias_parameter = 0.0
     begin_side_boundary_id = 0
   []
 
-  final_generator = fbcg2
+  # extrude along Z axis
+  [make3D]
+    type = MeshExtruderGenerator
+    extrusion_vector = '0 0 ${length}'
+    num_layers = 20
+    # bottom_sideset = 'bottom'
+    # top_sideset = 'top'
+    input = fbcg2
+  []
+
+  [add_sinusoidal]
+    type = ParsedNodeTransformGenerator
+    input = make3D
+    x_function = "x + (300*sin((2*pi/10000)*z))"
+    # x_function = 'x + z/10'
+    # y_function = "(300*sin((2*pi/10000)*x))"
+    y_function = 'if(y >= side_elevation, y + ((length - z) * surface_slope), y)'
+    z_function = "z"
+    constant_names = 'pi side_elevation surface_slope length'
+    constant_expressions = '${fparse pi} ${side_elevation} ${surface_slope} ${length}'
+  []
+  [convert]
+    type = ElementsToTetrahedronsConverter
+    input = add_sinusoidal
+  []
+  # final_generator = fbcg2
 
   # [add_bottom]
   #   type = ParsedGenerateNodeset
