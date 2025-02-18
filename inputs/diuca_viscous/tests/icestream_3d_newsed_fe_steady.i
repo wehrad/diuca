@@ -1,11 +1,11 @@
 # a large glacier flowing towards the ocean (hydrostatic pressure at
-# the glacier front, i.e. downstream boundary) in the influence of the
+# the glacier front, i.e. front boundary) in the influence of the
 # driving stress (surface slope), over a flat bed.
 # The mesh includes a sediment block which is the last layer of
 # elements before the bottom boundary (where zero velocity is
 # applied): the viscosity of the sediment layer is modulating basal
 # sliding through a friction coefficient.
-# An influx of ice is applied at the top of the domain (upstream
+# An influx of ice is applied at the top of the domain (back
 # boundary) to take into account the ice coming from the inner part of
 # the ice sheet.
 
@@ -52,20 +52,22 @@ initial_II_eps_min = 1e-07
 
   [channel]
     type = FileMeshGenerator
-    file = ../../../meshes/mesh_icestream_sed.e
+    # file = ../../../meshes/mesh_icestream_sed.e
+    file = generate_icestream_mesh_out.e
   []
 
-  [delete_sediment_block]
-    type = BlockDeletionGenerator
-    input = channel
-    block = '3'
-  []
+  # [delete_sediment_block]
+  #   type = BlockDeletionGenerator
+  #   input = channel
+  #   block = '3'
+  # []
 
   # Create sediment layer by projecting glacier bed by
   # the sediment thickness
   [lowerDblock_sediment]
     type = LowerDBlockFromSidesetGenerator
-    input = "delete_sediment_block"
+    # input = "delete_sediment_block"
+    input = "channel"
     new_block_name = "block_0"
     sidesets = "bottom"
   []
@@ -85,7 +87,7 @@ initial_II_eps_min = 1e-07
   []
   [stitch_sediment]
     type = StitchedMeshGenerator
-    inputs = 'delete_sediment_block extrude_sediment'
+    inputs = 'channel extrude_sediment'
     stitch_boundaries_pairs = 'bottom bottom_sediment'
   []
 
@@ -98,31 +100,31 @@ initial_II_eps_min = 1e-07
     replace = True
   []
 
-  [add_sediment_upstream_side]
+  [add_sediment_back_side]
     type = ParsedGenerateSideset
     combinatorial_geometry = 'x < 0.01'
     included_subdomains = 0
-    new_sideset_name = 'upstream_sediment'
+    new_sideset_name = 'back_sediment'
     input = 'add_sediment_lateral_sides'
     replace = True
   []
-  [add_sediment_downstream_side]
+  [add_sediment_front_side]
     type = ParsedGenerateSideset
     combinatorial_geometry = 'x > 19599.99'
     included_subdomains = 0
-    new_sideset_name = 'downstream_sediment'
-    input = 'add_sediment_upstream_side'
+    new_sideset_name = 'front_sediment'
+    input = 'add_sediment_back_side'
     replace = True
   []
 
   [add_nodesets]
     type = NodeSetsFromSideSetsGenerator
-    input = 'add_sediment_downstream_side'
+    input = 'add_sediment_front_side'
   []
 
   [final_mesh]
     type = SubdomainBoundingBoxGenerator
-    restricted_subdomains="eleblock1 eleblock2"
+    restricted_subdomains="1"
     input = add_nodesets
     block_id = 255
     block_name = deactivated
@@ -201,21 +203,21 @@ initial_II_eps_min = 1e-07
     variable = vel_x
     vector_variable = velocity
     component = 'x'
-    block = 'eleblock1 eleblock2 0 255 254'
+    block = '1 0 255 254'
   []
   [vel_y]
     type = VectorVariableComponentAux
     variable = vel_y
     vector_variable = velocity
     component = 'y'
-    block = 'eleblock1 eleblock2 0 255 254'
+    block = '1 0 255 254'
   []
   [vel_z]
     type = VectorVariableComponentAux
     variable = vel_z
     vector_variable = velocity
     component = 'z'
-    block = 'eleblock1 eleblock2 0 255 254'
+    block = '1 0 255 254'
   []
 []
 
@@ -226,60 +228,60 @@ initial_II_eps_min = 1e-07
     scaling = 1e-6
     # scaling = 1e6
     # initial_condition = 1e-6
-    block = 'eleblock1 eleblock2 0 255 254'
+    block = '1 0 255 254'
   []
   [p]
     # scaling = 1e6
     family = LAGRANGE
     # scaling = 1e-6
     # initial_condition = 1e6
-    block = 'eleblock1 eleblock2 0 255 254'
+    block = '1 0 255 254'
   []
 []
 
 [Kernels]
   [mass_ice]
     type = INSADMass
-    block = 'eleblock1 eleblock2 255'
+    block = '1 255'
     variable = p
   []
   [mass_stab_ice_ice]
     type = INSADMassPSPG
-    block = 'eleblock1 eleblock2 255'
+    block = '1 255'
     variable = p
     rho_name = "rho_ice"
   []
   [momentum_time_ice]
     type = INSADMomentumTimeDerivative
-    block = 'eleblock1 eleblock2 255'
+    block = '1 255'
     variable = velocity
   []
   [momentum_advection_ice]
     type = INSADMomentumAdvection
-    block = 'eleblock1 eleblock2 255'
+    block = '1 255'
     variable = velocity
   []
   [momentum_viscous_ice]
     type = INSADMomentumViscous
-    block = 'eleblock1 eleblock2 255'
+    block = '1 255'
     variable = velocity
     mu_name = "mu_ice"
   []
   [momentum_pressure_ice]
     type = INSADMomentumPressure
-    block = 'eleblock1 eleblock2 255'
+    block = '1 255'
     variable = velocity
     pressure = p
   []
   [momentum_supg_ice]
     type = INSADMomentumSUPG
-    block = 'eleblock1 eleblock2 255'
+    block = '1 255'
     variable = velocity
     velocity = velocity
   []
   [gravity_ice]
     type = INSADGravityForce
-    block = 'eleblock1 eleblock2 255'
+    block = '1 255'
     variable = velocity
     gravity = '0. 0. -9.81'
   []
@@ -400,7 +402,7 @@ initial_II_eps_min = 1e-07
   [inlet]
     type = ADVectorFunctionDirichletBC
     variable = velocity
-    boundary = 'upstream' # upstream_sediment not much diff. either
+    boundary = 'back' # back_sediment not much diff. either
     function_x = influx
     function_y = 0.
     function_z = 0.
@@ -409,7 +411,7 @@ initial_II_eps_min = 1e-07
   [oulet]
     type = ADFunctionDirichletBC
     variable = p
-    boundary = 'downstream' # downstream_sediment doesn't make much of a diff.
+    boundary = 'front' # front_sediment doesn't make much of a diff.
     function = ocean_pressure
   []
 
@@ -425,7 +427,7 @@ initial_II_eps_min = 1e-07
 [Materials]
   [ice]
     type = ADIceMaterialSI
-    block = 'eleblock1 eleblock2 255'
+    block = '1 255'
     velocity_x = "vel_x"
     velocity_y = "vel_y"
     velocity_z = "vel_z"
@@ -464,7 +466,7 @@ initial_II_eps_min = 1e-07
 
   [ins_mat_ice]
     type = INSADTauMaterial
-    block = 'eleblock1 eleblock2 255'
+    block = '1 255'
     velocity = velocity
     pressure = p
     rho_name = "rho_ice"
@@ -595,7 +597,7 @@ initial_II_eps_min = 1e-07
   console = true
   [out]
     type = Exodus
-    execute_on = 'FINAL'
+    # execute_on = 'FINAL'
   []
 []
 

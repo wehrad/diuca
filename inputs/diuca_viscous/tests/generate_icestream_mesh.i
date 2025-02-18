@@ -13,7 +13,7 @@ peak_position = 5000.
 surface_slope = 0.02
 front_elevation = 100.
 
-nb_elements_alongflow = 10
+nb_elements_alongflow = 20
 nb_elements_acrossflow = 10
 nb_elements_depth = 5
 
@@ -58,7 +58,8 @@ nb_elements_depth = 5
   [add_sinusoidal]
     type = ParsedNodeTransformGenerator
     input = make3D
-    x_function = "x + (300*sin((2*pi/10000)*z))"
+    # x_function = "x + (300*sin((2*pi/10000)*z))"
+    x_function = "x"
     y_function = 'if(y > side_elevation, y + (((length - z) * surface_slope) * ((y - side_elevation) / front_elevation)), y)'
     z_function = "z"
     constant_names = 'pi side_elevation surface_slope length front_elevation'
