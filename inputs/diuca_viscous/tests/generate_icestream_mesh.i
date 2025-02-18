@@ -1,3 +1,8 @@
+# This input files creates an ice stream mesh with sinusoidal
+# alongflow geometry, a gaussian-like acrossflow geometry, and surface
+# slope.
+
+# The front geometry is first created in the XY geometry before it's extructed along the glacier length, and nodes transformed to include the sinusoid.
 length = 20000.
 width = 10000.
 
@@ -66,88 +71,38 @@ nb_elements_depth = 5
     input = add_sinusoidal
   []
 
-  # [refined]
-  #   type = RefineBlockGenerator
-  #   input = "convert"
-  #   block = "1"
-  #   refinement = '0'
-  #   enable_neighbor_refinement = true
-  #   max_element_volume = 1e6
-  # []
-  # [coarsened]
-  #   type = CoarsenBlockGenerator
-  #   input = "refined"
-  #   block = "1"
-  #   coarsening = '1'
-  #   enable_neighbor_refinement = true
-  #   # max_element_volume = 1e7
-  # []
+  # rotate for X, Y and Z to be alongflow, acrossflow and depth respectively
+  [rotate]
+    type = TransformGenerator
+    input = convert
+    transform = ROTATE
+    vector_value = '0 90 90'
+  []
 
-  # TODO: add layers in z?
+  # now add the side sets
+  [add_sidesets]
+    type = SideSetsFromNormalsGenerator
+    input = rotate
+    normals = '0  0 -1
+               0  1  0
+               0 -1  0
+               1  0  0
+              -1  0  0
+               0  0  1'
+    fixed_normal = false
+    new_boundary = 'bottom right left front back surface'
+    normal_tol=0.5 # very high to include e.g. a steep bed 
+  []
 
-  # [triang_4]
-  #   type = XYZDelaunayGenerator
-  #   boundary = 'convert'
-  #   desired_volume = 100000000
-  # []
-  # final_generator = triang_4
 
-  # [add_bottom]
-  #   type = ParsedGenerateNodeset
-  #   input = fbcg
-  #   expression = 'y = 0 - 0.05 * x'
-  #   new_nodeset_name = 'bottom'
-  # []
-  # [add_top]
-  #   type = ParsedGenerateNodeset
-  #   input = add_bottom
-  #   expression = 'y = thickness - 0.05 * x'
-  #   constant_names = 'thickness'
-  #   constant_expressions = '${thickness}'
-  #   new_nodeset_name = 'top'
-  # []
-  # [add_left]
-  #   type = ParsedGenerateNodeset
-  #   input = add_top
-  #   expression = 'x = 0'
-  #   new_nodeset_name = 'left'
-  # []
-  # [add_right]
-  #   type = ParsedGenerateNodeset
-  #   input = add_left
-  #   expression = 'x = length'
-  #   constant_names = 'length'
-  #   constant_expressions = '${length}'
-  #   new_nodeset_name = 'right'
-  # []
-
-  # [add_bottom]
-  #   type = BoundingBoxNodeSetGenerator
-  #   input = 'fbcg'
-  #   bottom_left = '0 -1 0'
-  #   top_right = '500 0 0'
-  #   new_boundary = 'bottom'
-  # []
-  # [add_nodesets]
-  #   type = NodeSetsFromSideSetsGenerator
-  #   input = fbcg
-  # []
-  # [create_sideset]
-  #   type = SideSetsFromNodeSetsGenerator
-  #   input = fbcg
-  # []
+  # and the node sets
+  [add_nodesets]
+    type = NodeSetsFromSideSetsGenerator
+    input = add_sidesets
+  []
 
 []
 
-
-[Adaptivity]
-  [./Markers]
-    [./uniform]
-      type = UniformMarker
-      mark = refine
-    [../]
-  [../]
-[]
 [Executioner]
   type = Steady
 []
@@ -165,4 +120,3 @@ nb_elements_depth = 5
 [Outputs]
   exodus = true
 []
-
