@@ -1,44 +1,21 @@
 length = 20000.
 width = 10000.
 
-channel_depth = -800.
+channel_depth = -900.
 channel_width_spread = 1200.
-side_elevation = 0.
+side_elevation = 0.001
 peak_position = 5000.
 surface_slope = 0.02
+front_elevation = 100.
+
+nb_elements_alongflow = 10
+nb_elements_acrossflow = 10
+nb_elements_depth = 5
 
 [Mesh]
 
-  # make the surface by filling between left and right
-  # [pcg1]
-  #   type = ParsedCurveGenerator
-  #   x_formula = 't'
-  #   y_formula = '300*sin((2*pi/10000)*t)'
-  #   constant_names = 'pi'
-  #   constant_expressions = '${fparse pi}'
-  #   section_bounding_t_values = '0 ${length}'
-  #   nums_segments = 20
-  # []
-  # [pcg2]
-  #   type = ParsedCurveGenerator
-  #   x_formula = 't'
-  #   y_formula = '(300*sin((2*pi/10000)*t)) + 5000.'
-  #   constant_names = 'pi'
-  #   constant_expressions = '${fparse pi}'
-  #   section_bounding_t_values = '0 ${length}'
-  #   nums_segments = 20
-  # []
-  # [fbcg]
-  #   type = FillBetweenCurvesGenerator
-  #   input_mesh_1 = pcg1
-  #   input_mesh_2 = pcg2
-  #   num_layers = 10
-  #   bias_parameter = 0.0
-  #   begin_side_boundary_id = 0
-  # []
-
-
-  # make the front face on the XY plane
+  # make the front face on the XY plane with the acrossflow trough (pcg1/y_formula)
+  # and the front elevation (pcg2/y_formula)
   [pcg1]
     type = ParsedCurveGenerator
     x_formula = 't'
@@ -46,50 +23,74 @@ surface_slope = 0.02
     constant_names = 'channel_depth peak_position channel_width_spread side_elevation'
     constant_expressions = '${channel_depth} ${peak_position} ${channel_width_spread} ${side_elevation}'
     section_bounding_t_values = '0 ${width}'
-    nums_segments = 20
+    nums_segments = '${nb_elements_acrossflow}'
   []
   [pcg2]
     type = ParsedCurveGenerator
     x_formula = 't'
-    y_formula = '100'
+    y_formula = '${front_elevation}'
     section_bounding_t_values = '0 ${width}'
-    nums_segments = 20
+    nums_segments = '${nb_elements_acrossflow}'
   []
   [fbcg2]
     type = FillBetweenCurvesGenerator
     input_mesh_1 = pcg1
     input_mesh_2 = pcg2
-    num_layers = 5
+    num_layers = '${nb_elements_depth}'
     bias_parameter = 0.0
     begin_side_boundary_id = 0
   []
 
-  # extrude along Z axis
+  # extrude along Z axis, along the glacier length
   [make3D]
     type = MeshExtruderGenerator
     extrusion_vector = '0 0 ${length}'
-    num_layers = 20
-    # bottom_sideset = 'bottom'
-    # top_sideset = 'top'
+    num_layers = '${nb_elements_alongflow}'
     input = fbcg2
   []
 
+  # add alongflow sinusoid (x_function) and surface slope (y_function)
   [add_sinusoidal]
     type = ParsedNodeTransformGenerator
     input = make3D
     x_function = "x + (300*sin((2*pi/10000)*z))"
-    # x_function = 'x + z/10'
-    # y_function = "(300*sin((2*pi/10000)*x))"
-    y_function = 'if(y >= side_elevation, y + ((length - z) * surface_slope), y)'
+    y_function = 'if(y > side_elevation, y + (((length - z) * surface_slope) * ((y - side_elevation) / front_elevation)), y)'
     z_function = "z"
-    constant_names = 'pi side_elevation surface_slope length'
-    constant_expressions = '${fparse pi} ${side_elevation} ${surface_slope} ${length}'
+    constant_names = 'pi side_elevation surface_slope length front_elevation'
+    constant_expressions = '${fparse pi} ${side_elevation} ${surface_slope} ${length} ${front_elevation}'
   []
+
+  # convert the modified elements to tetrahedrons
   [convert]
     type = ElementsToTetrahedronsConverter
     input = add_sinusoidal
   []
-  # final_generator = fbcg2
+
+  # [refined]
+  #   type = RefineBlockGenerator
+  #   input = "convert"
+  #   block = "1"
+  #   refinement = '0'
+  #   enable_neighbor_refinement = true
+  #   max_element_volume = 1e6
+  # []
+  # [coarsened]
+  #   type = CoarsenBlockGenerator
+  #   input = "refined"
+  #   block = "1"
+  #   coarsening = '1'
+  #   enable_neighbor_refinement = true
+  #   # max_element_volume = 1e7
+  # []
+
+  # TODO: add layers in z?
+
+  # [triang_4]
+  #   type = XYZDelaunayGenerator
+  #   boundary = 'convert'
+  #   desired_volume = 100000000
+  # []
+  # final_generator = triang_4
 
   # [add_bottom]
   #   type = ParsedGenerateNodeset
@@ -139,6 +140,14 @@ surface_slope = 0.02
 []
 
 
+[Adaptivity]
+  [./Markers]
+    [./uniform]
+      type = UniformMarker
+      mark = refine
+    [../]
+  [../]
+[]
 [Executioner]
   type = Steady
 []
