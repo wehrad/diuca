@@ -6,15 +6,15 @@
 length = 20000.
 width = 10000.
 
-channel_depth = -900.
+channel_depth = -1200.
 channel_width_spread = 1200.
-side_elevation = 0.001
+side_elevation = -100. # 0.0
 peak_position = 5000.
-surface_slope = 0.02
+surface_slope = 0.025 # 0.02
 front_elevation = 100.
 
-nb_elements_alongflow = 20
-nb_elements_acrossflow = 10
+nb_elements_alongflow = 15
+nb_elements_acrossflow = 15
 nb_elements_depth = 5
 
 [Mesh]
@@ -44,6 +44,7 @@ nb_elements_depth = 5
     num_layers = '${nb_elements_depth}'
     bias_parameter = 0.0
     begin_side_boundary_id = 0
+    use_quad_elements=true
   []
 
   # extrude along Z axis, along the glacier length
@@ -67,15 +68,16 @@ nb_elements_depth = 5
   []
 
   # convert the modified elements to tetrahedrons
-  [convert]
-    type = ElementsToTetrahedronsConverter
-    input = add_sinusoidal
-  []
+  # [convert]
+  #   type = ElementsToTetrahedronsConverter
+  #   input = add_sinusoidal
+  # []
 
   # rotate for X, Y and Z to be alongflow, acrossflow and depth respectively
   [rotate]
     type = TransformGenerator
-    input = convert
+    # input = convert
+    input = add_sinusoidal
     transform = ROTATE
     vector_value = '0 90 90'
   []

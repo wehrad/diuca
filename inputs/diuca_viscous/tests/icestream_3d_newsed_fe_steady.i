@@ -14,7 +14,7 @@
 # sediment rheology
 # sliding_law = "GudmundssonRaymond"
 sediment_layer_thickness = 50.
-slipperiness_coefficient_mmpaa = 3e3 # 3e4 # 3e3 # 9.512937595129376e-11
+slipperiness_coefficient_mmpaa = 3e5 # 3e3
 slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (365*24*3600)}' # 
 
 # ------------------------ simulation settings
@@ -29,10 +29,10 @@ slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (
 # # mult = 0.5
 # mult = 0.5
 # _dt = '${fparse nb_years * 3600 * 24 * 365 * mult}'
-nb_years = 0.01 # 0.1
+nb_years = 0.008 # 0.01
 _dt = '${fparse nb_years * 3600 * 24 * 365}'
 
-inlet_mph = 0.75 # 0.01 # mh-1
+inlet_mph = 0.4 # 0.41 # 0.01 # mh-1
 inlet_mps = ${fparse
              inlet_mph / 3600
             } # ms-1
@@ -91,35 +91,30 @@ initial_II_eps_min = 1e-07
     stitch_boundaries_pairs = 'bottom bottom_sediment'
   []
 
-  [add_sediment_lateral_sides]
-    type = ParsedGenerateSideset
-    combinatorial_geometry = 'y > 9999.99 | y < 0.01'
-    included_subdomains = 0
-    new_sideset_name = 'left_right_sediment'
-    input = 'stitch_sediment'
-    replace = True
+  [add_bottom_sediment_sideset]
+    type = SideSetsFromNormalsGenerator
+    input = stitch_sediment
+    included_subdomains = "0"
+    normals = '0  0 -1'
+    fixed_normal = false
+    new_boundary = 'bottom_sediment'
+    normal_tol=0.5 # very high to include e.g. a steep bed 
   []
 
-  [add_sediment_back_side]
-    type = ParsedGenerateSideset
-    combinatorial_geometry = 'x < 0.01'
-    included_subdomains = 0
-    new_sideset_name = 'back_sediment'
-    input = 'add_sediment_lateral_sides'
-    replace = True
-  []
-  [add_sediment_front_side]
-    type = ParsedGenerateSideset
-    combinatorial_geometry = 'x > 19599.99'
-    included_subdomains = 0
-    new_sideset_name = 'front_sediment'
-    input = 'add_sediment_back_side'
-    replace = True
+  [add_frontback_leftright_sediment_sidesets]
+    type = SideSetsFromNormalsGenerator
+    input = add_bottom_sediment_sideset
+    included_subdomains = "0"
+    normals = '0  1  0
+               0 -1  0
+               1  0  0
+              -1  0  0'
+    new_boundary = 'right_sediment left_sediment front_sediment back_sediment'
   []
 
   [add_nodesets]
     type = NodeSetsFromSideSetsGenerator
-    input = 'add_sediment_front_side'
+    input = add_frontback_leftright_sediment_sidesets
   []
 
   [final_mesh]
@@ -128,7 +123,7 @@ initial_II_eps_min = 1e-07
     input = add_nodesets
     block_id = 255
     block_name = deactivated
-    bottom_left = '18500 -100 -100'
+    bottom_left = '19000 -100 -100'
     top_right = '22000 11000 150'
   []
 
@@ -144,6 +139,7 @@ initial_II_eps_min = 1e-07
   [final_mesh2]
     type = SubdomainBoundingBoxGenerator
     input = refined_mesh
+    # input = final_mesh
     restricted_subdomains="0"
     block_id = 254
     block_name = flood
@@ -393,7 +389,17 @@ initial_II_eps_min = 1e-07
   [no_slip_sides]
     type = ADVectorFunctionDirichletBC
     variable = velocity
-    boundary = 'left right left_right_sediment top_sediment'
+    boundary = 'left right'
+    function_x = 0.
+    function_y = 0.
+    function_z = 0.
+    # set_x_comp = false
+  []
+
+  [no_slip_sides_sediments]
+    type = ADVectorFunctionDirichletBC
+    variable = velocity
+    boundary = 'left_sediment right_sediment bottom_sediment'
     function_x = 0.
     function_y = 0.
     function_z = 0.
@@ -413,6 +419,15 @@ initial_II_eps_min = 1e-07
     variable = p
     boundary = 'front' # front_sediment doesn't make much of a diff.
     function = ocean_pressure
+  []
+
+  [outlet_sediment]
+    type = ADVectorFunctionDirichletBC
+    variable = velocity
+    boundary = 'front_sediment'
+    function_z = 0.
+    set_x_comp = False
+    set_y_comp = False
   []
 
   # [freesurface]
@@ -438,12 +453,6 @@ initial_II_eps_min = 1e-07
   [sediment]
     type = ADSedimentMaterialSI
     block = '0'
-    # velocity_x = "vel_x"
-    # velocity_y = "vel_y"
-    # velocity_z = "vel_z"
-    # pressure = "p"
-    # density  = 1850.
-    # sliding_law = ${sliding_law}
     SlipperinessCoefficient = ${slipperiness_coefficient}
     LayerThickness = ${sediment_layer_thickness}
     output_properties = 'mu_sediment rho_sediment'
@@ -452,12 +461,6 @@ initial_II_eps_min = 1e-07
   [floodedsediment]
     type = ADSubglacialFloodMaterialSI
     block = '254'
-    # velocity_x = "vel_x"
-    # velocity_y = "vel_y"
-    # velocity_z = "vel_z"
-    # pressure = "p"
-    # density  = 1850.
-    # sliding_law = ${sliding_law}
     SlipperinessCoefficient = ${slipperiness_coefficient}
     LayerThickness = ${sediment_layer_thickness}
     output_properties = 'mu_floodedsediment rho_floodedsediment'
