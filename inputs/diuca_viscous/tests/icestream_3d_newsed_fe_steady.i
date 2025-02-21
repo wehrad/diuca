@@ -14,7 +14,7 @@
 # sediment rheology
 # sliding_law = "GudmundssonRaymond"
 sediment_layer_thickness = 50.
-slipperiness_coefficient_mmpaa = 3e5 # 3e3
+slipperiness_coefficient_mmpaa = 3e4 # 3e3
 slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (365*24*3600)}' # 
 
 # ------------------------ simulation settings
@@ -56,12 +56,6 @@ initial_II_eps_min = 1e-07
     file = generate_icestream_mesh_out.e
   []
 
-  # [delete_sediment_block]
-  #   type = BlockDeletionGenerator
-  #   input = channel
-  #   block = '3'
-  # []
-
   # Create sediment layer by projecting glacier bed by
   # the sediment thickness
   [lowerDblock_sediment]
@@ -79,31 +73,33 @@ initial_II_eps_min = 1e-07
   [extrude_sediment]
     type = MeshExtruderGenerator
     input = separateMesh_sediment
-    num_layers = 1
+    num_layers = 2
     extrusion_vector = '0. 0. -${sediment_layer_thickness}'
     # bottom/top swap is (correct and) due to inverse extrusion
-    top_sideset = 'top_sediment'
-    bottom_sideset = 'bottom_sediment'
+    top_sideset = 'bottom_sediment'
+    bottom_sideset = 'top_sediment'
   []
   [stitch_sediment]
     type = StitchedMeshGenerator
     inputs = 'channel extrude_sediment'
-    stitch_boundaries_pairs = 'bottom bottom_sediment'
+    stitch_boundaries_pairs = 'bottom top_sediment'
   []
 
-  [add_bottom_sediment_sideset]
-    type = SideSetsFromNormalsGenerator
-    input = stitch_sediment
-    included_subdomains = "0"
-    normals = '0  0 -1'
-    fixed_normal = false
-    new_boundary = 'bottom_sediment'
-    normal_tol=0.5 # very high to include e.g. a steep bed 
-  []
+  # [add_bottom_sediment_sideset]
+  #   type = SideSetsFromNormalsGenerator
+  #   input = stitch_sediment
+  #   included_subdomains = "0"
+  #   normals = '0  0 -1
+  #              0  0  1'
+  #   fixed_normal = false
+  #   new_boundary = 'bottom_sediment surface_sediment'
+  #   normal_tol=0.5 # very high to include e.g. a steep bed 
+  # []
 
   [add_frontback_leftright_sediment_sidesets]
     type = SideSetsFromNormalsGenerator
-    input = add_bottom_sediment_sideset
+    # input = add_bottom_sediment_sideset
+    input = stitch_sediment
     included_subdomains = "0"
     normals = '0  1  0
                0 -1  0

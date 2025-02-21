@@ -83,25 +83,31 @@ nb_elements_depth = 5
   []
 
   # now add the side sets
-  [add_sidesets]
+  [add_bottomsurface_sidesets]
     type = SideSetsFromNormalsGenerator
     input = rotate
     normals = '0  0 -1
-               0  1  0
-               0 -1  0
-               1  0  0
-              -1  0  0
                0  0  1'
     fixed_normal = false
-    new_boundary = 'bottom right left front back surface'
+    new_boundary = 'bottom surface'
     normal_tol=0.5 # very high to include e.g. a steep bed 
+  []
+
+  [add_leftright_frontback_sidesets]
+    type = SideSetsFromNormalsGenerator
+    input = add_bottomsurface_sidesets
+    normals = '0  1  0
+               0 -1  0
+               1  0  0
+              -1  0  0'
+    new_boundary = 'right left front back'
   []
 
 
   # and the node sets
   [add_nodesets]
     type = NodeSetsFromSideSetsGenerator
-    input = add_sidesets
+    input = add_leftright_frontback_sidesets
   []
 
 []
