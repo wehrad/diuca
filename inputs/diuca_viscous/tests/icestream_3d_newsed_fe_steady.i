@@ -14,8 +14,11 @@
 # sediment rheology
 # sliding_law = "GudmundssonRaymond"
 sediment_layer_thickness = 50.
-slipperiness_coefficient_mmpaa = 3e4 # 3e3
+slipperiness_coefficient_mmpaa = 3e3 # 3e3 # 3e3
 slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (365*24*3600)}' # 
+
+slipperiness_coefficient_center_mmpaa = 3e5
+slipperiness_coefficient_center = '${fparse (slipperiness_coefficient_center_mmpaa * 1e-6) / (365*24*3600)}' # 
 
 # ------------------------ simulation settings
 
@@ -32,7 +35,7 @@ slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (
 nb_years = 0.008 # 0.01
 _dt = '${fparse nb_years * 3600 * 24 * 365}'
 
-inlet_mph = 0.4 # 0.41 # 0.01 # mh-1
+inlet_mph = 0.7 # 0.4 # 0.41 # 0.01 # mh-1
 inlet_mps = ${fparse
              inlet_mph / 3600
             } # ms-1
@@ -73,7 +76,7 @@ initial_II_eps_min = 1e-07
   [extrude_sediment]
     type = MeshExtruderGenerator
     input = separateMesh_sediment
-    num_layers = 2
+    num_layers = 1
     extrusion_vector = '0. 0. -${sediment_layer_thickness}'
     # bottom/top swap is (correct and) due to inverse extrusion
     top_sideset = 'bottom_sediment'
@@ -139,7 +142,8 @@ initial_II_eps_min = 1e-07
     restricted_subdomains="0"
     block_id = 254
     block_name = flood
-    bottom_left = '10000 4900 -1e4'
+    # bottom_left = '10000 4900 -1e4'
+    bottom_left = '-1000 4000 -1e4'
     top_right = '22000  5700 1e4'
   []
 
@@ -381,15 +385,16 @@ initial_II_eps_min = 1e-07
   #  value = 1e5
   # []
   
-    # no slip at the sediment base nor on the sides
+  # no slip at the sediment base nor on the sides
   [no_slip_sides]
     type = ADVectorFunctionDirichletBC
     variable = velocity
     boundary = 'left right'
-    function_x = 0.
+    # function_x = 0.
     function_y = 0.
-    function_z = 0.
-    # set_x_comp = false
+    # function_z = 0.
+    set_x_comp = false
+    set_z_comp = false
   []
 
   [no_slip_sides_sediments]
@@ -457,7 +462,7 @@ initial_II_eps_min = 1e-07
   [floodedsediment]
     type = ADSubglacialFloodMaterialSI
     block = '254'
-    SlipperinessCoefficient = ${slipperiness_coefficient}
+    SlipperinessCoefficient = ${slipperiness_coefficient_center}
     LayerThickness = ${sediment_layer_thickness}
     output_properties = 'mu_floodedsediment rho_floodedsediment'
     outputs = "out"
