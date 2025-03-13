@@ -55,7 +55,6 @@ initial_II_eps_min = 1e-07
 
   [channel]
     type = FileMeshGenerator
-    # file = ../../../meshes/mesh_icestream_sed.e
     file = generate_icestream_mesh_out.e
   []
 
@@ -160,7 +159,7 @@ initial_II_eps_min = 1e-07
   []
   [viscosity_rampup]
     type = ParsedFunction
-    expression = 'initial_II_eps_min * exp(-(t-_dt) * 2e-6)' # 5e-6
+    expression = 'initial_II_eps_min * exp(-(t-_dt) * 4e-6)' # 5e-6
     # expression = 'initial_II_eps_min'
     symbol_names = '_dt initial_II_eps_min'
     symbol_values = '${_dt} ${initial_II_eps_min}'

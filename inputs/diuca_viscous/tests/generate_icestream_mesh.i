@@ -6,7 +6,7 @@
 length = 20000.
 width = 10000.
 
-channel_depth = -1200.
+channel_depth = -800. # -1200.
 channel_width_spread = 1200.
 side_elevation = -100. # 0.0
 peak_position = 5000.
