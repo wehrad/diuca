@@ -10,10 +10,10 @@ channel_depth = -800. # -1200.
 channel_width_spread = 1200.
 side_elevation = -100. # 0.0
 peak_position = 5000.
-surface_slope = 0.025 # 0.02
+surface_slope = 0.032 # 0.025 # bedmachine: 0.032
 front_elevation = 100.
 
-nb_elements_alongflow = 15
+nb_elements_alongflow = 30 # 15
 nb_elements_acrossflow = 15
 nb_elements_depth = 5
 
@@ -61,7 +61,8 @@ nb_elements_depth = 5
     input = make3D
     # x_function = "x + (300*sin((2*pi/10000)*z))"
     x_function = "x"
-    y_function = 'if(y > side_elevation, y + (((length - z) * surface_slope) * ((y - side_elevation) / front_elevation)), y)'
+    # y_function = 'if(y > side_elevation, y + (((length - z) * surface_slope) * ((y - side_elevation) / front_elevation)), y)'
+    y_function = 'if(y > 0., (y + (((length - z) * surface_slope))) * (y / front_elevation), y)'
     z_function = "z"
     constant_names = 'pi side_elevation surface_slope length front_elevation'
     constant_expressions = '${fparse pi} ${side_elevation} ${surface_slope} ${length} ${front_elevation}'

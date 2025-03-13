@@ -14,7 +14,7 @@
 # sediment rheology
 # sliding_law = "GudmundssonRaymond"
 sediment_layer_thickness = 50.
-slipperiness_coefficient_mmpaa = 3e3 # 3e3 # 3e3
+slipperiness_coefficient_mmpaa = 3e3 # 3e3
 slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (365*24*3600)}' # 
 
 slipperiness_coefficient_center_mmpaa = 3e5
@@ -35,7 +35,7 @@ slipperiness_coefficient_center = '${fparse (slipperiness_coefficient_center_mmp
 nb_years = 0.008 # 0.01
 _dt = '${fparse nb_years * 3600 * 24 * 365}'
 
-inlet_mph = 0.7 # 0.4 # 0.41 # 0.01 # mh-1
+inlet_mph = 0.4 # 0.7 # mh-1
 inlet_mps = ${fparse
              inlet_mph / 3600
             } # ms-1
@@ -166,8 +166,8 @@ initial_II_eps_min = 1e-07
   []
   [influx]
     type = ParsedFunction
-    expression = 'inlet_mps * sin((2*pi / 20000) * y)' # * (z / 433.2)'
-    # expression = 'inlet_mps' # * (z / 433.2)'
+    # expression = 'inlet_mps * sin((2*pi / 20000) * y)' # * (z / 433.2)'
+    expression = 'inlet_mps'
     symbol_names = 'inlet_mps'
     symbol_values = '${inlet_mps}'
   []
