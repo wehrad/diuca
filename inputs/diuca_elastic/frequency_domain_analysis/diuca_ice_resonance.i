@@ -1,7 +1,40 @@
-# from moose/modules/solid_mechanics/examples/wave_propagation/cantilever_sweep.i
+# This input file is part of the DIUCA MOOSE application
+# https://github.com/AdrienWehrle/diuca
+# https://github.com/idaholab/moose
 
-# choose if bed is coupled or not
-# bed_coupled = 0
+# adapted from
+# moose/modules/solid_mechanics/examples/wave_propagation/cantilever_sweep.i
+
+# This input file simulates the frequency response of a block of ice
+# of side length 5km and thickness 0.6km, for different ice-bedrock
+# coupling states. The displacement magnitude at the surface of the
+# block is stored in a csv file for each frequency (see simulation
+# settings). The frequency response for the different states are
+# presented in van Ginkel et al 2025 where more details about model
+# setup and research questions can be found too.
+
+# ------------------------------------------------- Domain settings
+
+# Three ice-bedrock coupling states are currently available:
+# 0: the ice-bedrock interface is fully coupled (null Dirichlet)
+# 1: the ice-bedrock interface is only coupled on four zones of the
+# bed (see "add_bottom_back" object).
+# 2: the ice-bedrock interface is fully decoupled (no boundary condition).
+# The state can be set below by setting it to 0, 1 or 2.
+icebedrock_coupling_state = 2
+
+# ice parameters
+_youngs_modulus = 1e9 # 8.7e9 # Pa # between 0.8 and 3.5 GPa
+_poissons_ratio = 0.32
+
+# ------------------------------------------------- Simulation settings
+
+# Frequency domain to sweep in Hertz (minimum, maximum and step)
+min_freq = 0.1
+max_freq = 10
+step_freq = 0.002 # 0.01
+
+# ------------------------------------------------- Simulation
 
 [Mesh]
   [block]
@@ -10,13 +43,13 @@
     dim = 3
     xmin = 0
     xmax = 5000.
-    nx = 25 # 50
+    nx = 25
     zmin = 0
     zmax = 5000.
-    nz = 25 # 50
+    nz = 25
     ymin = 0.
     ymax = 600.
-    ny = 3 # 6
+    ny = 3
   []
 
   [shaking_zone]
@@ -165,42 +198,44 @@
 []
 
 [BCs]
-  [dirichlet_bottom1_x]
+
+  [dirichlet_partialbottom_x]
     type = DirichletBC
     variable = disp_x
     value = 0
     boundary = 'decoupling_bottom'
   []
-  [dirichlet_bottom1_y]
+  [dirichlet_partialbottom_y]
     type = DirichletBC
     variable = disp_y
     value = 0
     boundary = 'decoupling_bottom'
   []
-  [dirichlet_bottom1_z]
+  [dirichlet_partialbottom_z]
     type = DirichletBC
     variable = disp_z
     value = 0
     boundary = 'decoupling_bottom'
   []
-  # [dirichlet_bottom_x]
-  #   type = DirichletBC
-  #   variable = disp_x
-  #   value = 0
-  #   boundary = 'bottom'
-  # []
-  # [dirichlet_bottom_y]
-  #   type = DirichletBC
-  #   variable = disp_y
-  #   value = 0
-  #   boundary = 'bottom'
-  # []
-  # [dirichlet_bottom_z]
-  #   type = DirichletBC
-  #   variable = disp_z
-  #   value = 0
-  #   boundary = 'bottom'
-  # []
+
+  [dirichlet_bottom_x]
+    type = DirichletBC
+    variable = disp_x
+    value = 0
+    boundary = 'bottom'
+  []
+  [dirichlet_bottom_y]
+    type = DirichletBC
+    variable = disp_y
+    value = 0
+    boundary = 'bottom'
+  []
+  [dirichlet_bottom_z]
+    type = DirichletBC
+    variable = disp_z
+    value = 0
+    boundary = 'bottom'
+  []
 
   [bottom_xreal]
     type = NeumannBC
@@ -221,25 +256,14 @@
     value = 1
   []
 
-  # [Periodic]
-  #   [periodic_x]
-  #     variable = disp_x
-  #     auto_direction = 'x'
-  #   []
-  #   [periodic_z]
-  #     variable = disp_z
-  #     auto_direction = 'z'
-  #   []
-  # []
-
 []
 
 
 [Materials]
   [elastic_tensor_Al]
     type = ComputeIsotropicElasticityTensor
-    youngs_modulus = 8.7e9 # Pa
-    poissons_ratio = 0.32
+    youngs_modulus = '${_youngs_modulus}'
+    poissons_ratio = '${_poissons_ratio}'
   []
   [compute_stress]
     type = ComputeLagrangianLinearElasticStress
@@ -252,11 +276,6 @@
     boundary = 'top'
     variable = disp_mag
   []
-  # [dispMag]
-  #   type = NodalExtremeValue
-  #   value_type = max
-  #   variable = disp_mag
-  # []
 []
 
 [Functions]
@@ -266,10 +285,15 @@
     symbol_values = 917 # ice, kg/m3
     expression = '-t*t*density'
   []
-  # [bed_coupling_function]
-  #   type = ParsedFunction
-  #   expression = '${bed_coupled} = 0'
-  # []
+  # no need for state 0 since it's the default state
+  [icebedrock_state_1]
+    type = ParsedFunction
+    expression = '${icebedrock_coupling_state} = 1'
+  []
+  [icebedrock_state_2]
+    type = ParsedFunction
+    expression = '${icebedrock_coupling_state} = 2'
+  []
 []
 
 [Controls]
@@ -279,12 +303,30 @@
     function = 'freq2'
     execute_on = 'initial timestep_begin'
   []
-  # [bed_not_coupled]
-  #   type = ConditionalFunctionEnableControl
-  #   conditional_function = bed_coupling_function
-  #   disable_objects = 'BCs::dirichlet_decoupling_bottom_x BCs::dirichlet_decoupling_bottom_y BCs::dirichlet_decoupling_bottom_z'
-  #   execute_on = 'INITIAL TIMESTEP_BEGIN'
-  # []
+  [control_icebedrock_state_1]
+    type = ConditionalFunctionEnableControl
+    conditional_function = icebedrock_state_1
+    disable_objects = 'BCs::dirichlet_bottom_x
+                       BCs::dirichlet_bottom_y
+                       BCs::dirichlet_bottom_z'
+    enable_objects = 'BCs::dirichlet_partialbottom_x
+                      BCs::dirichlet_partialbottom_y
+                      BCs::dirichlet_partialbottom_z'
+    execute_on = 'INITIAL TIMESTEP_BEGIN'
+    reverse_on_false = False
+  []
+  [control_icebedrock_state_2]
+    type = ConditionalFunctionEnableControl
+    conditional_function = icebedrock_state_2
+    disable_objects = 'BCs::dirichlet_bottom_x
+                       BCs::dirichlet_bottom_y
+                       BCs::dirichlet_bottom_z
+                       BCs::dirichlet_partialbottom_x
+                       BCs::dirichlet_partialbottom_y
+                       BCs::dirichlet_partialbottom_z'
+    execute_on = 'INITIAL TIMESTEP_BEGIN'
+    reverse_on_false = False
+  []
 []
 
 [Executioner]
@@ -292,12 +334,12 @@
   solve_type=LINEAR
   petsc_options_iname = ' -pc_type'
   petsc_options_value = 'lu'
-  start_time = 0.1 #starting frequency
-  end_time =  10.  #ending frequency
+  start_time = '${min_freq}'
+  end_time =  '${max_freq}'
   nl_abs_tol = 1e-6
   [TimeStepper]
     type = ConstantDT
-    dt = 0.01  #frequency stepsize
+    dt = '${step_freq}'
   []
 []
 
