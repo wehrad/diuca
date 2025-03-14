@@ -21,7 +21,7 @@ slipperiness_coefficient_center = '${fparse (slipperiness_coefficient_center_mmp
 # # mult = 0.5
 # mult = 0.5
 # _dt = '${fparse nb_years * 3600 * 24 * 365 * mult}'
-nb_years = 0.008 # 0.01
+nb_years = 0.0001 # 0.01 # 0.1
 _dt = '${fparse nb_years * 3600 * 24 * 365}'
 
 inlet_mph = 0.4 # 0.7 # mh-1
@@ -29,9 +29,8 @@ inlet_mps = ${fparse
              inlet_mph / 3600
             } # ms-1
 
-# initial_file = 'icestream_3d_newsed_fe_steady_out.e'
-initial_file = 'icestream_3d_newsed_fe_steady_out_cp/0017-mesh.cpa.gz'
-initial_II_eps_min = 1.10477e-18
+initial_file = 'icestream_3d_sedimentlayer_steady_state_out_cp/0029-mesh.cpa.gz'
+# initial_II_eps_min = 1.10477e-18
 
 # ------------------------
 
@@ -44,7 +43,7 @@ initial_II_eps_min = 1.10477e-18
 
 [Problem]
   #Note that the suffix is left off in the parameter below.
-  restart_file_base = icestream_3d_newsed_fe_steady_out_cp/LATEST  # You may also use a specific number here
+  restart_file_base = icestream_3d_sedimentlayer_steady_state_out_cp/LATEST  # You may also use a specific number here
 []
 
 [Mesh]
@@ -57,12 +56,6 @@ initial_II_eps_min = 1.10477e-18
     expression = 'if(z < 0, -1028 * 9.81 * z, 1e5)' # -1e5 * 9.81 * z)'
     # expression = '917 * 9.81 * (100 - z)' # -1e5 * 9.81 * z)'
   []
-  [viscosity_rampup]
-    type = ParsedFunction
-    expression = 'initial_II_eps_min'
-    symbol_names = '_dt initial_II_eps_min'
-    symbol_values = '${_dt} ${initial_II_eps_min}'
-  []
   [influx]
     type = ParsedFunction
     # expression = 'inlet_mps * sin((2*pi / 20000) * y)' # * (z / 433.2)'
@@ -71,16 +64,6 @@ initial_II_eps_min = 1.10477e-18
     symbol_values = '${inlet_mps}'
   []
 []
-
-[Controls]
-  [II_eps_min_control]
-    type = RealFunctionControl
-    parameter = 'Materials/ice/II_eps_min'
-    function = 'viscosity_rampup'
-    execute_on = 'initial timestep_begin'
-  []
-[]
-
 
 [AuxVariables]
   [vel_x]
@@ -361,7 +344,7 @@ initial_II_eps_min = 1.10477e-18
     block = '254'
     SlipperinessCoefficientVariations = "subglacialflood"
     SlipperinessCoefficient = ${slipperiness_coefficient_center}
-    FloodAmplitude = 1e-8
+    FloodAmplitude = 1e-8 # 1e-8
     LayerThickness = ${sediment_layer_thickness}
     output_properties = 'mu_floodedsediment rho_floodedediment'
     outputs = "out"
