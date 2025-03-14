@@ -1,14 +1,3 @@
-# a large glacier flowing towards the ocean (hydrostatic pressure at
-# the glacier front, i.e. front boundary) in the influence of the
-# driving stress (surface slope), over a flat bed.
-# The mesh includes a sediment block which is the last layer of
-# elements before the bottom boundary (where zero velocity is
-# applied): the viscosity of the sediment layer is modulating basal
-# sliding through a friction coefficient.
-# An influx of ice is applied at the top of the domain (back
-# boundary) to take into account the ice coming from the inner part of
-# the ice sheet.
-
 # ------------------------ domain settings
 
 # sediment rheology
@@ -40,7 +29,9 @@ inlet_mps = ${fparse
              inlet_mph / 3600
             } # ms-1
 
-initial_II_eps_min = 1e-07
+# initial_file = 'icestream_3d_newsed_fe_steady_out.e'
+initial_file = 'icestream_3d_newsed_fe_steady_out_cp/0017-mesh.cpa.gz'
+initial_II_eps_min = 1.10477e-18
 
 # ------------------------
 
@@ -51,104 +42,13 @@ initial_II_eps_min = 1e-07
   integrate_p_by_parts = false
 []
 
+[Problem]
+  #Note that the suffix is left off in the parameter below.
+  restart_file_base = icestream_3d_newsed_fe_steady_out_cp/LATEST  # You may also use a specific number here
+[]
+
 [Mesh]
-
-  [channel]
-    type = FileMeshGenerator
-    file = generate_icestream_mesh_out.e
-  []
-
-  # Create sediment layer by projecting glacier bed by
-  # the sediment thickness
-  [lowerDblock_sediment]
-    type = LowerDBlockFromSidesetGenerator
-    # input = "delete_sediment_block"
-    input = "channel"
-    new_block_name = "block_0"
-    sidesets = "bottom"
-  []
-  [separateMesh_sediment]
-    type = BlockToMeshConverterGenerator
-    input = lowerDblock_sediment
-    target_blocks = "block_0"
-  []
-  [extrude_sediment]
-    type = MeshExtruderGenerator
-    input = separateMesh_sediment
-    num_layers = 1
-    extrusion_vector = '0. 0. -${sediment_layer_thickness}'
-    # bottom/top swap is (correct and) due to inverse extrusion
-    top_sideset = 'bottom_sediment'
-    bottom_sideset = 'top_sediment'
-  []
-  [stitch_sediment]
-    type = StitchedMeshGenerator
-    inputs = 'channel extrude_sediment'
-    stitch_boundaries_pairs = 'bottom top_sediment'
-  []
-
-  # [add_bottom_sediment_sideset]
-  #   type = SideSetsFromNormalsGenerator
-  #   input = stitch_sediment
-  #   included_subdomains = "0"
-  #   normals = '0  0 -1
-  #              0  0  1'
-  #   fixed_normal = false
-  #   new_boundary = 'bottom_sediment surface_sediment'
-  #   normal_tol=0.5 # very high to include e.g. a steep bed 
-  # []
-
-  [add_frontback_leftright_sediment_sidesets]
-    type = SideSetsFromNormalsGenerator
-    # input = add_bottom_sediment_sideset
-    input = stitch_sediment
-    included_subdomains = "0"
-    normals = '0  1  0
-               0 -1  0
-               1  0  0
-              -1  0  0'
-    new_boundary = 'right_sediment left_sediment front_sediment back_sediment'
-  []
-
-  [add_nodesets]
-    type = NodeSetsFromSideSetsGenerator
-    input = add_frontback_leftright_sediment_sidesets
-  []
-
-  [final_mesh]
-    type = SubdomainBoundingBoxGenerator
-    restricted_subdomains="1"
-    input = add_nodesets
-    block_id = 255
-    block_name = deactivated
-    bottom_left = '19000 -100 -100'
-    top_right = '22000 11000 150'
-  []
-
-  [refined_mesh]
-    type = RefineBlockGenerator
-    input = "final_mesh"
-    block = "255"
-    refinement = '1'
-    enable_neighbor_refinement = true
-    max_element_volume = 1e100
-  []
-
-  [final_mesh2]
-    type = SubdomainBoundingBoxGenerator
-    input = refined_mesh
-    # input = final_mesh
-    restricted_subdomains="0"
-    block_id = 254
-    block_name = flood
-    # bottom_left = '10000 4900 -1e4'
-    bottom_left = '-1000 4000 -1e4'
-    top_right = '22000  5700 1e4'
-  []
-
-  final_generator = final_mesh2
-
-
+  file = ${initial_file}
 []
 
 [Functions]
@@ -159,8 +59,7 @@ initial_II_eps_min = 1e-07
   []
   [viscosity_rampup]
     type = ParsedFunction
-    expression = 'initial_II_eps_min * exp(-(t-_dt) * 4e-6)' # 5e-6
-    # expression = 'initial_II_eps_min'
+    expression = 'initial_II_eps_min'
     symbol_names = '_dt initial_II_eps_min'
     symbol_values = '${_dt} ${initial_II_eps_min}'
   []
@@ -185,10 +84,13 @@ initial_II_eps_min = 1e-07
 
 [AuxVariables]
   [vel_x]
+    initial_from_file_var = vel_x
   []
   [vel_y]
+    initial_from_file_var = vel_y
   []
   [vel_z]
+    initial_from_file_var = vel_z
   []
 []
 
@@ -219,18 +121,14 @@ initial_II_eps_min = 1e-07
 [Variables]
   [velocity]
     family = LAGRANGE_VEC
-    # order = SECOND
     scaling = 1e-6
-    # scaling = 1e6
-    # initial_condition = 1e-6
     block = '1 0 255 254'
+    # initial_from_file_var = "velocity_x velocity_y velocity_z"
   []
   [p]
-    # scaling = 1e6
     family = LAGRANGE
-    # scaling = 1e-6
-    # initial_condition = 1e6
     block = '1 0 255 254'
+    initial_from_file_var = p
   []
 []
 
@@ -461,9 +359,11 @@ initial_II_eps_min = 1e-07
   [floodedsediment]
     type = ADSubglacialFloodMaterialSI
     block = '254'
+    SlipperinessCoefficientVariations = "subglacialflood"
     SlipperinessCoefficient = ${slipperiness_coefficient_center}
+    FloodAmplitude = 1e-8
     LayerThickness = ${sediment_layer_thickness}
-    output_properties = 'mu_floodedsediment rho_floodedsediment'
+    output_properties = 'mu_floodedsediment rho_floodedediment'
     outputs = "out"
   []
 
@@ -493,7 +393,6 @@ initial_II_eps_min = 1e-07
   []
   
 []
-
 
 [Preconditioning]
   active = 'FSP'
@@ -551,8 +450,8 @@ initial_II_eps_min = 1e-07
 
 [Executioner]
   type = Transient
-  num_steps = 50
-
+  num_steps = 60
+  start_time = 0
   petsc_options_iname = '-pc_type -pc_factor_shift_type'
   petsc_options_value = 'lu       NONZERO'
   
@@ -567,7 +466,7 @@ initial_II_eps_min = 1e-07
   # nl_rel_tol = 1e-07
 
   # l_tol = 1e-6
-  l_tol = 1e-6
+  l_tol = 1e-5
 
   # nl_rel_tol = 1e-04 in the initial SSA test
   # nl_abs_tol = 1e-04
@@ -576,12 +475,12 @@ initial_II_eps_min = 1e-07
   nl_abs_tol = 1e-05
 
   nl_max_its = 100
-  nl_forced_its = 3
+  # nl_forced_its = 3
   line_search = none
 
   dt = '${_dt}'
-  steady_state_detection = true
-  steady_state_tolerance = 1e-10
+  # steady_state_detection = true
+  # steady_state_tolerance = 1e-10
   check_aux = true
 
   # [Adaptivity]
@@ -595,12 +494,10 @@ initial_II_eps_min = 1e-07
 []
 
 [Outputs]
-  checkpoint = true
-  perf_graph = true
   console = true
+  perf_graph = true
   [out]
     type = Exodus
-    # execute_on = 'FINAL'
   []
 []
 
