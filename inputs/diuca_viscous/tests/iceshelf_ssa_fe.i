@@ -141,6 +141,7 @@ initial_II_eps_min = 1e-07
   [mass_stab]
     type = INSADMassPSPG
     variable = p
+    rho_name = "rho_ice"
   []
   [momentum_time]
     type = INSADMomentumTimeDerivative
@@ -153,6 +154,7 @@ initial_II_eps_min = 1e-07
   [momentum_viscous]
     type = INSADMomentumViscous
     variable = velocity
+    mu_name = "mu_ice"
   []
   [momentum_pressure]
     type = INSADMomentumPressure
@@ -246,13 +248,15 @@ initial_II_eps_min = 1e-07
     velocity_y = "vel_y"
     velocity_z = "vel_z"
     pressure = "p"
-    output_properties = "rho mu"
+    output_properties = "rho_ice mu_ice"
     outputs = "out"
   []
   [ins_mat]
     type = INSADTauMaterial
     velocity = velocity
     pressure = p
+    rho_name = "rho_ice"
+    mu_name = "mu_ice"
   []
 []
 
