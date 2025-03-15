@@ -3,10 +3,10 @@
 # sediment rheology
 # sliding_law = "GudmundssonRaymond"
 sediment_layer_thickness = 50.
-slipperiness_coefficient_mmpaa = 3e3 # 3e3
+slipperiness_coefficient_mmpaa = 1e0 # 3e3
 slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (365*24*3600)}' # 
 
-slipperiness_coefficient_center_mmpaa = 3e5
+slipperiness_coefficient_center_mmpaa = 1e4 # 3e5
 slipperiness_coefficient_center = '${fparse (slipperiness_coefficient_center_mmpaa * 1e-6) / (365*24*3600)}' # 
 
 # ------------------------ simulation settings
@@ -24,13 +24,10 @@ slipperiness_coefficient_center = '${fparse (slipperiness_coefficient_center_mmp
 nb_years = 0.0001 # 0.01 # 0.1
 _dt = '${fparse nb_years * 3600 * 24 * 365}'
 
-inlet_mph = 0.4 # 0.7 # mh-1
+inlet_mph = 0.37 # 0.4 # mh-1
 inlet_mps = ${fparse
              inlet_mph / 3600
             } # ms-1
-
-initial_file = 'icestream_3d_sedimentlayer_steady_state_out_cp/0029-mesh.cpa.gz'
-# initial_II_eps_min = 1.10477e-18
 
 # ------------------------
 
@@ -47,7 +44,7 @@ initial_file = 'icestream_3d_sedimentlayer_steady_state_out_cp/0029-mesh.cpa.gz'
 []
 
 [Mesh]
-  file = ${initial_file}
+  file = icestream_3d_sedimentlayer_steady_state_out_cp/LATEST # ${initial_file}
 []
 
 [Functions]
@@ -344,7 +341,9 @@ initial_file = 'icestream_3d_sedimentlayer_steady_state_out_cp/0029-mesh.cpa.gz'
     block = '254'
     SlipperinessCoefficientVariations = "subglacialflood"
     SlipperinessCoefficient = ${slipperiness_coefficient_center}
-    FloodAmplitude = 1e-8 # 1e-8
+    # FloodStartPosition = 0
+    FloodAmplitude = 5e-10 # 1e-10 # 1e-8
+    # FloodSpreadTime = 7200 # 3600*3
     LayerThickness = ${sediment_layer_thickness}
     output_properties = 'mu_floodedsediment rho_floodedediment'
     outputs = "out"
@@ -457,7 +456,7 @@ initial_file = 'icestream_3d_sedimentlayer_steady_state_out_cp/0029-mesh.cpa.gz'
   nl_rel_tol = 1e-05
   nl_abs_tol = 1e-05
 
-  nl_max_its = 100
+  nl_max_its = 20
   # nl_forced_its = 3
   line_search = none
 

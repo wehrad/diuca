@@ -3,10 +3,10 @@
 # sediment rheology
 # sliding_law = "GudmundssonRaymond"
 sediment_layer_thickness = 50.
-slipperiness_coefficient_mmpaa = 3e3 # 3e3
+slipperiness_coefficient_mmpaa = 1e0 # 1e1 # 3e3
 slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (365*24*3600)}' # 
 
-slipperiness_coefficient_center_mmpaa = 3e5
+slipperiness_coefficient_center_mmpaa = 1e4 # 1e3 # 3e5
 slipperiness_coefficient_center = '${fparse (slipperiness_coefficient_center_mmpaa * 1e-6) / (365*24*3600)}' # 
 
 # ------------------------ simulation settings
@@ -24,7 +24,7 @@ slipperiness_coefficient_center = '${fparse (slipperiness_coefficient_center_mmp
 nb_years = 0.008 # 0.01
 _dt = '${fparse nb_years * 3600 * 24 * 365}'
 
-inlet_mph = 0.4 # 0.7 # mh-1
+inlet_mph = 0.37 # 0.4 # mh-1
 inlet_mps = ${fparse
              inlet_mph / 3600
             } # ms-1
@@ -130,9 +130,10 @@ initial_II_eps_min = 1e-07
     restricted_subdomains="0"
     block_id = 254
     block_name = flood
-    # bottom_left = '10000 4900 -1e4'
     bottom_left = '-1000 4000 -1e4'
     top_right = '22000  5700 1e4'
+    # bottom_left = '-1000 4600 -1e4'
+    # top_right = '22000  5400 1e4'
   []
 
   final_generator = final_mesh2
