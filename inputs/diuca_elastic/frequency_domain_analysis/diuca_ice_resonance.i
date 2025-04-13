@@ -32,7 +32,7 @@ _poissons_ratio = 0.32
 # Frequency domain to sweep in Hertz (minimum, maximum and step)
 min_freq = 0.1
 max_freq = 10
-step_freq = 0.002 # 0.01
+step_freq = 0.005 # 0.01 # 0.002 # 0.01
 
 # ------------------------------------------------- Simulation
 
