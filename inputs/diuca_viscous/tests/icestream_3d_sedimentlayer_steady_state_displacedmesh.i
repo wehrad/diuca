@@ -144,7 +144,7 @@ initial_II_eps_min = 1e-07
 [Functions]
   [ocean_pressure]
     type = ParsedFunction
-    expression = 'if(z < 0, -1028 * 9.81 * z, 1e5)' # -1e5 * 9.81 * z)'
+    expression = 'if(z < 0, -1028 * 9.81 * z, 0)' # -1e5 * 9.81 * z)'
     # expression = '917 * 9.81 * (100 - z)' # -1e5 * 9.81 * z)'
   []
   [viscosity_rampup]
@@ -173,7 +173,7 @@ initial_II_eps_min = 1e-07
   [disp_activated]
     type = TimePeriod
     start_time = 0
-    end_time = 5e6
+    end_time = 10e6 # basically not used for steady state # 5e6
     disable_objects = 'BCs::no_disp_x
                       BCs::no_disp_y
                       BCs::no_disp_z
@@ -460,13 +460,13 @@ initial_II_eps_min = 1e-07
    [no_disp_x]
     type = ADDirichletBC
     variable = disp_x
-    boundary = 'left right bottom_sediment back front left_sediment right_sediment front_sediment back_sediment'
+    boundary = 'left right bottom_sediment back front left_sediment right_sediment front_sediment back_sediment surface'
     value = 0
   []
   [no_disp_y]
     type = ADDirichletBC
     variable = disp_y
-    boundary = 'left right bottom_sediment back front left_sediment right_sediment front_sediment back_sediment'
+    boundary = 'left right bottom_sediment back front left_sediment right_sediment front_sediment back_sediment surface'
     value = 0
   []
   [no_disp_z]
@@ -505,21 +505,31 @@ initial_II_eps_min = 1e-07
     function_y = 0.
     function_z = 0.
   []
-  
+
   [oulet]
     type = ADFunctionDirichletBC
     variable = p
     boundary = 'front' # front_sediment doesn't make much of a diff.
-    function = ocean_pressure
+    function = '0'
   []
+
+  # [oulet]
+  #   type = ADVectorFunctionNeumannBC
+  #   variable = velocity
+  #   boundary = 'front' # front_sediment doesn't make much of a diff.
+  #   function_x = ocean_pressure
+  # []
+
 
   [outlet_sediment]
     type = ADVectorFunctionDirichletBC
     variable = velocity
     boundary = 'front_sediment'
     function_z = 0.
-    set_x_comp = False
-    set_y_comp = False
+    function_x = 0.
+    function_y = 0.
+    # set_x_comp = False
+    # set_y_comp = False
   []
 
   # [freesurface]
