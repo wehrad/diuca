@@ -21,7 +21,7 @@
 # bed (see "add_bottom_back" object).
 # 2: the ice-bedrock interface is fully decoupled (no boundary condition).
 # The state can be set below by setting it to 0, 1 or 2.
-icebedrock_coupling_state = 2
+icebedrock_coupling_state = 0
 
 # ice parameters
 _youngs_modulus = 1e9 # 8.7e9 # Pa # between 0.8 and 3.5 GPa
@@ -31,8 +31,8 @@ _poissons_ratio = 0.32
 
 # Frequency domain to sweep in Hertz (minimum, maximum and step)
 min_freq = 0.1
-max_freq = 10
-step_freq = 0.005 # 0.01 # 0.002 # 0.01
+max_freq = 5
+step_freq = 0.01 # 0.01 # 0.002 # 0.01
 
 # ------------------------------------------------- Simulation
 
@@ -43,13 +43,13 @@ step_freq = 0.005 # 0.01 # 0.002 # 0.01
     dim = 3
     xmin = 0
     xmax = 5000.
-    nx = 25
+    nx = 50
     zmin = 0
     zmax = 5000.
-    nz = 25
+    nz = 50
     ymin = 0.
     ymax = 600.
-    ny = 3
+    ny = 6
   []
 
   [shaking_zone]
