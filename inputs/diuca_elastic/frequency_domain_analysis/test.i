@@ -1,12 +1,12 @@
 # ------------------------------------------------- ice parameters
-_youngs_modulus = 8.7e9 # 1e9 # Pa
+_youngs_modulus = 1e9 # 1e9 # Pa
 _poissons_ratio = 0.32
 
 # ------------------------------------------------- Simulation settings
 
 # Frequency domain to sweep in Hz (minimum, maximum and step)
 min_freq = 0.1
-max_freq = 1.5
+max_freq = 2
 step_freq = 0.01
 
 # ------------------------------------------------- Simulation
@@ -18,13 +18,13 @@ step_freq = 0.01
     dim = 3
     xmin = 0
     xmax = 5000.
-    nx = 5
+    nx = 20
     zmin = 0
     zmax = 5000.
-    nz = 5
+    nz = 20
     ymin = 0.
     ymax = 600.
-    ny = 20
+    ny = 10
   []
 []
 
@@ -64,21 +64,21 @@ step_freq = 0.01
         block = '0' # 4'
     []
     #reaction terms
-    # [reaction_realx]
-    #     type = Reaction
-    #     variable = disp_x
-    #     rate = 0# filled by controller
-    #     extra_vector_tags = 'ref'
-    #     block = '0' # 4'
-    # []
-    # #reaction terms
-    # [reaction_realz]
-    #     type = Reaction
-    #     variable = disp_z
-    #     rate = 0# filled by controller
-    #     extra_vector_tags = 'ref'
-    #     block = '0' # 4'
-    # []
+    [reaction_realx]
+        type = Reaction
+        variable = disp_x
+        rate = 0# filled by controller
+        extra_vector_tags = 'ref'
+        block = '0' # 4'
+    []
+    #reaction terms
+    [reaction_realz]
+        type = Reaction
+        variable = disp_z
+        rate = 0# filled by controller
+        extra_vector_tags = 'ref'
+        block = '0' # 4'
+    []
 []
 
 [AuxVariables]
@@ -90,10 +90,10 @@ step_freq = 0.01
   [disp_mag]
     type = ParsedAux
     variable = disp_mag
-    coupled_variables = 'disp_y'
-    # coupled_variables = 'disp_y disp_x disp_z'
-    # expression = 'sqrt(disp_y^2+disp_x^2+disp_z^2)'
-    expression = 'abs(disp_y)'
+    # coupled_variables = 'disp_x disp_z'
+    coupled_variables = 'disp_y disp_x disp_z'
+    expression = 'sqrt(disp_x^2+disp_z^2)'
+    # expression = 'abs(disp_y)'
   []
 []
 
@@ -112,12 +112,12 @@ step_freq = 0.01
     boundary = 'bottom'
   []
 
-  # [dirichlet_bottom_y]
-  #   type = DirichletBC
-  #   variable = disp_y
-  #   value = 0
-  #   boundary = 'bottom'
-  # []
+  [dirichlet_bottom_y]
+    type = DirichletBC
+    variable = disp_y
+    value = 0
+    boundary = 'bottom'
+  []
 
   [surface_yreal]
     type = NeumannBC
@@ -125,18 +125,19 @@ step_freq = 0.01
     boundary = 'top left right back front'
     value = 1000
   []
-  # [surface_xreal]
-  #   type = NeumannBC
-  #   variable = disp_x
-  #   boundary = 'top left right back front'
-  #   value = 1000
-  # []
-  # [surface_zreal]
-  #   type = NeumannBC
-  #   variable = disp_z
-  #   boundary = 'top left right back front'
-  #   value = 1000
-  # []
+  
+  [surface_xreal]
+    type = NeumannBC
+    variable = disp_x
+    boundary = 'top left right back front'
+    value = 1000
+  []
+  [surface_zreal]
+    type = NeumannBC
+    variable = disp_z
+    boundary = 'top left right back front'
+    value = 1000
+  []
 []
 
 
@@ -151,10 +152,18 @@ step_freq = 0.01
   []
 []
 
+# [Postprocessors]
+#   [dispMag]
+#     type = AverageNodalVariableValue
+#     boundary = 'top'
+#     variable = disp_mag
+#   []
+# []
+
 [Postprocessors]
   [dispMag]
-    type = AverageNodalVariableValue
-    boundary = 'top'
+    type = NodalExtremeValue
+    value_type = max
     variable = disp_mag
   []
 []

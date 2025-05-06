@@ -30,8 +30,8 @@ _poissons_ratio = 0.32
 # ------------------------------------------------- Simulation settings
 
 # Frequency domain to sweep in Hertz (minimum, maximum and step)
-min_freq = 0.1
-max_freq = 3
+min_freq = 0.01
+max_freq = 1
 step_freq = 0.01 # 0.01 # 0.002 # 0.01
 
 # ------------------------------------------------- Simulation
@@ -42,10 +42,10 @@ step_freq = 0.01 # 0.01 # 0.002 # 0.01
     elem_type = HEX8
     dim = 3
     xmin = 0
-    xmax = 5000.
+    xmax = 100.
     nx = 5 # 50
     zmin = 0
-    zmax = 5000.
+    zmax = 100.
     nz = 5 # 50
     ymin = 0.
     ymax = 600.
@@ -160,13 +160,13 @@ step_freq = 0.01 # 0.01 # 0.002 # 0.01
 
 [Kernels]
     #reaction terms
-    [reaction_realx]
-        type = Reaction
-        variable = disp_x
-        rate = 0# filled by controller
-        extra_vector_tags = 'ref'
-        block = '0' # 4'
-    []
+    # [reaction_realx]
+    #     type = Reaction
+    #     variable = disp_x
+    #     rate = 0# filled by controller
+    #     extra_vector_tags = 'ref'
+    #     block = '0' # 4'
+    # []
     [reaction_realy]
         type = Reaction
         variable = disp_y
@@ -174,13 +174,13 @@ step_freq = 0.01 # 0.01 # 0.002 # 0.01
         extra_vector_tags = 'ref'
         block = '0' # 4'
     []
-    [reaction_realz]
-        type = Reaction
-        variable = disp_z
-        rate = 0# filled by controller
-        extra_vector_tags = 'ref'
-        block = '0' # 4'
-    []
+    # [reaction_realz]
+    #     type = Reaction
+    #     variable = disp_z
+    #     rate = 0# filled by controller
+    #     extra_vector_tags = 'ref'
+    #     block = '0' # 4'
+    # []
 []
 
 [AuxVariables]
@@ -192,8 +192,8 @@ step_freq = 0.01 # 0.01 # 0.002 # 0.01
   [disp_mag]
     type = ParsedAux
     variable = disp_mag
-    coupled_variables = 'disp_y' # 'disp_x disp_y disp_z'
-    expression = 'disp_y' # 'sqrt(disp_x^2+disp_y^2+disp_z^2)'
+    coupled_variables = 'disp_y'
+    expression = 'disp_y'
   []
 []
 
@@ -218,18 +218,18 @@ step_freq = 0.01 # 0.01 # 0.002 # 0.01
     boundary = 'bottom'
   []
 
-  [surface_xreal]
+  # [surface_xreal]
+  #   type = NeumannBC
+  #   variable = disp_x
+  #   boundary = 'top'
+  #   value = 1000
+  # []
+  [surface_yreal]
     type = NeumannBC
     variable = disp_y
     boundary = 'top left right back front'
     value = 1000
   []
-  # [surface_yreal]
-  #   type = NeumannBC
-  #   variable = disp_y
-  #   boundary = 'top left right back front'
-  #   value = 1000
-  # []
   # [surface_zreal]
   #   type = NeumannBC
   #   variable = disp_z

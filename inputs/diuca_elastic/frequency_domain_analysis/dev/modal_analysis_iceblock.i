@@ -11,13 +11,13 @@ index = 0
     dim = 3
     xmin = 0
     xmax = 5000.
-    nx = 10 # 50
+    nx = 20 # 50
     zmin = 0
     zmax = 5000.
-    nz = 10 # 50
+    nz = 20 # 50
     ymin = 0.
     ymax = 600.
-    ny = 60 # 6
+    ny = 10 # 6
   []
   
 []
@@ -89,12 +89,12 @@ index = 0
     value = 0
     boundary = 'bottom'
   []
-  [dirichlet_bottom_y]
-    type = DirichletBC
-    variable = disp_y
-    value = 0
-    boundary = 'bottom'
-  []
+  # [dirichlet_bottom_y]
+  #   type = DirichletBC
+  #   variable = disp_y
+  #   value = 0
+  #   boundary = 'bottom'
+  # []
   [dirichlet_bottom_z]
     type = DirichletBC
     variable = disp_z
@@ -107,11 +107,11 @@ index = 0
     variable = disp_x
     boundary = 'bottom'
   []
-  [dirichlet_bottom_y_e]
-    type = EigenDirichletBC
-    variable = disp_y
-    boundary = 'bottom'
-  []
+  # [dirichlet_bottom_y_e]
+  #   type = EigenDirichletBC
+  #   variable = disp_y
+  #   boundary = 'bottom'
+  # []
   [dirichlet_bottom_z_e]
     type = EigenDirichletBC
     variable = disp_z
@@ -123,7 +123,7 @@ index = 0
 [Materials]
   [elastic_tensor]
     type = ComputeIsotropicElasticityTensor
-    youngs_modulus = 1e9 # Pa
+    youngs_modulus = 9.4e9 # Pa
     poissons_ratio = 0.32
   []
   [compute_stress]
@@ -155,8 +155,8 @@ index = 0
   type = Eigenvalue
   solve_type = KRYLOVSCHUR
   which_eigen_pairs = SMALLEST_MAGNITUDE
-  n_eigen_pairs = 10
-  n_basis_vectors = 5
+  n_eigen_pairs = 15
+  n_basis_vectors = 20
   petsc_options = '-eps_monitor_all -eps_view'
   petsc_options_iname = '-st_type -eps_target -st_pc_type -st_pc_factor_mat_solver_type'
   petsc_options_value = 'sinvert 0 lu mumps'
