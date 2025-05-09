@@ -3,10 +3,10 @@
 # sediment rheology
 # sliding_law = "GudmundssonRaymond"
 sediment_layer_thickness = 50.
-slipperiness_coefficient_mmpaa = 1e0 # 1e1 # 3e3
+slipperiness_coefficient_mmpaa = 1e2 # 1e1 # 3e3
 slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (365*24*3600)}' # 
 
-slipperiness_coefficient_center_mmpaa = 1e0 # 1e4 
+slipperiness_coefficient_center_mmpaa = 1e2 # 1e4 
 slipperiness_coefficient_center = '${fparse (slipperiness_coefficient_center_mmpaa * 1e-6) / (365*24*3600)}' # 
 
 # ------------------------ simulation settings
@@ -36,8 +36,8 @@ initial_II_eps_min = 1e-07
 [GlobalParams]
   order = FIRST
   # https://github.com/idaholab/moose/discussions/26157
-  # integrate_p_by_parts = true
-  integrate_p_by_parts = false
+  integrate_p_by_parts = true
+  # integrate_p_by_parts = false
 []
 
 [Mesh]
@@ -125,8 +125,8 @@ initial_II_eps_min = 1e-07
 
   [final_mesh2]
     type = SubdomainBoundingBoxGenerator
-    input = refined_mesh
-    # input = final_mesh
+    # input = refined_mesh
+    input = final_mesh
     restricted_subdomains="0"
     block_id = 254
     block_name = flood
@@ -136,8 +136,17 @@ initial_II_eps_min = 1e-07
     # top_right = '22000  5400 1e4'
   []
 
-  final_generator = final_mesh2
+  # create a new nodeset
+  [pin_pressure_node]
+    type = BoundingBoxNodeSetGenerator
+    input = 'final_mesh2'
+    bottom_left = '-0.0001 -0.00001 739.999999'
+    top_right = '0.000001 0.000001 740.000001'
+    new_boundary = 'pressure_pin_node'
+  []
 
+  final_generator = pin_pressure_node
+  
 
 []
 
@@ -422,7 +431,15 @@ initial_II_eps_min = 1e-07
     function_y = 0.
     function_z = 0.
   []
-  
+
+  # we need to pin the pressure to remove the singular value
+  [pin_pressure]
+   type = DirichletBC
+   variable = p
+   boundary = 'pressure_pin_node'
+   value = 1e5
+  []
+
   # [outlet]
   #   type = ADFunctionDirichletBC
   #   variable = p
@@ -505,70 +522,70 @@ initial_II_eps_min = 1e-07
 []
 
 
-# [Preconditioning]
-#   active = 'FSP'
-#   [FSP]
-#     type = FSP
-#     # It is the starting point of splitting
-#     topsplit = 'up' # 'up' should match the following block name
-#     [up]
-#       splitting = 'u p' # 'u' and 'p' are the names of subsolvers
-#       splitting_type = schur
-#       # Splitting type is set as schur, because the pressure part of Stokes-like systems
-#       # is not diagonally dominant. CAN NOT use additive, multiplicative and etc.
-#       #
-#       # Original system:
-#       #
-#       # | Auu Aup | | u | = | f_u |
-#       # | Apu 0   | | p |   | f_p |
-#       #
-#       # is factorized into
-#       #
-#       # |I             0 | | Auu  0|  | I  Auu^{-1}*Aup | | u | = | f_u |
-#       # |Apu*Auu^{-1}  I | | 0   -S|  | 0  I            | | p |   | f_p |
-#       #
-#       # where
-#       #
-#       # S = Apu*Auu^{-1}*Aup
-#       #
-#       # The preconditioning is accomplished via the following steps
-#       #
-#       # (1) p* = f_p - Apu*Auu^{-1}f_u,
-#       # (2) p = (-S)^{-1} p*
-#       # (3) u = Auu^{-1}(f_u-Aup*p)
-#       petsc_options = '-pc_fieldsplit_detect_saddle_point'
-#       petsc_options_iname = '-pc_fieldsplit_schur_fact_type  -pc_fieldsplit_schur_precondition -ksp_gmres_restart -ksp_rtol -ksp_type'
-#       petsc_options_value = 'full                            selfp                             300                1e-4      fgmres'
-#     []
-#     [u]
-#       vars = 'vel_x vel_y vel_z'
-#       petsc_options_iname = '-pc_type -pc_hypre_type -ksp_type -ksp_rtol -ksp_gmres_restart -ksp_pc_side'
-#       petsc_options_value = 'hypre    boomeramg      gmres    5e-1      300                 right'
-#     []
-#     [p]
-#       vars = 'p'
-#       petsc_options_iname = '-ksp_type -ksp_gmres_restart -ksp_rtol -pc_type -ksp_pc_side'
-#       petsc_options_value = 'gmres    300                5e-1      jacobi    right'
-#     []
-#   []
-#   [SMP]
-#     type = SMP
-#     full = true
-#     petsc_options_iname = '-pc_type -pc_factor_shift_type'
-#     petsc_options_value = 'lu       NONZERO'
-#   []
-# []
+[Preconditioning]
+  active = 'FSP'
+  [FSP]
+    type = FSP
+    # It is the starting point of splitting
+    topsplit = 'up' # 'up' should match the following block name
+    [up]
+      splitting = 'u p' # 'u' and 'p' are the names of subsolvers
+      splitting_type = schur
+      # Splitting type is set as schur, because the pressure part of Stokes-like systems
+      # is not diagonally dominant. CAN NOT use additive, multiplicative and etc.
+      #
+      # Original system:
+      #
+      # | Auu Aup | | u | = | f_u |
+      # | Apu 0   | | p |   | f_p |
+      #
+      # is factorized into
+      #
+      # |I             0 | | Auu  0|  | I  Auu^{-1}*Aup | | u | = | f_u |
+      # |Apu*Auu^{-1}  I | | 0   -S|  | 0  I            | | p |   | f_p |
+      #
+      # where
+      #
+      # S = Apu*Auu^{-1}*Aup
+      #
+      # The preconditioning is accomplished via the following steps
+      #
+      # (1) p* = f_p - Apu*Auu^{-1}f_u,
+      # (2) p = (-S)^{-1} p*
+      # (3) u = Auu^{-1}(f_u-Aup*p)
+      petsc_options = '-pc_fieldsplit_detect_saddle_point'
+      petsc_options_iname = '-pc_fieldsplit_schur_fact_type  -pc_fieldsplit_schur_precondition -ksp_gmres_restart -ksp_rtol -ksp_type'
+      petsc_options_value = 'full                            selfp                             300                1e-4      fgmres'
+    []
+    [u]
+      vars = 'vel_x vel_y vel_z'
+      petsc_options_iname = '-pc_type -pc_hypre_type -ksp_type -ksp_rtol -ksp_gmres_restart -ksp_pc_side'
+      petsc_options_value = 'hypre    boomeramg      gmres    5e-1      300                 right'
+    []
+    [p]
+      vars = 'p'
+      petsc_options_iname = '-ksp_type -ksp_gmres_restart -ksp_rtol -pc_type -ksp_pc_side'
+      petsc_options_value = 'gmres    300                5e-1      jacobi    right'
+    []
+  []
+  [SMP]
+    type = SMP
+    full = true
+    petsc_options_iname = '-pc_type -pc_factor_shift_type'
+    petsc_options_value = 'lu       NONZERO'
+  []
+[]
 
 [Executioner]
   type = Transient
   num_steps = 50
 
-  # petsc_options_iname = '-pc_type -pc_factor_shift_type'
-  # petsc_options_value = 'lu       NONZERO'
+  petsc_options_iname = '-pc_type -pc_factor_shift_type'
+  petsc_options_value = 'lu       NONZERO'
   
-  petsc_options = '-pc_svd_monitor'
-  petsc_options_iname = '-pc_type'
-  petsc_options_value = 'svd'
+  # petsc_options = '-pc_svd_monitor'
+  # petsc_options_iname = '-pc_type'
+  # petsc_options_value = 'svd'
   
   # petsc_options = '-pc_type fieldsplit -pc_fieldsplit_type schur -pc_fieldsplit_detect_saddle_point'
   # petsc_options = '--ksp_monitor'
