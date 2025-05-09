@@ -31,7 +31,7 @@ _poissons_ratio = 0.32
 
 # Frequency domain to sweep in Hertz (minimum, maximum and step)
 min_freq = 0.01
-max_freq = 1
+max_freq = 4
 step_freq = 0.01 # 0.01 # 0.002 # 0.01
 
 # ------------------------------------------------- Simulation
@@ -42,77 +42,91 @@ step_freq = 0.01 # 0.01 # 0.002 # 0.01
     elem_type = HEX8
     dim = 3
     xmin = 0
-    xmax = 100.
-    nx = 5 # 50
+    xmax = 5000.
+    nx = 20 # 50
     zmin = 0
-    zmax = 100.
-    nz = 5 # 50
+    zmax = 5000.
+    nz = 20 # 50
     ymin = 0.
     ymax = 600.
-    ny = 60 # 6
+    ny = 10 # 6
   []
 
-  # [shaking_zone]
-  #   type = SubdomainBoundingBoxGenerator
-  #   input = 'block'
-  #   block_id = 4
-  #   bottom_left = '2200 -1 2200'
-  #   top_right = '2700 101 2700'
-  # []
-  # [decoupling_zone_left]
-  #   type = SubdomainBoundingBoxGenerator
-  #   input = 'shaking_zone'
-  #   block_id = 5
-  #   bottom_left = '2200 -1 950'
-  #   top_right = '2700 101 1550'
-  # []
-  # [decoupling_zone_right]
-  #   type = SubdomainBoundingBoxGenerator
-  #   input = 'decoupling_zone_left'
-  #   block_id = 6
-  #   bottom_left = '2200 -1 3450'
-  #   top_right = '2700 101 4050'
-  # []
-  # [decoupling_zone_top]
-  #   type = SubdomainBoundingBoxGenerator
-  #   input = 'decoupling_zone_right'
-  #   block_id = 7
-  #   bottom_left = '3450 -1 2200'
-  #   top_right = '4050 101 2700'
-  # []
-  # [decoupling_zone_bottom]
-  #   type = SubdomainBoundingBoxGenerator
-  #   input = 'decoupling_zone_top'
-  #   block_id = 8
-  #   bottom_left = '950 -1 2200'
-  #   top_right = '1550 101 2700'
-  # []
-  # [mesh_combined_interm]
-  #   type = CombinerGenerator
-  #   inputs = 'block decoupling_zone_bottom'
-  # []
-  # [shaking_bottom]
-  #   type = SideSetsAroundSubdomainGenerator
-  #   input = 'mesh_combined_interm'
-  #   block = '4'
-  #   new_boundary = 'shaking_bottom'
-  #   replace = true
-  #   normal = '0 1 0'
-  # []
-  # [decoupling_bottom]
-  #   type = SideSetsAroundSubdomainGenerator
-  #   input = 'shaking_bottom'
-  #   block = '5 6 7 8'
-  #   new_boundary = 'decoupling_bottom'
-  #   replace = true
-  #   normal = '0 1 0'
-  # []
-  # [delete_bottom]
-  #   type=BoundaryDeletionGenerator
-  #   input='decoupling_bottom'
-  #   boundary_names='bottom'
-  # []
+  [shaking_zone]
+    type = SubdomainBoundingBoxGenerator
+    input = 'block'
+    block_id = 4
+    bottom_left = '2200 -1 2200'
+    # bottom_left = '1900 -1 1900'
+    top_right = '2700 101 2700'
+    # top_right = '3000 101 3000'
+  []
+  [decoupling_zone_left]
+    type = SubdomainBoundingBoxGenerator
+    input = 'shaking_zone'
+    block_id = 5
+    bottom_left = '2200 -1 950'
+    top_right = '2700 101 1550'
+    # bottom_left = '1900 -1 650'
+    # top_right = '3000 101 1850'
+  []
+  [decoupling_zone_right]
+    type = SubdomainBoundingBoxGenerator
+    input = 'decoupling_zone_left'
+    block_id = 6
+    bottom_left = '2200 -1 3450'
+    top_right = '2700 101 4050'
+    # bottom_left = '1900 -1 3150'
+    # top_right = '3000 101 4350'
+  []
+  [decoupling_zone_top]
+    type = SubdomainBoundingBoxGenerator
+    input = 'decoupling_zone_right'
+    block_id = 7
+    bottom_left = '3450 -1 2200'
+    top_right = '4050 101 2700'
+    # bottom_left = '3150 -1 1900'
+    # top_right = '4350 101 3000'
+  []
+  [decoupling_zone_bottom]
+    type = SubdomainBoundingBoxGenerator
+    input = 'decoupling_zone_top'
+    block_id = 8
+    bottom_left = '950 -1 2200'
+    top_right = '1550 101 2700'
+    # bottom_left = '650 -1 1900'
+    # top_right = '1850 101 3000'
+  []
+  [mesh_combined_interm]
+    type = CombinerGenerator
+    inputs = 'block decoupling_zone_bottom'
+  []
+  [shaking_bottom]
+    type = SideSetsAroundSubdomainGenerator
+    input = 'mesh_combined_interm'
+    block = '4'
+    new_boundary = 'shaking_bottom'
+    replace = true
+    normal = '0 -1 0'
+  []
+  [decoupling_bottom]
+    type = SideSetsAroundSubdomainGenerator
+    input = 'shaking_bottom'
+    block = '4 5 6 7 8'
+    new_boundary = 'decoupling_bottom'
+    replace = true
+    normal = '0 -1 0'
+  []
+  [delete_bottom]
+    type=BoundaryDeletionGenerator
+    input='decoupling_bottom'
+    boundary_names='bottom'
+  []
 
+  [add_nodesets]
+    type = NodeSetsFromSideSetsGenerator
+    input = delete_bottom
+  []
   # [add_bottom_back]
   #   type = ParsedGenerateSideset
   #   input = 'delete_bottom'
@@ -192,30 +206,68 @@ step_freq = 0.01 # 0.01 # 0.002 # 0.01
   [disp_mag]
     type = ParsedAux
     variable = disp_mag
-    coupled_variables = 'disp_y'
-    expression = 'disp_y'
+    coupled_variables = 'disp_z disp_x'
+    expression = 'sqrt((disp_z^2)+(disp_x^2))'
   []
 []
 
 [BCs]
 
-  [dirichlet_bottom_x]
+  # [dirichlet_bottom_x]
+  #   type = DirichletBC
+  #   variable = disp_x
+  #   value = 0
+  #   boundary = 'bottom'
+  # []
+  # [dirichlet_bottom_y]
+  #   type = DirichletBC
+  #   variable = disp_y
+  #   value = 0
+  #   boundary = 'bottom'
+  # []
+  # [dirichlet_bottom_z]
+  #   type = DirichletBC
+  #   variable = disp_z
+  #   value = 0
+  #   boundary = 'bottom'
+  # []
+
+  [dirichlet_decoupling_bottom_x]
     type = DirichletBC
     variable = disp_x
     value = 0
-    boundary = 'bottom'
+    boundary = 'decoupling_bottom'
   []
-  [dirichlet_bottom_y]
+  [dirichlet_decoupling_bottom_y]
     type = DirichletBC
     variable = disp_y
     value = 0
-    boundary = 'bottom'
+    boundary = 'decoupling_bottom'
   []
-  [dirichlet_bottom_z]
+  [dirichlet_decoupling_bottom_z]
     type = DirichletBC
     variable = disp_z
     value = 0
-    boundary = 'bottom'
+    boundary = 'decoupling_bottom'
+  []
+
+  [dirichlet_side_x]
+    type = DirichletBC
+    variable = disp_x
+    value = 0
+    boundary = 'left right back front'
+  []
+  [dirichlet_side_z]
+    type = DirichletBC
+    variable = disp_z
+    value = 0
+    boundary = 'left right back front'
+  []
+  [dirichlet_side_y]
+    type = DirichletBC
+    variable = disp_y
+    value = 0
+    boundary = 'left right back front'
   []
 
   # [surface_xreal]
@@ -227,13 +279,13 @@ step_freq = 0.01 # 0.01 # 0.002 # 0.01
   [surface_yreal]
     type = NeumannBC
     variable = disp_y
-    boundary = 'top left right back front'
-    value = 1000
+    boundary = 'top'
+    value = 1
   []
   # [surface_zreal]
   #   type = NeumannBC
   #   variable = disp_z
-  #   boundary = 'top left right back front'
+  #   boundary = 'top'
   #   value = 1000
   # []
 
@@ -258,6 +310,14 @@ step_freq = 0.01 # 0.01 # 0.002 # 0.01
     variable = disp_mag
   []
 []
+
+# [Postprocessors]
+#   [dispMag]
+#     type = NodalExtremeValue
+#     value_type = max
+#     variable = disp_mag
+#   []
+# []
 
 [Functions]
   [freq2]

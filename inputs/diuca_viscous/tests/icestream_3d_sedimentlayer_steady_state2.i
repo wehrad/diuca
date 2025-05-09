@@ -35,9 +35,7 @@ inlet_mps = ${fparse
 
 [GlobalParams]
   order = FIRST
-  # https://github.com/idaholab/moose/discussions/26157
-  # integrate_p_by_parts = true
-  integrate_p_by_parts = false
+  integrate_p_by_parts = true
 []
 
 [Problem]
@@ -64,11 +62,11 @@ inlet_mps = ${fparse
 [Functions]
   [ocean_pressure_coupled_force]
     type = ParsedVectorFunction
-    expression_x = 'if(z < 0, 1028 * 9.81 * 0.01, 1e5)' # negative for compression
+    expression_x = 'if(z < 0 & x > 19800, 1028 * 9.81 * z, 0)' # negative for compression
   []
   [ocean_pressure_dirichlet]
     type = ParsedFunction
-    expression = 'if(z < 0, -1028 * 9.81 * z *0.99, 1e5)'
+    expression = 'if(z < 0, -1028 * 9.81 * z *1.0, 1e5)'
   []
   [influx]
     type = ParsedFunction
@@ -291,13 +289,13 @@ inlet_mps = ${fparse
 [BCs]
 
   # we need to pin the pressure to remove the singular value
-  # [pin_pressure]
-  #  type = DirichletBC
-  #  variable = p
-  #  boundary = 'pressure_pin_node'
-  #  value = 1e5
-  # []
-  
+  [pin_pressure]
+   type = DirichletBC
+   variable = p
+   boundary = 'pressure_pin_node'
+   value = 1e5
+  []
+
   # no slip at the sediment base nor on the sides
   [no_slip_sides]
     type = ADVectorFunctionDirichletBC
@@ -327,13 +325,13 @@ inlet_mps = ${fparse
     function_y = 0.
     function_z = 0.
   []
-  
-  [outlet]
-    type = ADFunctionDirichletBC
-    variable = p
-    boundary = 'front' # front_sediment doesn't make much of a diff.
-    function = ocean_pressure_dirichlet
-  []
+
+  # [outlet]
+  #   type = ADFunctionDirichletBC
+  #   variable = p
+  #   boundary = 'front' # front_sediment doesn't make much of a diff.
+  #   function = ocean_pressure_dirichlet
+  # []
 
   # [outlet_sediment]
   #   type = ADVectorFunctionDirichletBC
