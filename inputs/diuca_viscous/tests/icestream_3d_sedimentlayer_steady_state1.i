@@ -3,10 +3,10 @@
 # sediment rheology
 # sliding_law = "GudmundssonRaymond"
 sediment_layer_thickness = 50.
-slipperiness_coefficient_mmpaa = 1e2 # 1e1 # 3e3
+slipperiness_coefficient_mmpaa = 1e0 # 1e1 # 3e3
 slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (365*24*3600)}' # 
 
-slipperiness_coefficient_center_mmpaa = 1e2 # 1e4 
+slipperiness_coefficient_center_mmpaa = 1e0 # 1e4 
 slipperiness_coefficient_center = '${fparse (slipperiness_coefficient_center_mmpaa * 1e-6) / (365*24*3600)}' # 
 
 # ------------------------ simulation settings
@@ -36,8 +36,8 @@ initial_II_eps_min = 1e-07
 [GlobalParams]
   order = FIRST
   # https://github.com/idaholab/moose/discussions/26157
-  integrate_p_by_parts = true
   # integrate_p_by_parts = false
+  integrate_p_by_parts = true
 []
 
 [Mesh]
@@ -153,7 +153,10 @@ initial_II_eps_min = 1e-07
 [Functions]
   [ocean_pressure_coupled_force]
     type = ParsedVectorFunction
-    expression_x = 'if(z < 0 & x > 19800, 1028 * 9.81 * z, 0)' # negative for compression
+    expression_x = 'if(z < 0 & x > 19800, 1028 * 9.81 * z, 0)'
+    # expression_x = 'if(z < 0 & x > 19800, 1028 * 9.81 * z * ((exp((t - _dt) * 4e-6)) / 2.483120e11), 0)' # negative for compression
+    # symbol_names = '_dt'
+    # symbol_values = '${_dt}'
   []
   [ocean_pressure_dirichlet]
     type = ParsedFunction
@@ -395,13 +398,13 @@ initial_II_eps_min = 1e-07
 [BCs]
 
   # we need to pin the pressure to remove the singular value
-  # [pin_pressure]
-  #  type = DirichletBC
-  #  variable = p
-  #  boundary = 'pressure_pin_node'
-  #  value = 1e5
-  # []
-  
+  [pin_pressure]
+   type = DirichletBC
+   variable = p
+   boundary = 'pressure_pin_node'
+   value = 1e5
+  []
+
   # no slip at the sediment base nor on the sides
   [no_slip_sides]
     type = ADVectorFunctionDirichletBC
@@ -430,14 +433,6 @@ initial_II_eps_min = 1e-07
     function_x = influx
     function_y = 0.
     function_z = 0.
-  []
-
-  # we need to pin the pressure to remove the singular value
-  [pin_pressure]
-   type = DirichletBC
-   variable = p
-   boundary = 'pressure_pin_node'
-   value = 1e5
   []
 
   # [outlet]
