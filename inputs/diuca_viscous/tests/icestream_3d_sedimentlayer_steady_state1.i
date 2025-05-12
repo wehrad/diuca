@@ -437,7 +437,7 @@ initial_II_eps_min = 1e-07
     function_z = 0.
   []
 
-  [velocity_out]
+  [front_pressure]
     type = INSADHydrostaticPressureBC
     boundary = 'front'
     variable = velocity
