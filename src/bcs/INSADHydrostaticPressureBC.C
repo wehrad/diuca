@@ -32,6 +32,9 @@ INSADHydrostaticPressureBC::validParams()
 
   // Optional parameters
   params.addParam<MaterialPropertyName>("mu_name", "mu", "The name of the dynamic viscosity");
+  params.addParam<Real>("water_density", 1028., "Water density");
+  params.addParam<Real>("g", 9.81, "Gravity acceleration");
+  params.addParam<Real>("water_level", 0., "Water height");
   return params;
 }
 
@@ -40,7 +43,10 @@ INSADHydrostaticPressureBC::INSADHydrostaticPressureBC(const InputParameters & p
     _p(adCoupledValue(NS::pressure)),
     _integrate_p_by_parts(getParam<bool>("integrate_p_by_parts")),
     _mu(getADMaterialProperty<Real>("mu_name")),
-    _form(getParam<MooseEnum>("viscous_form"))
+    _form(getParam<MooseEnum>("viscous_form")),
+     _water_density(getParam<Real>("water_density")),
+    _g(getParam<Real>("g")),
+    _water_level(getParam<Real>("water_level"))
 {
   std::set<SubdomainID> connected_blocks;
   for (const auto bnd_id : boundaryIDs())
@@ -60,17 +66,30 @@ INSADHydrostaticPressureBC::INSADHydrostaticPressureBC(const InputParameters & p
 ADReal
 INSADHydrostaticPressureBC::computeQpResidual()
 {
-  // The viscous term
+
+  // Elevation
+  Real z = _q_point[_qp](2);
+
+  // Hydrostatic pressure
+  ADReal hydrostatic_pressure = _water_density * _g * (_water_level - z);
+  
   ADReal residual;
+
+  // if above water level, implement INSADMomentumNoBCBC ("No Boundary condition") only
+  // The viscous term
   if (_form == "laplace")
     residual = -_mu[_qp] * (_grad_u[_qp] * _normals[_qp]) * _test[_i][_qp];
   else
     residual =
-        -_mu[_qp] * ((_grad_u[_qp] + _grad_u[_qp].transpose()) * _normals[_qp]) * _test[_i][_qp];
+      -_mu[_qp] * ((_grad_u[_qp] + _grad_u[_qp].transpose()) * _normals[_qp]) * _test[_i][_qp];
 
   if (_integrate_p_by_parts)
     // pIn * test
     residual += _p[_qp] * _normals[_qp] * _test[_i][_qp];
 
+  // if below water level, add hydrostatic pressure to INSADMomentumNoBCBC
+  if (z < _water_level)
+    residual += _test[_i][_qp] * _normals[_qp] * hydrostatic_pressure;
+    
   return residual;
 }

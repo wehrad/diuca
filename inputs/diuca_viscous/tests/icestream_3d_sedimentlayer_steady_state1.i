@@ -30,6 +30,7 @@ inlet_mps = ${fparse
             } # ms-1
 
 initial_II_eps_min = 1e-07
+# initial_II_eps_min = 1e-10
 
 # ------------------------
 
@@ -146,22 +147,23 @@ initial_II_eps_min = 1e-07
   []
 
   final_generator = pin_pressure_node
+  # final_generator = final_mesh2
   
 
 []
 
 [Functions]
-  [ocean_pressure_coupled_force]
-    type = ParsedVectorFunction
-    expression_x = 'if(z < 0 & x > 19800, 1028 * 9.81 * z, 0)'
-    # expression_x = 'if(z < 0 & x > 19800, 1028 * 9.81 * z * ((exp((t - _dt) * 4e-6)) / 2.483120e11), 0)' # negative for compression
-    # symbol_names = '_dt'
-    # symbol_values = '${_dt}'
-  []
-  [ocean_pressure_dirichlet]
-    type = ParsedFunction
-    expression = 'if(z < 0, -1028 * 9.81 * z, 1e5)'
-  []
+  # [ocean_pressure_coupled_force]
+  #   type = ParsedVectorFunction
+  #   expression_x = 'if(z < 0 & x > 19800, 1028 * 9.81 * z, 0)'
+  #   # expression_x = 'if(z < 0 & x > 19800, 1028 * 9.81 * z * ((exp((t - _dt) * 4e-6)) / 2.483120e11), 0)' # negative for compression
+  #   # symbol_names = '_dt'
+  #   # symbol_values = '${_dt}'
+  # []
+  # [ocean_pressure_dirichlet]
+  #   type = ParsedFunction
+  #   expression = 'if(z < 0, -1028 * 9.81 * z, 1e5)'
+  # []
   [viscosity_rampup]
     type = ParsedFunction
     expression = 'initial_II_eps_min * exp(-(t-_dt) * 4e-6)' # 5e-6
@@ -293,12 +295,13 @@ initial_II_eps_min = 1e-07
     variable = velocity
     gravity = '0. 0. -9.81'
   []
-  [hydrostatic_pressure_ice]
-    type = INSADMomentumCoupledForce
-    block = '1 255'
-    variable = velocity
-    vector_function = 'ocean_pressure_coupled_force'
-  []
+  # [hydrostatic_pressure_ice]
+  #   type = INSADMomentumCoupledForce
+  #   block = '1 255'
+  #   variable = velocity
+  #   vector_function = 'ocean_pressure_coupled_force'
+  # []
+
   [mass_sediment]
     type = INSADMass
     block = '0'
@@ -435,10 +438,11 @@ initial_II_eps_min = 1e-07
   []
 
   [velocity_out]
-    type = INSADMomentumNoBCBC
-    boundary = 'surface'
+    type = INSADHydrostaticPressureBC
+    boundary = 'front'
     variable = velocity
     pressure = p
+    mu_name = "mu_ice"
   []
 
   # [outlet]
