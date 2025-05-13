@@ -3,24 +3,14 @@
 # sediment rheology
 # sliding_law = "GudmundssonRaymond"
 sediment_layer_thickness = 50.
-slipperiness_coefficient_mmpaa = 1e0 # 1e1 # 3e3
+slipperiness_coefficient_mmpaa = 1e3 # 1e1 # 3e3
 slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (365*24*3600)}' # 
 
-slipperiness_coefficient_center_mmpaa = 1e0 # 1e4 
-slipperiness_coefficient_center = '${fparse (slipperiness_coefficient_center_mmpaa * 1e-6) / (365*24*3600)}' # 
+# slipperiness_coefficient_center_mmpaa = 1e3 # 1e4 
+# slipperiness_coefficient_center = '${fparse (slipperiness_coefficient_center_mmpaa * 1e-6) / (365*24*3600)}' # 
 
 # ------------------------ simulation settings
 
-
-# dt associated with rest time associated with the
-# geometry (in seconds)
-# ice has a high viscosity and hence response times
-# of years
-# nb_years = 0.075
-# # mult = 1
-# # mult = 0.5
-# mult = 0.5
-# _dt = '${fparse nb_years * 3600 * 24 * 365 * mult}'
 nb_years = 0.008 # 0.01
 _dt = '${fparse nb_years * 3600 * 24 * 365}'
 
@@ -29,8 +19,9 @@ inlet_mps = ${fparse
              inlet_mph / 3600
             } # ms-1
 
+# Mercenier et al 2019: 1.9e-13
 initial_II_eps_min = 1e-07
-# initial_II_eps_min = 1e-10
+# initial_II_eps_min = 1e-13
 
 # ------------------------
 
@@ -65,7 +56,7 @@ initial_II_eps_min = 1e-07
   [extrude_sediment]
     type = MeshExtruderGenerator
     input = separateMesh_sediment
-    num_layers = 1
+    num_layers = 2
     extrusion_vector = '0. 0. -${sediment_layer_thickness}'
     # bottom/top swap is (correct and) due to inverse extrusion
     top_sideset = 'bottom_sediment'
@@ -153,17 +144,6 @@ initial_II_eps_min = 1e-07
 []
 
 [Functions]
-  # [ocean_pressure_coupled_force]
-  #   type = ParsedVectorFunction
-  #   expression_x = 'if(z < 0 & x > 19800, 1028 * 9.81 * z, 0)'
-  #   # expression_x = 'if(z < 0 & x > 19800, 1028 * 9.81 * z * ((exp((t - _dt) * 4e-6)) / 2.483120e11), 0)' # negative for compression
-  #   # symbol_names = '_dt'
-  #   # symbol_values = '${_dt}'
-  # []
-  # [ocean_pressure_dirichlet]
-  #   type = ParsedFunction
-  #   expression = 'if(z < 0, -1028 * 9.81 * z, 1e5)'
-  # []
   [viscosity_rampup]
     type = ParsedFunction
     expression = 'initial_II_eps_min * exp(-(t-_dt) * 4e-6)' # 5e-6
@@ -187,14 +167,6 @@ initial_II_eps_min = 1e-07
     function = 'viscosity_rampup'
     execute_on = 'initial timestep_begin'
   []
-  # [inertia_switch]
-  #   type = TimePeriod
-  #   start_time = 1e1
-  #   end_time = 4e6
-  #   set_sync_times = true
-  #   disable_objects = '*/hydrostatic_pressure_ice'
-  #   execute_on = 'timestep_begin timestep_end'
-  # []
 []
 
 
@@ -241,8 +213,8 @@ initial_II_eps_min = 1e-07
     block = '1 0 255 254'
   []
   [p]
-    # scaling = 1e6
     family = LAGRANGE
+    # order = FIRST
     # scaling = 1e-6
     # initial_condition = 1e6
     block = '1 0 255 254'
@@ -295,105 +267,51 @@ initial_II_eps_min = 1e-07
     variable = velocity
     gravity = '0. 0. -9.81'
   []
-  # [hydrostatic_pressure_ice]
-  #   type = INSADMomentumCoupledForce
-  #   block = '1 255'
-  #   variable = velocity
-  #   vector_function = 'ocean_pressure_coupled_force'
-  # []
-
   [mass_sediment]
     type = INSADMass
-    block = '0'
+    block = '0 254'
     variable = p
   []
   [mass_stab_sediment_sediment]
     type = INSADMassPSPG
-    block = '0'
+    block = '0 254'
     variable = p
     rho_name = "rho_sediment"
   []
   [momentum_time_sediment]
     type = INSADMomentumTimeDerivative
-    block = '0'
+    block = '0 254'
     variable = velocity
   []
   [momentum_advection_sediment]
     type = INSADMomentumAdvection
-    block = '0'
+    block = '0 254'
     variable = velocity
   []
   [momentum_viscous_sediment]
     type = INSADMomentumViscous
-    block = '0'
+    block = '0 254'
     variable = velocity
     mu_name = "mu_sediment"
   []
   [momentum_pressure_sediment]
     type = INSADMomentumPressure
-    block = '0'
+    block = '0 254'
     variable = velocity
     pressure = p
   []
   [momentum_supg_sediment]
     type = INSADMomentumSUPG
-    block = '0'
+    block = '0 254'
     variable = velocity
     velocity = velocity
   []
   [gravity_sediment]
     type = INSADGravityForce
-    block = '0'
+    block = '0 254'
     variable = velocity
     gravity = '0. 0. -9.81'
   []
-
-  [mass_floodedsediment]
-    type = INSADMass
-    block = '254'
-    variable = p
-  []
-  [mass_stab_floodedsediment_floodedsediment]
-    type = INSADMassPSPG
-    block = '254'
-    variable = p
-    rho_name = "rho_floodedsediment"
-  []
-  [momentum_time_floodedsediment]
-    type = INSADMomentumTimeDerivative
-    block = '254'
-    variable = velocity
-  []
-  [momentum_advection_floodedsediment]
-    type = INSADMomentumAdvection
-    block = '254'
-    variable = velocity
-  []
-  [momentum_viscous_floodedsediment]
-    type = INSADMomentumViscous
-    block = '254'
-    variable = velocity
-    mu_name = "mu_floodedsediment"
-  []
-  [momentum_pressure_floodedsediment]
-    type = INSADMomentumPressure
-    block = '254'
-    variable = velocity
-    pressure = p
-  []
-  [momentum_supg_floodedsediment]
-    type = INSADMomentumSUPG
-    block = '254'
-    variable = velocity
-    velocity = velocity
-  []
-  [gravity_floodedsediment]
-    type = INSADGravityForce
-    block = '254'
-    variable = velocity
-    gravity = '0. 0. -9.81'
-  []
-
 
 []
 
@@ -412,11 +330,11 @@ initial_II_eps_min = 1e-07
     type = ADVectorFunctionDirichletBC
     variable = velocity
     boundary = 'left right'
-    # function_x = 0.
+    function_x = 0.
     function_y = 0.
-    # function_z = 0.
-    set_x_comp = false
-    set_z_comp = false
+    function_z = 0.
+    # set_x_comp = false
+    # set_z_comp = false
   []
 
   [no_slip_sides_sediments]
@@ -461,12 +379,12 @@ initial_II_eps_min = 1e-07
   #   set_y_comp = False
   # []
 
-
   # [freesurface]
   #   type = INSADMomentumNoBCBC
   #   variable = velocity
   #   pressure = p
-  #   boundary = 'top'
+  #   boundary = 'surface'
+  #   mu_name="mu_ice"
   # []
 
 []
@@ -484,18 +402,10 @@ initial_II_eps_min = 1e-07
   []
   [sediment]
     type = ADSedimentMaterialSI
-    block = '0'
+    block = '0 254'
     SlipperinessCoefficient = ${slipperiness_coefficient}
     LayerThickness = ${sediment_layer_thickness}
     output_properties = 'mu_sediment rho_sediment'
-    outputs = "out"
-  []
-  [floodedsediment]
-    type = ADSubglacialFloodMaterialSI
-    block = '254'
-    SlipperinessCoefficient = ${slipperiness_coefficient_center}
-    LayerThickness = ${sediment_layer_thickness}
-    output_properties = 'mu_floodedsediment rho_floodedsediment'
     outputs = "out"
   []
 
@@ -509,76 +419,67 @@ initial_II_eps_min = 1e-07
   []
   [ins_mat_sediment]
     type = INSADTauMaterial
-    block = '0'
+    block = '0 254'
     velocity = velocity
     pressure = p
     rho_name = "rho_sediment"
     mu_name = "mu_sediment"
   []
-  [ins_mat_floodedsediment]
-    type = INSADTauMaterial
-    block = '254'
-    velocity = velocity
-    pressure = p
-    rho_name = "rho_floodedsediment"
-    mu_name = "mu_floodedsediment"
-  []
-  
 []
 
-[Preconditioning]
-  active = 'FSP'
-  [FSP]
-    type = FSP
-    # It is the starting point of splitting
-    topsplit = 'up' # 'up' should match the following block name
-    [up]
-      splitting = 'u p' # 'u' and 'p' are the names of subsolvers
-      splitting_type = schur
-      # Splitting type is set as schur, because the pressure part of Stokes-like systems
-      # is not diagonally dominant. CAN NOT use additive, multiplicative and etc.
-      #
-      # Original system:
-      #
-      # | Auu Aup | | u | = | f_u |
-      # | Apu 0   | | p |   | f_p |
-      #
-      # is factorized into
-      #
-      # |I             0 | | Auu  0|  | I  Auu^{-1}*Aup | | u | = | f_u |
-      # |Apu*Auu^{-1}  I | | 0   -S|  | 0  I            | | p |   | f_p |
-      #
-      # where
-      #
-      # S = Apu*Auu^{-1}*Aup
-      #
-      # The preconditioning is accomplished via the following steps
-      #
-      # (1) p* = f_p - Apu*Auu^{-1}f_u,
-      # (2) p = (-S)^{-1} p*
-      # (3) u = Auu^{-1}(f_u-Aup*p)
-      petsc_options = '-pc_fieldsplit_detect_saddle_point'
-      petsc_options_iname = '-pc_fieldsplit_schur_fact_type  -pc_fieldsplit_schur_precondition -ksp_gmres_restart -ksp_rtol -ksp_type'
-      petsc_options_value = 'full                            selfp                             300                1e-4      fgmres'
-    []
-    [u]
-      vars = 'vel_x vel_y vel_z'
-      petsc_options_iname = '-pc_type -pc_hypre_type -ksp_type -ksp_rtol -ksp_gmres_restart -ksp_pc_side'
-      petsc_options_value = 'hypre    boomeramg      gmres    5e-1      300                 right'
-    []
-    [p]
-      vars = 'p'
-      petsc_options_iname = '-ksp_type -ksp_gmres_restart -ksp_rtol -pc_type -ksp_pc_side'
-      petsc_options_value = 'gmres    300                5e-1      jacobi    right'
-    []
-  []
-  [SMP]
-    type = SMP
-    full = true
-    petsc_options_iname = '-pc_type -pc_factor_shift_type'
-    petsc_options_value = 'lu       NONZERO'
-  []
-[]
+# [Preconditioning]
+#   active = 'FSP'
+#   [FSP]
+#     type = FSP
+#     # It is the starting point of splitting
+#     topsplit = 'up' # 'up' should match the following block name
+#     [up]
+#       splitting = 'u p' # 'u' and 'p' are the names of subsolvers
+#       splitting_type = schur
+#       # Splitting type is set as schur, because the pressure part of Stokes-like systems
+#       # is not diagonally dominant. CAN NOT use additive, multiplicative and etc.
+#       #
+#       # Original system:
+#       #
+#       # | Auu Aup | | u | = | f_u |
+#       # | Apu 0   | | p |   | f_p |
+#       #
+#       # is factorized into
+#       #
+#       # |I             0 | | Auu  0|  | I  Auu^{-1}*Aup | | u | = | f_u |
+#       # |Apu*Auu^{-1}  I | | 0   -S|  | 0  I            | | p |   | f_p |
+#       #
+#       # where
+#       #
+#       # S = Apu*Auu^{-1}*Aup
+#       #
+#       # The preconditioning is accomplished via the following steps
+#       #
+#       # (1) p* = f_p - Apu*Auu^{-1}f_u,
+#       # (2) p = (-S)^{-1} p*
+#       # (3) u = Auu^{-1}(f_u-Aup*p)
+#       petsc_options = '-pc_fieldsplit_detect_saddle_point'
+#       petsc_options_iname = '-pc_fieldsplit_schur_fact_type  -pc_fieldsplit_schur_precondition -ksp_gmres_restart -ksp_rtol -ksp_type'
+#       petsc_options_value = 'full                            selfp                             300                1e-4      fgmres'
+#     []
+#     [u]
+#       vars = 'vel_x vel_y vel_z'
+#       petsc_options_iname = '-pc_type -pc_hypre_type -ksp_type -ksp_rtol -ksp_gmres_restart -ksp_pc_side'
+#       petsc_options_value = 'hypre    boomeramg      gmres    5e-1      300                 right'
+#     []
+#     [p]
+#       vars = 'p'
+#       petsc_options_iname = '-ksp_type -ksp_gmres_restart -ksp_rtol -pc_type -ksp_pc_side'
+#       petsc_options_value = 'gmres    300                5e-1      jacobi    right'
+#     []
+#   []
+#   [SMP]
+#     type = SMP
+#     full = true
+#     petsc_options_iname = '-pc_type -pc_factor_shift_type'
+#     petsc_options_value = 'lu       NONZERO'
+#   []
+# []
 
 [Executioner]
   type = Transient
@@ -607,7 +508,7 @@ initial_II_eps_min = 1e-07
   nl_rel_tol = 1e-05
   nl_abs_tol = 1e-05
 
-  nl_max_its = 100
+  nl_max_its = 20 # 50 # 100
   nl_forced_its = 3
   line_search = none
 
