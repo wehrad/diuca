@@ -32,11 +32,10 @@ protected:
   const bool _integrate_p_by_parts;
   const ADMaterialProperty<Real> & _mu;
   
+  /// The form of the viscous term. Either laplace or traction
+  MooseEnum _form;
+
   const Real & _water_density;
   const Real & _g;
   const Real & _water_level;
-
-
-  /// The form of the viscous term. Either laplace or traction
-  MooseEnum _form;
 };
