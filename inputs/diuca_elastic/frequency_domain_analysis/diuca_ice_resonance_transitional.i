@@ -6,27 +6,24 @@
 # moose/modules/solid_mechanics/examples/wave_propagation/cantilever_sweep.i
 
 # This input file simulates the frequency response of a block of ice
-# of side length 5km and thickness 0.6km, for different ice-bedrock
-# coupling states. The displacement magnitude at the surface of the
-# block is stored in a csv file for each frequency (see simulation
-# settings). The frequency response for the different states are
-# presented in van Ginkel et al 2025 where more details about model
-# setup and research questions can be found too.
+# of side length 5km and thickness 0.6km. The displacement magnitude
+# at the surface of the block is stored in a csv file for each
+# frequency (see simulation settings).
 
-# ------------------------------------------------- Domain settings
+# --------------------------------- Domain settings
 
 # ice parameters
-_youngs_modulus = 1e9
+_youngs_modulus = 1e9 # Pa
 _poissons_ratio = 0.32
 
-# ------------------------------------------------- Simulation settings
+# --------------------------------- Simulation settings
 
-# Frequency domain to sweep in Hertz (minimum, maximum and step)
-min_freq = 0.01
-max_freq = 4
-step_freq = 0.01
+# Frequency domain to sweep
+min_freq = 0.01 # Hz
+max_freq = 4 # Hz
+step_freq = 0.01 # Hz
 
-# ------------------------------------------------- Simulation
+# --------------------------------- Simulation
 
 [Mesh]
   [block]
@@ -48,37 +45,37 @@ step_freq = 0.01
     type = SubdomainBoundingBoxGenerator
     input = 'block'
     block_id = 4
-    # bottom_left = '2200 -1 2200'
-    # top_right = '2700 101 2700'
-    bottom_left = '1900 -1 1900'
-    top_right = '3000 101 3000'
+    bottom_left = '2200 -1 2200'
+    top_right = '2700 101 2700'
+    # bottom_left = '1900 -1 1900'
+    # top_right = '3000 101 3000'
   []
   [decoupling_zone_left]
     type = SubdomainBoundingBoxGenerator
     input = 'shaking_zone'
     block_id = 5
-    # bottom_left = '2200 -1 950'
-    # top_right = '2700 101 1550'
-    bottom_left = '1900 -1 650'
-    top_right = '3000 101 1850'
+    bottom_left = '2200 -1 950'
+    top_right = '2700 101 1550'
+    # bottom_left = '1900 -1 650'
+    # top_right = '3000 101 1850'
   []
   [decoupling_zone_right]
     type = SubdomainBoundingBoxGenerator
     input = 'decoupling_zone_left'
     block_id = 6
-    # bottom_left = '2200 -1 3450'
-    # top_right = '2700 101 4050'
-    bottom_left = '1900 -1 3150'
-    top_right = '3000 101 4350'
+    bottom_left = '2200 -1 3450'
+    top_right = '2700 101 4050'
+    # bottom_left = '1900 -1 3150'
+    # top_right = '3000 101 4350'
   []
   [decoupling_zone_top]
     type = SubdomainBoundingBoxGenerator
     input = 'decoupling_zone_right'
     block_id = 7
-    # bottom_left = '3450 -1 2200'
-    # top_right = '4050 101 2700'
-    bottom_left = '3150 -1 1900'
-    top_right = '4350 101 3000'
+    bottom_left = '3450 -1 2200'
+    top_right = '4050 101 2700'
+    # bottom_left = '3150 -1 1900'
+    # top_right = '4350 101 3000'
   []
   [decoupling_zone_bottom]
     type = SubdomainBoundingBoxGenerator
@@ -154,9 +151,9 @@ step_freq = 0.01
     [reaction_realy]
         type = Reaction
         variable = disp_y
-        rate = 0# filled by controller
+        rate = 0 # filled by controller
         extra_vector_tags = 'ref'
-        block = '0' # 4'
+        block = '0'
     []
 []
 
@@ -176,6 +173,7 @@ step_freq = 0.01
 
 [BCs]
 
+  # fixed bottom pinning points in all three dimensions
   [dirichlet_decoupling_bottom_x]
     type = DirichletBC
     variable = disp_x
@@ -195,6 +193,7 @@ step_freq = 0.01
     boundary = 'decoupling_bottom'
   []
 
+  # fixed vertical sides in all three dimensions
   [dirichlet_side_x]
     type = DirichletBC
     variable = disp_x
@@ -214,6 +213,7 @@ step_freq = 0.01
     boundary = 'left right back front'
   []
 
+  # vertical shaking at the surface
   [surface_yreal]
     type = NeumannBC
     variable = disp_y
@@ -223,9 +223,8 @@ step_freq = 0.01
 
 []
 
-
 [Materials]
-  [elastic_tensor_Al]
+  [elastic_tensor_ice]
     type = ComputeIsotropicElasticityTensor
     youngs_modulus = '${_youngs_modulus}'
     poissons_ratio = '${_poissons_ratio}'

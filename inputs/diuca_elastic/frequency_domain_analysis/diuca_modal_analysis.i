@@ -1,8 +1,27 @@
-# from moose/modules/solid_mechanics/test/tests/modal_analysis/modal.i
+# This input file is part of the DIUCA MOOSE application
+# https://github.com/AdrienWehrle/diuca
+# https://github.com/idaholab/moose
+
+# adapted from
+# moose/modules/solid_mechanics/test/tests/modal_analysis/modal.i
+
+# This input file computes a modal analysis for a block of ice of side
+# length 5km and thickness 0.6km. The displacement magnitude at the
+# surface of the block is stored in a csv file for each frequency (see
+# simulation settings).
+
+# --------------------------------- Domain settings
+
+# ice parameters
+_youngs_modulus = 1e9 # Pa
+_poissons_ratio = 0.32
+
+# --------------------------------- Simulation settings
+
+# active_eigen_index
 index = 0
 
-# choose if bed is coupled or not
-# bed_coupled = 1
+# --------------------------------- Simulation
 
 [Mesh]
   [block]
@@ -22,9 +41,6 @@ index = 0
   
 []
 
-# [GlobalParams]
-#   displacements = 'disp_x disp_y disp_z'
-# []
 [GlobalParams]
   order = FIRST
   family = LAGRANGE
@@ -83,48 +99,85 @@ index = 0
 []
 
 [BCs]
+
+  # fixed bottom in all three dimensions
   [dirichlet_bottom_x]
     type = DirichletBC
     variable = disp_x
     value = 0
     boundary = 'bottom'
   []
-  # [dirichlet_bottom_y]
-  #   type = DirichletBC
-  #   variable = disp_y
-  #   value = 0
-  #   boundary = 'bottom'
-  # []
+  [dirichlet_bottom_y]
+    type = DirichletBC
+    variable = disp_y
+    value = 0
+    boundary = 'bottom'
+  []
   [dirichlet_bottom_z]
     type = DirichletBC
     variable = disp_z
     value = 0
     boundary = 'bottom'
   []
-  
   [dirichlet_bottom_x_e]
     type = EigenDirichletBC
     variable = disp_x
     boundary = 'bottom'
   []
-  # [dirichlet_bottom_y_e]
-  #   type = EigenDirichletBC
-  #   variable = disp_y
-  #   boundary = 'bottom'
-  # []
+  [dirichlet_bottom_y_e]
+    type = EigenDirichletBC
+    variable = disp_y
+    boundary = 'bottom'
+  []
   [dirichlet_bottom_z_e]
     type = EigenDirichletBC
     variable = disp_z
     boundary = 'bottom'
   []
+  
+  # fixed vertical sides in all three dimensions
+  [dirichlet_side_x]
+    type = DirichletBC
+    variable = disp_x
+    value = 0
+    boundary = 'left right back front'
+  []
+  [dirichlet_side_z]
+    type = DirichletBC
+    variable = disp_z
+    value = 0
+    boundary = 'left right back front'
+  []
+  [dirichlet_side_y]
+    type = DirichletBC
+    variable = disp_y
+    value = 0
+    boundary = 'left right back front'
+  []
+  [dirichlet_side_x_e]
+    type = EigenDirichletBC
+    variable = disp_x
+    boundary = 'left right back front'
+  []
+  [dirichlet_side_y_e]
+    type = EigenDirichletBC
+    variable = disp_y
+    boundary = 'left right back front'
+  []
+  [dirichlet_side_z_e]
+    type = EigenDirichletBC
+    variable = disp_z
+    boundary = 'left right back front'
+  []
 
 []
 
+
 [Materials]
-  [elastic_tensor]
+  [elastic_tensor_ice]
     type = ComputeIsotropicElasticityTensor
-    youngs_modulus = 9.4e9 # Pa
-    poissons_ratio = 0.32
+    youngs_modulus = '${_youngs_modulus}'
+    poissons_ratio = '${_poissons_ratio}'
   []
   [compute_stress]
     type = ComputeLinearElasticStress
@@ -133,23 +186,6 @@ index = 0
     type = ComputeSmallStrain
   []
 []
-
-# [Functions]
-#   [bed_coupling_function]
-#     type = ParsedFunction
-#     expression = '${bed_coupled} = 0'
-#   []
-# []
-
-# [Controls]
-#   [bed_not_coupled]
-#     type = ConditionalFunctionEnableControl
-#     conditional_function = bed_coupling_function
-#     disable_objects = 'BCs::dirichlet_decoupling_bottom_x BCs::dirichlet_decoupling_bottom_y
-#                        BCs::dirichlet_decoupling_bottom_x_e BCs::dirichlet_decoupling_bottom_y_e'
-#     execute_on = 'INITIAL TIMESTEP_BEGIN'
-#   []
-# []
 
 [Executioner]
   type = Eigenvalue

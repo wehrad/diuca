@@ -6,35 +6,32 @@
 # moose/modules/solid_mechanics/examples/wave_propagation/cantilever_sweep.i
 
 # This input file simulates the frequency response of a block of ice
-# of side length 5km and thickness 0.6km, for different ice-bedrock
-# coupling states. The displacement magnitude at the surface of the
-# block is stored in a csv file for each frequency (see simulation
-# settings). The frequency response for the different states are
-# presented in van Ginkel et al 2025 where more details about model
-# setup and research questions can be found too.
+# of side length 5km and thickness 0.6km. The displacement magnitude
+# at the surface of the block is stored in a csv file for each
+# frequency (see simulation settings).
 
-# ------------------------------------------------- Domain settings
+# --------------------------------- Domain settings
 
 # Three ice-bedrock coupling states are currently available:
 # 0: the ice-bedrock interface is fully coupled (null Dirichlet)
 # 1: the ice-bedrock interface is only coupled on four zones of the
 # bed (see "add_bottom_back" object).
-# 2: the ice-bedrock interface is fully decoupled (no boundary condition).
-# The state can be set below by setting it to 0, 1 or 2.
+# 2: the ice-bedrock interface is fully decoupled (no boundary
+# condition).  The state can be set below by setting it to 0, 1 or 2.
 icebedrock_coupling_state = 0
 
 # ice parameters
-_youngs_modulus = 1e9 # 8.7e9 # Pa # between 0.8 and 3.5 GPa
+_youngs_modulus = 1e9 # Pa
 _poissons_ratio = 0.32
 
-# ------------------------------------------------- Simulation settings
+# --------------------------------- Simulation settings
 
-# Frequency domain to sweep in Hertz (minimum, maximum and step)
-min_freq = 0.1
-max_freq = 5
-step_freq = 0.01 # 0.01 # 0.002 # 0.01
+# Frequency domain to sweep
+min_freq = 0.01 # Hz
+max_freq = 4 # Hz
+step_freq = 0.01 # Hz
 
-# ------------------------------------------------- Simulation
+# --------------------------------- Simulation
 
 [Mesh]
   [block]
