@@ -75,6 +75,8 @@ INSADHydrostaticPressureBC::computeQpResidual()
   
   ADReal residual;
 
+  if (z > _water_level)
+  {
   // if above water level, implement INSADMomentumNoBCBC ("No Boundary condition") only
   // The viscous term
   if (_form == "laplace")
@@ -86,10 +88,14 @@ INSADHydrostaticPressureBC::computeQpResidual()
   if (_integrate_p_by_parts)
     // pIn * test
     residual += _p[_qp] * _normals[_qp] * _test[_i][_qp];
+  }
 
+  else
+  {
+  mooseAssert(_integrate_p_by_parts, "Should be integrating pressure by parts");
   // if below water level, add hydrostatic pressure to INSADMomentumNoBCBC
-  if (z < _water_level)
     residual += _test[_i][_qp] * _normals[_qp] * hydrostatic_pressure;
+  }
     
   return residual;
 }
