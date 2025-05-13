@@ -21,7 +21,7 @@ protected:
   const unsigned int _mesh_dimension;
 
   // density of the fluid
-  const ADReal & _rho;
+  const Real _rho;
 
   // sediment layer thickness
   const Real & _LayerThickness;
