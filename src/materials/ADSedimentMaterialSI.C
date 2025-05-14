@@ -8,7 +8,7 @@ ADSedimentMaterialSI::validParams()
 {
   InputParameters params = ADMaterial::validParams();
 
-  params.addParam<ADReal>("density", 917., "Ice density"); // kgm-3
+  params.addParam<Real>("density", 917., "Ice density"); // kgm-3
 
   // Sediment layer thickness (Slip model)
   params.addParam<Real>("LayerThickness", 1.0, "Sediment layer thickness"); // m
@@ -28,7 +28,7 @@ ADSedimentMaterialSI::ADSedimentMaterialSI(const InputParameters & parameters)
     _mesh_dimension(_mesh.dimension()),
 
     // Ice density
-    _rho(getParam<ADReal>("density")),
+    _rho(getParam<Real>("density")),
 
     _LayerThickness(getParam<Real>("LayerThickness")),
 
