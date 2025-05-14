@@ -6,7 +6,7 @@
 # moose/modules/solid_mechanics/examples/wave_propagation/cantilever_sweep.i
 
 # This input file simulates the frequency response of a block of ice
-# of side length 5km and thickness 0.6km. The displacement magnitude
+# of side length 5km and thickness 550m. The displacement magnitude
 # at the surface of the block is stored in a csv file for each
 # frequency (see simulation settings).
 
@@ -21,7 +21,7 @@ _poissons_ratio = 0.32
 # Frequency domain to sweep
 min_freq = 0.01 # Hz
 max_freq = 4 # Hz
-step_freq = 0.01 # Hz
+step_freq = 0.005 # Hz
 
 # --------------------------------- Simulation
 
@@ -32,13 +32,13 @@ step_freq = 0.01 # Hz
     dim = 3
     xmin = 0
     xmax = 5000.
-    nx = 20 # 50
+    nx = 20
     zmin = 0
     zmax = 5000.
-    nz = 20 # 50
+    nz = 20
     ymin = 0.
-    ymax = 600.
-    ny = 10 # 6
+    ymax = 550.
+    ny = 10
   []
 []
 

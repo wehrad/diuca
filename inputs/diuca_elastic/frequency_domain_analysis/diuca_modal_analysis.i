@@ -6,7 +6,7 @@
 # moose/modules/solid_mechanics/test/tests/modal_analysis/modal.i
 
 # This input file computes a modal analysis for a block of ice of side
-# length 5km and thickness 0.6km. The displacement magnitude at the
+# length 5km and thickness 550m. The displacement magnitude at the
 # surface of the block is stored in a csv file for each frequency (see
 # simulation settings).
 
@@ -30,13 +30,13 @@ index = 0
     dim = 3
     xmin = 0
     xmax = 5000.
-    nx = 20 # 50
+    nx = 20
     zmin = 0
     zmax = 5000.
-    nz = 20 # 50
+    nz = 20
     ymin = 0.
-    ymax = 600.
-    ny = 10 # 6
+    ymax = 550.
+    ny = 10
   []
   
 []
