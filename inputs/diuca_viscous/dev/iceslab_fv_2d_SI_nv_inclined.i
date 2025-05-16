@@ -8,7 +8,7 @@ bed_slope = '${fparse bed_slope_degree / 180 * pi}'
 # length = 1000.
 # thickness = 100.
 
-length = 500.
+length = 4000.
 thickness = 100.
 
 # dt associated with rest time associated with the
@@ -18,8 +18,8 @@ thickness = 100.
 nb_years = 0.01
 _dt = '${fparse nb_years * 3600 * 24 * 365}'
 
-# inlet_mph = 0.1 # mh-1
-# inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
+inlet_mph = 0. # mh-1
+inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
 
 # ------------------------
 
@@ -28,20 +28,24 @@ velocity_interp_method = 'rc'
 advected_interp_method = 'upwind'
 
 # velocity scaling
-vel_scaling = 1e-7 
+vel_scaling = 1e-7
 
 # Material properties
 rho = 'rho_ice'
 mu = 'mu_ice'
 
 # Initial finite strain rate for viscosity rampup
-initial_II_eps_min = 1e-07 # 1e-07
+initial_II_eps_min = 1e-07
 
 # ------------------------
 
 
 
 [Functions]
+  [ice_pressure]
+    type = ParsedFunction
+    expression = '1e5' # '917*9.81*100'
+  []
   [viscosity_rampup]
     type = ParsedFunction
     expression = 'initial_II_eps_min * exp(-(t-_dt) * 5e-6)'
@@ -49,17 +53,23 @@ initial_II_eps_min = 1e-07 # 1e-07
     symbol_names = '_dt initial_II_eps_min'
     symbol_values = '${_dt} ${initial_II_eps_min}'
   []
-  [transform_x]
+  # [transform_x]
+  #   type = ParsedFunction
+  #   expression = 'x - length'
+  #   symbol_names = 'length'
+  #   symbol_values = '${length}'
+  # []
+  # [transform_y]
+  #   type = ParsedFunction
+  #   expression = 'y + bed_slope * length'
+  #   symbol_names = 'length bed_slope'
+  #   symbol_values = '${length} ${bed_slope}'
+# []
+  [influx]
     type = ParsedFunction
-    expression = 'x - length'
-    symbol_names = 'length'
-    symbol_values = '${length}'
-  []
-  [transform_y]
-    type = ParsedFunction
-    expression = 'y + bed_slope * length'
-    symbol_names = 'length bed_slope'
-    symbol_values = '${length} ${bed_slope}'
+    expression = 'inlet_mps' #  * sin((2*pi / 20000) * y)'
+    symbol_names = 'inlet_mps'
+    symbol_values = '${inlet_mps}'
   []
 []
 
@@ -85,6 +95,15 @@ initial_II_eps_min = 1e-07 # 1e-07
     pressure = pressure
   []
 []
+
+# [Mesh]
+
+#   [channel]
+#     type = FileMeshGenerator
+#     file = generate_iceblock_mesh_out.e
+#   []
+
+# []
 
 [Mesh]
   [pcg1]
@@ -245,21 +264,30 @@ initial_II_eps_min = 1e-07 # 1e-07
     gravity = '0. -9.81 0.'
   []
 
+
 []
 
+# [ICs]
+#   [./vx_ic]
+#     type = FunctionIC
+#     variable = vel_x
+#     function = '1e-3*sin(5*y)'  # Small internal initial velocity field
+#   [../]
+# []
+
 [FVBCs]
-  [periodic_vel_x]
-    type = FVADFunctorDirichletBC
-    variable = vel_x
-    boundary = 'right'
-    functor = transformed_vel_x
-  []
-  [periodic_vel_y]
-    type = FVADFunctorDirichletBC
-    variable = vel_y
-    boundary = 'right'
-    functor = transformed_vel_y
-  []
+  # [periodic_vel_x]
+  #   type = FVADFunctorDirichletBC
+  #   variable = vel_x
+  #   boundary = 'right'
+  #   functor = transformed_vel_x
+  # []
+  # [periodic_vel_y]
+  #   type = FVADFunctorDirichletBC
+  #   variable = vel_y
+  #   boundary = 'right'
+  #   functor = transformed_vel_y
+  # []
   # [periodic_pressure]
   #   type = FVADFunctorDirichletBC
   #   variable = pressure
@@ -281,18 +309,45 @@ initial_II_eps_min = 1e-07 # 1e-07
   #   function = 0.
   # []
 
+  # [noslip_x_left]
+  #   type = INSFVNoSlipWallBC
+  #   variable = vel_x
+  #   boundary = 'left right'
+  #   function = 0.
+  # []
+
+  # [noslip_y_left]
+  #   type = INSFVNoSlipWallBC
+  #   variable = vel_y
+  #   boundary = 'left'
+  #   function = 0.
+  # []
+
+  [free_slip_x]
+    type = INSFVNaturalFreeSlipBC
+    variable = vel_x
+    momentum_component = 'x'
+    boundary = 'top'
+  []
+  [free_slip_y]
+    type = INSFVNaturalFreeSlipBC
+    variable = vel_y
+    momentum_component = 'y'
+    boundary = 'top'
+  []
+
   [noslip_x]
-    type = FVDirichletBC
+    type = INSFVNoSlipWallBC
     variable = vel_x
     boundary = 'bottom'
-    value = 0.
+    function = 0.
   []
 
   [noslip_y]
-    type = FVDirichletBC
+    type = INSFVNoSlipWallBC
     variable = vel_y
     boundary = 'bottom' # bottom
-    value = 0.
+    function = 0
   []
 
   # [freeslip_x]
@@ -308,11 +363,30 @@ initial_II_eps_min = 1e-07 # 1e-07
   #   momentum_component = 'y'
   # []
 
-  # [outlet_p]
-  #   type = INSFVOutletPressureBC
-  #   variable = pressure
+  [outlet_p]
+    type = INSFVOutletPressureBC
+    variable = pressure
+    boundary = 'right'
+    functor = ice_pressure
+  []
+  [inlet_p]
+    type = INSFVOutletPressureBC
+    variable = pressure
+    boundary = 'left'
+    functor = ice_pressure
+  []
+
+  # [inlet]
+  #   type = INSFVInletVelocityBC
+  #   variable = vel_x
+  #   boundary = 'left'
+  #   functor = influx
+  # []
+  # [outlet]
+  #   type = INSFVInletVelocityBC
+  #   variable = vel_x
   #   boundary = 'right'
-  #   functor = ocean_pressure
+  #   functor = influx
   # []
 
 []
@@ -326,20 +400,20 @@ initial_II_eps_min = 1e-07 # 1e-07
     output_properties = 'mu_ice rho_ice eps_xx eps_yy sig_xx sig_yy eps_xy sig_xy'
     outputs = "out"
   []
-  [translate_vel_x]
-    type = ADFunctorTransformFunctorMaterial
-    prop_names = 'transformed_vel_x'
-    prop_values = 'vel_x'
-    x_functor = 'transform_x'
-    y_functor = 'transform_y'
-  []
-  [translate_vel_y]
-    type = ADFunctorTransformFunctorMaterial
-    prop_names = 'transformed_vel_y'
-    prop_values = 'vel_y'
-    x_functor = 'transform_x'
-    y_functor = 'transform_y'
-  []
+  # [translate_vel_x]
+  #   type = ADFunctorTransformFunctorMaterial
+  #   prop_names = 'transformed_vel_x'
+  #   prop_values = 'vel_x'
+  #   x_functor = 'transform_x'
+  #   y_functor = 'transform_y'
+  # []
+  # [translate_vel_y]
+  #   type = ADFunctorTransformFunctorMaterial
+  #   prop_names = 'transformed_vel_y'
+  #   prop_values = 'vel_y'
+  #   x_functor = 'transform_x'
+  #   y_functor = 'transform_y'
+  # []
   # [translate_pressure]
   #   type = ADFunctorTransformFunctorMaterial
   #   prop_names = 'transformed_pressure'

@@ -13,8 +13,8 @@ peak_position = 5000.
 surface_slope = 0.032 # 0.025 # bedmachine: 0.032
 front_elevation = 100.
 
-nb_elements_alongflow = 10 # 30 
-nb_elements_acrossflow = 10 # 15
+nb_elements_alongflow = 30 
+nb_elements_acrossflow = 15
 nb_elements_depth = 5
 
 [Mesh]

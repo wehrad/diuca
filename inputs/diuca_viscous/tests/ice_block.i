@@ -27,6 +27,15 @@ initial_II_eps_min = 1e-07
     type = FileMeshGenerator
     file = generate_iceblock_mesh_out.e
   []
+
+  [pin_pressure_node]
+    type = BoundingBoxNodeSetGenerator
+    input = 'channel'
+    bottom_left = '19999.99999 -0.00001 99.999999'
+    top_right = '20000.000001 0.000001 100.000001'
+    new_boundary = 'pressure_pin_node'
+  []
+
 []
 
 [Functions]
@@ -43,10 +52,6 @@ initial_II_eps_min = 1e-07
     expression = 'inlet_mps'
     symbol_names = 'inlet_mps'
     symbol_values = '${inlet_mps}'
-  []
-  [ocean_pressure_coupled_force]
-    type = ParsedVectorFunction
-    expression_x = 'if(z < 0 & x > 19800, 1028 * 9.81 * z, 0)'
   []
 []
 
@@ -139,11 +144,11 @@ initial_II_eps_min = 1e-07
     gravity = '0. 0. -9.81'
   []
 
-  [hydrostatic_pressure_ice]
-    type = INSADMomentumCoupledForce
-    variable = velocity
-    vector_function = 'ocean_pressure_coupled_force'
-  []
+  # [hydrostatic_pressure_ice]
+  #   type = INSADMomentumCoupledForce
+  #   variable = velocity
+  #   vector_function = 'ocean_pressure_coupled_force'
+  # []
 []
 
 [BCs]
@@ -151,11 +156,20 @@ initial_II_eps_min = 1e-07
   [no_slip_sides]
     type = ADVectorFunctionDirichletBC
     variable = velocity
-    boundary = 'left right bottom'
+    boundary = 'left right'
     # function_x = 0.
     function_y = 0.
     function_z = 0.
     set_x_comp = false
+  []
+
+  [no_slip_bed]
+    type = ADVectorFunctionDirichletBC
+    variable = velocity
+    boundary = 'bottom'
+    function_x = 0.
+    function_y = 0.
+    function_z = 0.
   []
 
   [inlet]
@@ -173,6 +187,13 @@ initial_II_eps_min = 1e-07
     variable = velocity
     pressure = p
     mu_name = "mu_ice"
+  []
+
+  [pin_pressure]
+   type = DirichletBC
+   variable = p
+   boundary = 'pressure_pin_node'
+   value = 1e5
   []
 
   # [freesurface]
@@ -205,70 +226,70 @@ initial_II_eps_min = 1e-07
 
 []
 
-# [Preconditioning]
-#   active = 'SMP'
-#   [FSP]
-#     type = FSP
-#     # It is the starting point of splitting
-#     topsplit = 'up' # 'up' should match the following block name
-#     [up]
-#       splitting = 'u p' # 'u' and 'p' are the names of subsolvers
-#       splitting_type = schur
-#       # Splitting type is set as schur, because the pressure part of Stokes-like systems
-#       # is not diagonally dominant. CAN NOT use additive, multiplicative and etc.
-#       #
-#       # Original system:
-#       #
-#       # | Auu Aup | | u | = | f_u |
-#       # | Apu 0   | | p |   | f_p |
-#       #
-#       # is factorized into
-#       #
-#       # |I             0 | | Auu  0|  | I  Auu^{-1}*Aup | | u | = | f_u |
-#       # |Apu*Auu^{-1}  I | | 0   -S|  | 0  I            | | p |   | f_p |
-#       #
-#       # where
-#       #
-#       # S = Apu*Auu^{-1}*Aup
-#       #
-#       # The preconditioning is accomplished via the following steps
-#       #
-#       # (1) p* = f_p - Apu*Auu^{-1}f_u,
-#       # (2) p = (-S)^{-1} p*
-#       # (3) u = Auu^{-1}(f_u-Aup*p)
-#       petsc_options = '-pc_fieldsplit_detect_saddle_point'
-#       petsc_options_iname = '-pc_fieldsplit_schur_fact_type  -pc_fieldsplit_schur_precondition -ksp_gmres_restart -ksp_rtol -ksp_type'
-#       petsc_options_value = 'full                            selfp                             300                1e-4      fgmres'
-#     []
-#     [u]
-#       vars = 'vel_x vel_y vel_z'
-#       petsc_options_iname = '-pc_type -pc_hypre_type -ksp_type -ksp_rtol -ksp_gmres_restart -ksp_pc_side'
-#       petsc_options_value = 'hypre    boomeramg      gmres    5e-1      300                 right'
-#     []
-#     [p]
-#       vars = 'p'
-#       petsc_options_iname = '-ksp_type -ksp_gmres_restart -ksp_rtol -pc_type -ksp_pc_side'
-#       petsc_options_value = 'gmres    300                5e-1      jacobi    right'
-#     []
-#   []
-#   [SMP]
-#     type = SMP
-#     full = true
-#     petsc_options_iname = '-pc_type -pc_factor_shift_type'
-#     petsc_options_value = 'lu       NONZERO'
-#   []
-# []
+[Preconditioning]
+  active = 'FSP'
+  [FSP]
+    type = FSP
+    # It is the starting point of splitting
+    topsplit = 'up' # 'up' should match the following block name
+    [up]
+      splitting = 'u p' # 'u' and 'p' are the names of subsolvers
+      splitting_type = schur
+      # Splitting type is set as schur, because the pressure part of Stokes-like systems
+      # is not diagonally dominant. CAN NOT use additive, multiplicative and etc.
+      #
+      # Original system:
+      #
+      # | Auu Aup | | u | = | f_u |
+      # | Apu 0   | | p |   | f_p |
+      #
+      # is factorized into
+      #
+      # |I             0 | | Auu  0|  | I  Auu^{-1}*Aup | | u | = | f_u |
+      # |Apu*Auu^{-1}  I | | 0   -S|  | 0  I            | | p |   | f_p |
+      #
+      # where
+      #
+      # S = Apu*Auu^{-1}*Aup
+      #
+      # The preconditioning is accomplished via the following steps
+      #
+      # (1) p* = f_p - Apu*Auu^{-1}f_u,
+      # (2) p = (-S)^{-1} p*
+      # (3) u = Auu^{-1}(f_u-Aup*p)
+      petsc_options = '-pc_fieldsplit_detect_saddle_point'
+      petsc_options_iname = '-pc_fieldsplit_schur_fact_type  -pc_fieldsplit_schur_precondition -ksp_gmres_restart -ksp_rtol -ksp_type'
+      petsc_options_value = 'full                            selfp                             300                1e-4      fgmres'
+    []
+    [u]
+      vars = 'vel_x vel_y vel_z'
+      petsc_options_iname = '-pc_type -pc_hypre_type -ksp_type -ksp_rtol -ksp_gmres_restart -ksp_pc_side'
+      petsc_options_value = 'hypre    boomeramg      gmres    5e-1      300                 right'
+    []
+    [p]
+      vars = 'p'
+      petsc_options_iname = '-ksp_type -ksp_gmres_restart -ksp_rtol -pc_type -ksp_pc_side'
+      petsc_options_value = 'gmres    300                5e-1      jacobi    right'
+    []
+  []
+  [SMP]
+    type = SMP
+    full = true
+    petsc_options_iname = '-pc_type -pc_factor_shift_type'
+    petsc_options_value = 'lu       NONZERO'
+  []
+[]
 
 [Executioner]
   type = Transient
   num_steps = 50
 
-  # petsc_options_iname = '-pc_type -pc_factor_shift_type'
-  # petsc_options_value = 'lu       NONZERO'
+  petsc_options_iname = '-pc_type -pc_factor_shift_type'
+  petsc_options_value = 'lu       NONZERO'
   
-  petsc_options = '-pc_svd_monitor'
-  petsc_options_iname = '-pc_type'
-  petsc_options_value = 'svd'
+  # petsc_options = '-pc_svd_monitor'
+  # petsc_options_iname = '-pc_type'
+  # petsc_options_value = 'svd'
   
   l_tol = 1e-6
 

@@ -3,10 +3,10 @@
 # sediment rheology
 # sliding_law = "GudmundssonRaymond"
 sediment_layer_thickness = 50.
-slipperiness_coefficient_mmpaa = 1e0 # 1e1 # 3e3
+slipperiness_coefficient_mmpaa = 5e3 # 1e1 # 3e3
 slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (365*24*3600)}' # 
 
-slipperiness_coefficient_center_mmpaa = 1e4 # 1e3 # 3e5
+slipperiness_coefficient_center_mmpaa = 5e3 # 1e3 # 3e5
 slipperiness_coefficient_center = '${fparse (slipperiness_coefficient_center_mmpaa * 1e-6) / (365*24*3600)}' # 
 
 # ------------------------ simulation settings
@@ -24,20 +24,21 @@ slipperiness_coefficient_center = '${fparse (slipperiness_coefficient_center_mmp
 nb_years = 0.008 # 0.01
 _dt = '${fparse nb_years * 3600 * 24 * 365}'
 
-inlet_mph = 0.37 # 0.4 # mh-1
+inlet_mph = 0.3 # 0.4 # mh-1
 inlet_mps = ${fparse
              inlet_mph / 3600
             } # ms-1
 
-initial_II_eps_min = 1e-07
+# initial_II_eps_min = 1e-07
+initial_II_eps_min = 1e-17
 
 # ------------------------
 
 [GlobalParams]
   order = FIRST
   # https://github.com/idaholab/moose/discussions/26157
-  # integrate_p_by_parts = true
-  integrate_p_by_parts = false
+  integrate_p_by_parts = true
+  # integrate_p_by_parts = false
 []
 
 [Mesh]
@@ -45,6 +46,7 @@ initial_II_eps_min = 1e-07
   [channel]
     type = FileMeshGenerator
     file = generate_icestream_mesh_out.e
+    # file = generate_iceblock_mesh_out.e
   []
 
   # Create sediment layer by projecting glacier bed by
@@ -125,8 +127,8 @@ initial_II_eps_min = 1e-07
 
   [final_mesh2]
     type = SubdomainBoundingBoxGenerator
-    input = refined_mesh
-    # input = final_mesh
+    # input = refined_mesh
+    input = final_mesh
     restricted_subdomains="0"
     block_id = 254
     block_name = flood
@@ -206,20 +208,38 @@ initial_II_eps_min = 1e-07
   []
 []
 
+# [Variables]
+#   [velocity]
+#     family = LAGRANGE_VEC
+#     # order = SECOND
+#     scaling = 1e-6
+#     # scaling = 1e6
+#     # initial_condition = 1e-6
+#     block = '1 0 255 254'
+#   []
+#   [p]
+#     # scaling = 1e6
+#     family = LAGRANGE
+#     # scaling = 1e-6
+#     # initial_condition = 1e6
+#     block = '1 0 255 254'
+#   []
+# []
+
 [Variables]
   [velocity]
     family = LAGRANGE_VEC
     # order = SECOND
     scaling = 1e-6
     # scaling = 1e6
-    # initial_condition = 1e-6
+    initial_condition = 1e-6
     block = '1 0 255 254'
   []
   [p]
-    # scaling = 1e6
     family = LAGRANGE
-    # scaling = 1e-6
-    # initial_condition = 1e6
+    # order = FIRST
+    scaling = 1e-6
+    initial_condition = 1e6
     block = '1 0 255 254'
   []
 []
@@ -389,7 +409,7 @@ initial_II_eps_min = 1e-07
   [no_slip_sides_sediments]
     type = ADVectorFunctionDirichletBC
     variable = velocity
-    boundary = 'left_sediment right_sediment bottom_sediment'
+    boundary = 'bottom_sediment' # left_sediment right_sediment 
     function_x = 0.
     function_y = 0.
     function_z = 0.
@@ -404,21 +424,36 @@ initial_II_eps_min = 1e-07
     function_z = 0.
   []
   
-  [oulet]
-    type = ADFunctionDirichletBC
-    variable = p
-    boundary = 'front' # front_sediment doesn't make much of a diff.
-    function = ocean_pressure
-  []
+  # [oulet]
+  #   type = ADFunctionDirichletBC
+  #   variable = p
+  #   boundary = 'front' # front_sediment doesn't make much of a diff.
+  #   function = ocean_pressure
+  # []
 
-  [outlet_sediment]
-    type = ADVectorFunctionDirichletBC
+  [front_pressure]
+    type = INSADHydrostaticPressureBC
+    boundary = 'front'
     variable = velocity
+    pressure = p
+    mu_name = "mu_ice"
+  [] 
+  [front_pressure_sediments]
+    type = INSADHydrostaticPressureBC
     boundary = 'front_sediment'
-    function_z = 0.
-    set_x_comp = False
-    set_y_comp = False
-  []
+    variable = velocity
+    pressure = p
+    mu_name = "mu_sediment"
+  [] 
+
+  # [outlet_sediment]
+  #   type = ADVectorFunctionDirichletBC
+  #   variable = velocity
+  #   boundary = 'front_sediment'
+  #   function_z = 0.
+  #   set_x_comp = False
+  #   set_y_comp = False
+  # []
 
   # [freesurface]
   #   type = INSADMomentumNoBCBC
