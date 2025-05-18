@@ -4,14 +4,14 @@
 bed_slope = 10.
 
 # change coordinate system to add a slope
-gravity_x = '${fparse sin(bed_slope / 180 * pi) * 9.81}'
+gravity_x = '${fparse sin(bed_slope / 180 * pi) * 9.81 }'
 gravity_y = '${fparse - cos(bed_slope / 180 * pi) * 9.81}'
 
 #  geometry of the ice slab
 # length = 1000.
 # thickness = 100.
 
-length = 1000.
+length = 10000.
 thickness = 100.
 
 # dt associated with rest time associated with the
@@ -31,21 +31,21 @@ velocity_interp_method = 'rc'
 advected_interp_method = 'upwind' #upwind
 
 # velocity scaling
-vel_scaling = 1e-07
+vel_scaling = 1e-7 
 
 # Material properties
 rho = 'rho_ice'
 mu = 'mu_ice'
 
 # Initial finite strain rate for viscosity rampup
-initial_II_eps_min = 1e-15
+initial_II_eps_min = 1e-07 # 1e-07
 
 # ------------------------
 
 [Functions]
   [pressure_pin]
     type = ParsedFunction
-    expression = '917*9.81*sin(100-y)' # 1e5' # ''
+    expression = '917*9.81*sin(100-y)'
   []
   [viscosity_rampup]
     type = ParsedFunction
@@ -53,6 +53,12 @@ initial_II_eps_min = 1e-15
     symbol_names = '_dt initial_II_eps_min'
     symbol_values = '${_dt} ${initial_II_eps_min}'
   []
+  # [transform_x]
+  #   type = ParsedFunction
+  #   expression = 'x - length'
+  #   symbol_names = 'length'
+  #   symbol_values = '${length}'
+  # []
 []
 
 [Controls]
@@ -85,18 +91,27 @@ initial_II_eps_min = 1e-15
     xmax = '${length}'
     ymin = 0
     ymax = '${thickness}'
-    nx = 80 # 60
-    ny = 60 # 60
+    nx = 50
+    ny = 100
     elem_type = QUAD9
   []
 []
 
+[ICs]
+  [pressure_ic]
+    type = FunctionIC
+    variable = 'pressure'
+    function = pressure_pin
+  []
+[]
+  
 
 [Variables]
   [vel_x]
     type = INSFVVelocityVariable
     two_term_boundary_expansion = true
     scaling = ${vel_scaling}
+    initial_condition=1e-7
   []
   [vel_y]
     type = INSFVVelocityVariable
@@ -189,22 +204,26 @@ initial_II_eps_min = 1e-15
 
 []
 
-
 [FVBCs]
-
-  [free_slip_x]
-    type = INSFVNaturalFreeSlipBC
-    variable = vel_x
-    momentum_component = 'x'
-    boundary = 'top'
-  []
-  [free_slip_y]
-    type = INSFVNaturalFreeSlipBC
-    variable = vel_y
-    momentum_component = 'y'
-    boundary = 'top'
-  []
-
+  # [periodic_vel_x]
+  #   type = FVADFunctorDirichletBC
+  #   variable = vel_x
+  #   boundary = 'right'
+  #   functor = transformed_vel_x
+  # []
+  # [periodic_vel_y]
+  #   type = FVADFunctorDirichletBC
+  #   variable = vel_y
+  #   boundary = 'right'
+  #   functor = transformed_vel_y
+  # []
+  # [periodic_pressure]
+  #   type = FVADFunctorDirichletBC
+  #   variable = pressure
+  #   boundary = 'right'
+  #   functor = transformed_pressure
+  # []
+  
   [noslip_x]
     type = INSFVNoSlipWallBC
     variable = vel_x
@@ -219,19 +238,25 @@ initial_II_eps_min = 1e-15
     function = 0
   []
 
-  # [freeslip_x]
-  #   type = INSFVNaturalFreeSlipBC
-  #   variable = vel_x
-  #   boundary = 'top'
-  #   momentum_component = 'x'
-  # []
-  # [freeslip_y]
-  #   type = INSFVNaturalFreeSlipBC
-  #   variable = vel_y
-  #   boundary = 'top'
-  #   momentum_component = 'y'
-  # []
+  [freeslip_x]
+    type = INSFVNaturalFreeSlipBC
+    variable = vel_x
+    boundary = 'top'
+    momentum_component = 'x'
+  []
+  [freeslip_y]
+    type = INSFVNaturalFreeSlipBC
+    variable = vel_y
+    boundary = 'top'
+    momentum_component = 'y'
+  []
 
+  # [influx_vel_x]
+  #   type = FVDirichletBC
+  #   variable = vel_x
+  #   boundary = 'left'
+  #   value = 1e-6
+  # []
   [outlet_p]
     type = INSFVOutletPressureBC
     variable = pressure
@@ -244,6 +269,16 @@ initial_II_eps_min = 1e-15
     boundary = 'left'
     functor = pressure_pin
   []
+
+[]
+
+[Functions]
+  [ocean_pressure]
+    type = ParsedFunction
+    expression = '-1028 * 9.81 * ( (y * cos(bed_slope / 180 * pi)) + (x * sin(bed_slope / 180 * pi)))'
+    symbol_names = 'bed_slope'
+    symbol_values = '${bed_slope}'
+  []
 []
 
 [FunctorMaterials]
@@ -255,10 +290,28 @@ initial_II_eps_min = 1e-15
     output_properties = 'mu_ice rho_ice eps_xx eps_yy sig_xx sig_yy eps_xy sig_xy'
     outputs = "out"
   []
+  # [translate_vel_x]
+  #   type = ADFunctorTransformFunctorMaterial
+  #   prop_names = 'transformed_vel_x'
+  #   prop_values = 'vel_x'
+  #   x_functor = 'transform_x'
+  # []
+  # [translate_vel_y]
+  #   type = ADFunctorTransformFunctorMaterial
+  #   prop_names = 'transformed_vel_y'
+  #   prop_values = 'vel_y'
+  #   x_functor = 'transform_x'
+  # []
+  # [translate_pressure]
+  #   type = ADFunctorTransformFunctorMaterial
+  #   prop_names = 'transformed_pressure'
+  #   prop_values = 'pressure'
+  #   x_functor = 'transform_x'
+  # []
 []
 
 [Preconditioning]
-  active = 'FSP'
+  active = ''
   [FSP]
     type = FSP
     # It is the starting point of splitting
@@ -324,19 +377,19 @@ initial_II_eps_min = 1e-15
   # petsc_options = '-pc_type fieldsplit -pc_fieldsplit_type schur -pc_fieldsplit_detect_saddle_point'
   # petsc_options = '--ksp_monitor'
 
-  nl_abs_tol = 2e-05
-  l_tol = 1e-4
+  # nl_rel_tol = 1e-08
+  # nl_abs_tol = 1e-13
+  # nl_rel_tol = 1e-07
+
+  # nl_abs_tol = 2e-06
+  nl_abs_tol = 1e-07
+
+  # l_tol = 1e-6
+  l_tol = 1e-07
 
   nl_max_its = 100
   nl_forced_its = 3
   line_search = none
-
-  # l_tol = 1e-6
-  # nl_rel_tol = 1e-05
-  # nl_abs_tol = 1e-05
-
-  steady_state_detection = true
-  steady_state_tolerance = 1e-10
 
   dt = '${_dt}'
   # steady_state_detection = true

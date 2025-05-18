@@ -66,36 +66,19 @@ INSADHydrostaticPressureBC::INSADHydrostaticPressureBC(const InputParameters & p
 ADReal
 INSADHydrostaticPressureBC::computeQpResidual()
 {
-
   // Elevation
-  Real z = _q_point[_qp](2);
-
-  // Hydrostatic pressure
-  ADReal hydrostatic_pressure = _water_density * _g * (_water_level - z);
-  
-  ADReal residual;
+  const auto z = _q_point[_qp](2);
 
   if (z > _water_level)
-  {
-  // if above water level, implement INSADMomentumNoBCBC ("No Boundary condition") only
-  // The viscous term
-  if (_form == "laplace")
-    residual = -_mu[_qp] * (_grad_u[_qp] * _normals[_qp]) * _test[_i][_qp];
-  else
-    residual =
-      -_mu[_qp] * ((_grad_u[_qp] + _grad_u[_qp].transpose()) * _normals[_qp]) * _test[_i][_qp];
+    return 0;
 
-  if (_integrate_p_by_parts)
-    // pIn * test
-    residual += _p[_qp] * _normals[_qp] * _test[_i][_qp];
-  }
+  // Hydrostatic pressure
+  const auto hydrostatic_pressure = _water_density * _g * (_water_level - z);
 
-  else
-  {
-  mooseAssert(_integrate_p_by_parts, "Should be integrating pressure by parts");
-  // if below water level, add hydrostatic pressure to INSADMomentumNoBCBC
-    residual += _test[_i][_qp] * _normals[_qp] * hydrostatic_pressure;
-  }
-    
-  return residual;
+  mooseAssert(_integrate_by_parts,
+              "Remove this assert once you've added an error check in the constructor. An "
+              "alternative would be to remove this parameter entirely for this class, but this "
+              "could be helpful to catch someone setting GlobalParams/integrate_p_by_parts=false");
+
+  return _test[_i][_qp] * _normals[_qp] * hydrostatic_pressure;
 }
