@@ -14,23 +14,12 @@
 # sediment rheology
 sliding_law = "GudmundssonRaymond"
 sediment_layer_thickness = 50.
-slipperiness_coefficient_mmpaa = 3e3 # 3e4 # 3e3 # 9.512937595129376e-11
-slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (365*24*3600)}' # 
-
-# Ryser et al 2014 seems to use sediment viscosities between 5e14 and 1e13 Pas
-
-# slipperiness_coefficient = 0.5e-06
-# slipperiness_coefficient = 1e-07
+slipperiness_coefficient_mmpaa = 3e3
+slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (365*24*3600)}'
 
 # ------------------------ simulation settings
 
-# dt associated with rest time associated with the
-# geometry (in seconds)
-# ice has a high viscosity and hence response times
-# of years
 nb_years = 0.075
-# mult = 1
-# mult = 0.5
 mult = 0.5
 _dt = '${fparse nb_years * 3600 * 24 * 365 * mult}'
 
@@ -54,9 +43,6 @@ initial_II_eps_min = 1e-07
 
 [Problem]
   type = FEProblem
-  # near_null_space_dimension = 1
-  # null_space_dimension = 1
-  # transpose_null_space_dimension = 1
 []
 [GlobalParams]
   rhie_chow_user_object = 'rc'
@@ -70,6 +56,13 @@ initial_II_eps_min = 1e-07
     w = vel_z
     pressure = pressure
   []
+  # [pin_pressure]
+  #   type = NSPressurePin
+  #   variable = pressure
+  #   pin_type = point-value
+  #   phi0 = 0.
+  #   point = '0 0 433.2'
+  # []
 []
 
 [Mesh]
@@ -139,71 +132,10 @@ initial_II_eps_min = 1e-07
     replace = True
   []
 
-
-
-
-  # [frontal_zone]
-  #   type = SubdomainBoundingBoxGenerator
-  #   input = 'channel'
-  #   block_id = "10"
-  #   bottom_left = '20000 -1000 -3000'
-  #   top_right = '19000 15000 3000'
-  #   restricted_subdomains = 'eleblock1 eleblock2'
-  # []
-  # [refined_front]
-  #   type = RefineBlockGenerator
-  #   input = "add_sediment_downstream_side"
-  #   block = "0"
-  #   refinement = '1'
-  #   enable_neighbor_refinement = true
-  #   max_element_volume = 1e100
-  # []
-
-  # [fast_zone]
-  #   type = SubdomainBoundingBoxGenerator
-  #   input = 'add_sediment_downstream_side'
-  #   block_id = "10"
-  #   bottom_left = '20000 3749.99 -200.' # 99.99'
-  #   top_right = '13000  6700.99 434'
-  #   restricted_subdomains = 'eleblock2'
-  # []
-  # [refined_fastzone]
-  #   type = RefineBlockGenerator
-  #   input = "fast_zone"
-  #   block = "10"
-  #   refinement = '1'
-  #   enable_neighbor_refinement = false
-  #   max_element_volume = 1e100
-  # []
-
-  # [refined_surface]
-  #   type = RefineSidesetGenerator
-  #   input = "add_sediment_downstream_side"
-  #   boundaries = "surface"
-  #   refinement = '1'
-  #   enable_neighbor_refinement = false
-  #   boundary_side = "primary"
-  # []
-
-
-
-
   [add_nodesets]
     type = NodeSetsFromSideSetsGenerator
     input = 'add_sediment_downstream_side'
   []
-
-
-
-
-  # [refined_sediments]
-  #   type = RefineBlockGenerator
-  #   input = "add_nodesets"
-  #   block = "0"
-  #   refinement = '1'
-  #   enable_neighbor_refinement = true
-  #   max_element_volume = 1e100
-  # []
 
 []
 
@@ -236,6 +168,7 @@ initial_II_eps_min = 1e-07
     advected_interp_method = ${advected_interp_method}
     velocity_interp_method = ${velocity_interp_method}
     rho = ${rho}
+    boundaries_to_force = 'downstream'
   []
 
   [u_time]
@@ -251,12 +184,14 @@ initial_II_eps_min = 1e-07
     velocity_interp_method = ${velocity_interp_method}
     rho = ${rho}
     momentum_component = 'x'
+    boundaries_to_force = 'downstream'
   []
   [u_viscosity]
     type = INSFVMomentumDiffusion
     variable = vel_x
     mu = ${mu}
     momentum_component = 'x'
+    boundaries_to_force = 'downstream'
   []
   [u_pressure]
     type = INSFVMomentumPressure
@@ -285,12 +220,14 @@ initial_II_eps_min = 1e-07
     velocity_interp_method = ${velocity_interp_method}
     rho = ${rho}
     momentum_component = 'y'
+    boundaries_to_force = 'downstream'
   []
   [v_viscosity]
     type = INSFVMomentumDiffusion
     variable = vel_y
     mu = ${mu}
     momentum_component = 'y'
+    boundaries_to_force = 'downstream'
   []
   [v_pressure]
     type = INSFVMomentumPressure
@@ -319,12 +256,14 @@ initial_II_eps_min = 1e-07
     velocity_interp_method = ${velocity_interp_method}
     rho = ${rho}
     momentum_component = 'z'
+    boundaries_to_force = 'downstream'
   []
   [w_viscosity]
     type = INSFVMomentumDiffusion
     variable = vel_z
     mu = ${mu}
     momentum_component = 'z'
+    boundaries_to_force = 'downstream'
   []
   [w_pressure]
     type = INSFVMomentumPressure
@@ -343,13 +282,6 @@ initial_II_eps_min = 1e-07
 
 [FVBCs]
 
-  # ice and sediment influx
-  # [ice_inlet_x]
-  #   type = INSFVInletVelocityBC
-  #   variable = vel_x
-  #   boundary = 'upstream'
-  #   functor = ${inlet_mps}
-  # []
   [ice_inlet_x]
     type = INSFVInletVelocityBC
     variable = vel_x
@@ -409,28 +341,17 @@ initial_II_eps_min = 1e-07
     boundary = 'surface'
   []
 
-  # ocean pressure at the glacier front
-  [outlet_p]
-    type = INSFVOutletPressureBC
-    variable = pressure
+  [hydrostatic_pressure]
+    type = INSFVHydrostaticPressureBC
+    variable = vel_x
+    momentum_component='x'
     boundary = 'downstream'
-    function = ocean_pressure
   []
-  # [outlet_p]
-  #   type = INSFVHydrostaticPressureBC
-  #   variable = vel_x
-  #   momentum_component='x'
-  #   boundary = 'front'
-  # []
 []
 
 # ------------------------
 
 [Functions]
-  [ocean_pressure]
-    type = ParsedFunction
-    expression = 'if(z < 0, 1e5 -1028 * 9.81 * z, 0.)' # -1e5 * 9.81 * z)'
-  []
   [viscosity_rampup]
     type = ParsedFunction
     expression = 'initial_II_eps_min * exp(-(t-_dt) * 1e-6)'
@@ -466,14 +387,6 @@ initial_II_eps_min = 1e-07
     outputs = "out"
   []
   
-  # [sediment]
-  #   type = FVConstantMaterial
-  #   block = '0'
-  #   viscosity = 1e10
-  #   density = 1850.
-  #   output_properties = 'mu_material rho_material'
-  # []
-
   [sediment]
     type = FVSedimentMaterialSI
     block = '0'
@@ -503,11 +416,6 @@ initial_II_eps_min = 1e-07
                                eleblock2 rho_ice
                                0 rho_sediment'  #                                10  rho_ice
   []
-  # [darcy]
-  #   type = ADGenericVectorFunctorMaterial
-  #   prop_names = 'Darcy_coefficient Forchheimer_coefficient'
-  #   prop_values = '1e20 1e20 1e20 1e20 1e20 1e20'
-  # []
 []
 
 [Preconditioning]

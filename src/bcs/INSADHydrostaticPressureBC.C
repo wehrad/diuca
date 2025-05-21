@@ -70,6 +70,7 @@ INSADHydrostaticPressureBC::computeQpResidual()
   const auto z = _q_point[_qp](2);
 
   if (z > _water_level)
+    // return _test[_i][_qp] * _normals[_qp] * _p[_qp];
     return 0;
 
   // Hydrostatic pressure

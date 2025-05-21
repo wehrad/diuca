@@ -3,42 +3,29 @@
 # sediment rheology
 # sliding_law = "GudmundssonRaymond"
 sediment_layer_thickness = 50.
-slipperiness_coefficient_mmpaa = 5e3 # 1e1 # 3e3
+slipperiness_coefficient_mmpaa = 1e3
 slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (365*24*3600)}' # 
 
-slipperiness_coefficient_center_mmpaa = 5e3 # 1e3 # 3e5
+slipperiness_coefficient_center_mmpaa = 1e3
 slipperiness_coefficient_center = '${fparse (slipperiness_coefficient_center_mmpaa * 1e-6) / (365*24*3600)}' # 
 
 # ------------------------ simulation settings
 
-
-# dt associated with rest time associated with the
-# geometry (in seconds)
-# ice has a high viscosity and hence response times
-# of years
-# nb_years = 0.075
-# # mult = 1
-# # mult = 0.5
-# mult = 0.5
-# _dt = '${fparse nb_years * 3600 * 24 * 365 * mult}'
-nb_years = 0.008 # 0.01
+nb_years = 0.008
 _dt = '${fparse nb_years * 3600 * 24 * 365}'
 
-inlet_mph = 0.3 # 0.4 # mh-1
+inlet_mph = 0.4 # 0.4 # mh-1
 inlet_mps = ${fparse
              inlet_mph / 3600
             } # ms-1
 
-# initial_II_eps_min = 1e-07
-initial_II_eps_min = 1e-17
+initial_II_eps_min = 1e-07
 
 # ------------------------
 
 [GlobalParams]
   order = FIRST
-  # https://github.com/idaholab/moose/discussions/26157
   integrate_p_by_parts = true
-  # integrate_p_by_parts = false
 []
 
 [Mesh]
@@ -76,18 +63,8 @@ initial_II_eps_min = 1e-17
     type = StitchedMeshGenerator
     inputs = 'channel extrude_sediment'
     stitch_boundaries_pairs = 'bottom top_sediment'
+    clear_stitched_boundary_ids = false
   []
-
-  # [add_bottom_sediment_sideset]
-  #   type = SideSetsFromNormalsGenerator
-  #   input = stitch_sediment
-  #   included_subdomains = "0"
-  #   normals = '0  0 -1
-  #              0  0  1'
-  #   fixed_normal = false
-  #   new_boundary = 'bottom_sediment surface_sediment'
-  #   normal_tol=0.5 # very high to include e.g. a steep bed 
-  # []
 
   [add_frontback_leftright_sediment_sidesets]
     type = SideSetsFromNormalsGenerator
@@ -134,24 +111,16 @@ initial_II_eps_min = 1e-17
     block_name = flood
     bottom_left = '-1000 4000 -1e4'
     top_right = '22000  5700 1e4'
-    # bottom_left = '-1000 4600 -1e4'
-    # top_right = '22000  5400 1e4'
   []
 
   final_generator = final_mesh2
 
-
 []
 
 [Functions]
-  [ocean_pressure]
-    type = ParsedFunction
-    expression = 'if(z < 0, -1028 * 9.81 * z, 1e5)' # -1e5 * 9.81 * z)'
-    # expression = '917 * 9.81 * (100 - z)' # -1e5 * 9.81 * z)'
-  []
   [viscosity_rampup]
     type = ParsedFunction
-    expression = 'initial_II_eps_min * exp(-(t-_dt) * 4e-6)' # 5e-6
+    expression = 'initial_II_eps_min * exp(-(t-_dt) * 5e-6)' # 5e-6
     # expression = 'initial_II_eps_min'
     symbol_names = '_dt initial_II_eps_min'
     symbol_values = '${_dt} ${initial_II_eps_min}'
@@ -208,43 +177,21 @@ initial_II_eps_min = 1e-17
   []
 []
 
-# [Variables]
-#   [velocity]
-#     family = LAGRANGE_VEC
-#     # order = SECOND
-#     scaling = 1e-6
-#     # scaling = 1e6
-#     # initial_condition = 1e-6
-#     block = '1 0 255 254'
-#   []
-#   [p]
-#     # scaling = 1e6
-#     family = LAGRANGE
-#     # scaling = 1e-6
-#     # initial_condition = 1e6
-#     block = '1 0 255 254'
-#   []
-# []
-
 [Variables]
   [velocity]
     family = LAGRANGE_VEC
-    # order = SECOND
     scaling = 1e-6
-    # scaling = 1e6
     initial_condition = 1e-6
     block = '1 0 255 254'
   []
   [p]
     family = LAGRANGE
-    # order = FIRST
-    scaling = 1e-6
     initial_condition = 1e6
     block = '1 0 255 254'
   []
 []
 
-[Kernels]
+[Kernels] 
   [mass_ice]
     type = INSADMass
     block = '1 255'
@@ -385,20 +332,12 @@ initial_II_eps_min = 1e-17
 []
 
 [BCs]
-
-  # we need to pin the pressure to remove the singular value
-  # [pin_pressure]
-  #  type = DirichletBC
-  #  variable = p
-  #  boundary = 'pressure_pin_node'
-  #  value = 1e5
-  # []
   
   # no slip at the sediment base nor on the sides
   [no_slip_sides]
     type = ADVectorFunctionDirichletBC
     variable = velocity
-    boundary = 'left right'
+    boundary = 'left right left_sediment right_sediment'
     # function_x = 0.
     function_y = 0.
     # function_z = 0.
@@ -409,59 +348,54 @@ initial_II_eps_min = 1e-17
   [no_slip_sides_sediments]
     type = ADVectorFunctionDirichletBC
     variable = velocity
-    boundary = 'bottom_sediment' # left_sediment right_sediment 
+    boundary = 'bottom_sediment'
     function_x = 0.
     function_y = 0.
     function_z = 0.
   []
 
+  [no_vertical_ice_sediment_boundary]
+    type = ADVectorFunctionDirichletBC
+    variable = velocity
+    boundary = 'top_sediment'
+    function_z = 0.
+    set_x_comp = false
+    set_y_comp = false
+  []
+
   [inlet]
     type = ADVectorFunctionDirichletBC
     variable = velocity
-    boundary = 'back' # back_sediment not much diff. either
+    boundary = 'back'
     function_x = influx
     function_y = 0.
     function_z = 0.
   []
   
-  # [oulet]
-  #   type = ADFunctionDirichletBC
-  #   variable = p
-  #   boundary = 'front' # front_sediment doesn't make much of a diff.
-  #   function = ocean_pressure
-  # []
-
   [front_pressure]
     type = INSADHydrostaticPressureBC
     boundary = 'front'
     variable = velocity
     pressure = p
     mu_name = "mu_ice"
-  [] 
-  [front_pressure_sediments]
-    type = INSADHydrostaticPressureBC
+  []
+
+  [outlet_sediments]
+    type = ADVectorFunctionDirichletBC
+    variable = velocity
     boundary = 'front_sediment'
+    function_x = 0.
+    function_y = 0.
+    function_z = 0.
+  []
+  
+  [freesurface]
+    type = INSADMomentumNoBCBC
     variable = velocity
     pressure = p
-    mu_name = "mu_sediment"
-  [] 
-
-  # [outlet_sediment]
-  #   type = ADVectorFunctionDirichletBC
-  #   variable = velocity
-  #   boundary = 'front_sediment'
-  #   function_z = 0.
-  #   set_x_comp = False
-  #   set_y_comp = False
-  # []
-
-  # [freesurface]
-  #   type = INSADMomentumNoBCBC
-  #   variable = velocity
-  #   pressure = p
-  #   boundary = 'top'
-  # []
-
+    boundary = 'surface'
+    mu_name = "mu_ice"
+  []
 []
 
 [Materials]
@@ -600,7 +534,9 @@ initial_II_eps_min = 1e-17
   nl_rel_tol = 1e-05
   nl_abs_tol = 1e-05
 
-  nl_max_its = 100
+  # nl_max_its = 100
+  nl_max_its = 10
+
   nl_forced_its = 3
   line_search = none
 
