@@ -11,7 +11,7 @@ slipperiness_coefficient_center = '${fparse (slipperiness_coefficient_center_mmp
 
 # ------------------------ simulation settings
 
-nb_years = 0.008 # 0.008
+nb_years = 0.008
 _dt = '${fparse nb_years * 3600 * 24 * 365}'
 
 inlet_mph = 0.37 # 0.4 # mh-1
@@ -19,7 +19,9 @@ inlet_mps = ${fparse
              inlet_mph / 3600
             } # ms-1
 
-initial_II_eps_min = 1e-07
+initial_viscosity = 8e9 # Pas
+# maximum_viscosity = 1e13 # Pas
+rampup_rate = 1e5
 
 # ------------------------
 
@@ -120,10 +122,11 @@ initial_II_eps_min = 1e-07
 [Functions]
   [viscosity_rampup]
     type = ParsedFunction
-    expression = 'initial_II_eps_min * exp(-(t-_dt) * 5e-6)' # 5e-6
+    # expression = 'initial_viscosity + (maximum_viscosity - initial_viscosity) * (1-exp(-rampup_rate * t))'
+    expression = 'initial_viscosity + t * rampup_rate'
     # expression = 'initial_II_eps_min'
-    symbol_names = '_dt initial_II_eps_min'
-    symbol_values = '${_dt} ${initial_II_eps_min}'
+    symbol_names = 'initial_viscosity rampup_rate'
+    symbol_values = '${initial_viscosity} ${rampup_rate}'
   []
   [influx]
     type = ParsedFunction
@@ -135,9 +138,9 @@ initial_II_eps_min = 1e-07
 []
 
 [Controls]
-  [II_eps_min_control]
+  [viscosity_rampup_control]
     type = RealFunctionControl
-    parameter = 'Materials/ice/II_eps_min'
+    parameter = 'Materials/ice/rampedup_viscosity'
     function = 'viscosity_rampup'
     execute_on = 'initial timestep_begin'
   []
@@ -400,7 +403,7 @@ initial_II_eps_min = 1e-07
 
 [Materials]
   [ice]
-    type = ADIceMaterialSI
+    type = ADIceMaterialSI_ru
     block = '1 255'
     velocity_x = "vel_x"
     velocity_y = "vel_y"
