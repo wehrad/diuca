@@ -3,10 +3,10 @@
 # sediment rheology
 # sliding_law = "GudmundssonRaymond"
 sediment_layer_thickness = 50.
-slipperiness_coefficient_mmpaa = 1e3
+slipperiness_coefficient_mmpaa = 1e4
 slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (365*24*3600)}' # 
 
-slipperiness_coefficient_center_mmpaa = 1e3
+slipperiness_coefficient_center_mmpaa = 1e4
 slipperiness_coefficient_center = '${fparse (slipperiness_coefficient_center_mmpaa * 1e-6) / (365*24*3600)}' # 
 
 # ------------------------ simulation settings
@@ -14,14 +14,13 @@ slipperiness_coefficient_center = '${fparse (slipperiness_coefficient_center_mmp
 nb_years = 0.008
 _dt = '${fparse nb_years * 3600 * 24 * 365}'
 
-inlet_mph = 0.37 # 0.4 # mh-1
+inlet_mph = 0.5 # 0.4 # mh-1
 inlet_mps = ${fparse
              inlet_mph / 3600
             } # ms-1
 
 initial_viscosity = 8e9 # Pas
-# maximum_viscosity = 1e13 # Pas
-rampup_rate = 1e5
+rampup_rate = 5e6 # 1e6 # 5e5 # 1e5
 
 # ------------------------
 
@@ -106,8 +105,8 @@ rampup_rate = 1e5
 
   [final_mesh2]
     type = SubdomainBoundingBoxGenerator
-    # input = refined_mesh
-    input = final_mesh
+    input = refined_mesh
+    # input = final_mesh
     restricted_subdomains="0"
     block_id = 254
     block_name = flood
@@ -122,9 +121,11 @@ rampup_rate = 1e5
 [Functions]
   [viscosity_rampup]
     type = ParsedFunction
-    # expression = 'initial_viscosity + (maximum_viscosity - initial_viscosity) * (1-exp(-rampup_rate * t))'
     expression = 'initial_viscosity + t * rampup_rate'
+    # expression = 'A * t^2 + B*t'
     # expression = 'initial_II_eps_min'
+    # symbol_names = 'A B'
+    # symbol_values = '4.71333237962635 3567351.59817352'
     symbol_names = 'initial_viscosity rampup_rate'
     symbol_values = '${initial_viscosity} ${rampup_rate}'
   []
@@ -357,14 +358,14 @@ rampup_rate = 1e5
     function_z = 0.
   []
 
-  [no_vertical_ice_sediment_boundary]
-    type = ADVectorFunctionDirichletBC
-    variable = velocity
-    boundary = 'top_sediment'
-    function_z = 0.
-    set_x_comp = false
-    set_y_comp = false
-  []
+  # [no_vertical_ice_sediment_boundary]
+  #   type = ADVectorFunctionDirichletBC
+  #   variable = velocity
+  #   boundary = 'top_sediment'
+  #   function_z = 0.
+  #   set_x_comp = false
+  #   set_y_comp = false
+  # []
 
   [inlet]
     type = ADVectorFunctionDirichletBC
@@ -531,11 +532,11 @@ rampup_rate = 1e5
   # l_tol = 1e-6
   l_tol = 1e-6
 
-  # nl_rel_tol = 1e-04 in the initial SSA test
-  # nl_abs_tol = 1e-04
+  nl_rel_tol = 1e-04 # in the initial SSA test
+  nl_abs_tol = 1e-04
 
-  nl_rel_tol = 1e-05
-  nl_abs_tol = 1e-05
+  # nl_rel_tol = 1e-05
+  # nl_abs_tol = 1e-05
 
   nl_max_its = 100
 
