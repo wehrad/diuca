@@ -3,10 +3,10 @@
 # sediment rheology
 # sliding_law = "GudmundssonRaymond"
 sediment_layer_thickness = 50.
-slipperiness_coefficient_mmpaa = 1e4
+slipperiness_coefficient_mmpaa = 1e3
 slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (365*24*3600)}' # 
 
-slipperiness_coefficient_center_mmpaa = 1e4
+slipperiness_coefficient_center_mmpaa = 1e5
 slipperiness_coefficient_center = '${fparse (slipperiness_coefficient_center_mmpaa * 1e-6) / (365*24*3600)}' # 
 
 # ------------------------ simulation settings
@@ -14,7 +14,7 @@ slipperiness_coefficient_center = '${fparse (slipperiness_coefficient_center_mmp
 nb_years = 0.008
 _dt = '${fparse nb_years * 3600 * 24 * 365}'
 
-inlet_mph = 0.5 # 0.4 # mh-1
+inlet_mph = 0.32 # 0.4 # mh-1
 inlet_mps = ${fparse
              inlet_mph / 3600
             } # ms-1
@@ -90,8 +90,8 @@ rampup_rate = 5e6 # 1e6 # 5e5 # 1e5
     input = add_nodesets
     block_id = 255
     block_name = deactivated
-    bottom_left = '19000 -100 -100'
-    top_right = '22000 11000 150'
+    bottom_left = '24000 -100 -2000'
+    top_right = '26000 11000 150'
   []
 
   [refined_mesh]
@@ -111,7 +111,7 @@ rampup_rate = 5e6 # 1e6 # 5e5 # 1e5
     block_id = 254
     block_name = flood
     bottom_left = '-1000 4000 -1e4'
-    top_right = '22000  5700 1e4'
+    top_right = '26000  5700 1e4'
   []
 
   final_generator = final_mesh2
@@ -384,14 +384,23 @@ rampup_rate = 5e6 # 1e6 # 5e5 # 1e5
     mu_name = "mu_ice"
   []
 
-  [outlet_sediments]
-    type = ADVectorFunctionDirichletBC
-    variable = velocity
+  [front_sediment_pressure]
+    type = INSADHydrostaticPressureBC
     boundary = 'front_sediment'
-    function_x = 0.
-    function_y = 0.
-    function_z = 0.
+    variable = velocity
+    pressure = p
+    mu_name = "mu_sediment"
   []
+
+  # [outlet_sediments]
+  #   type = ADVectorFunctionDirichletBC
+  #   variable = velocity
+  #   boundary = 'front_sediment'
+  #   function_x = 0.
+  #   # set_x_comp = false
+  #   function_y = 0.
+  #   function_z = 0.
+  # []
   
   [freesurface]
     type = INSADMomentumNoBCBC

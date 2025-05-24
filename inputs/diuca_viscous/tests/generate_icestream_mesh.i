@@ -3,7 +3,7 @@
 # slope.
 
 # The front geometry is first created in the XY geometry before it's extructed along the glacier length, and nodes transformed to include the sinusoid.
-length = 20000.
+length = 25000.
 width = 10000.
 
 channel_depth = -800.
@@ -13,8 +13,8 @@ peak_position = 5000.
 surface_slope = 0.032 # 0.025 # bedmachine: 0.032
 front_elevation = 100.
 
-nb_elements_alongflow = 30 
-nb_elements_acrossflow = 15
+nb_elements_alongflow = 50 
+nb_elements_acrossflow = 30
 nb_elements_depth = 7
 
 [Mesh]

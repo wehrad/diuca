@@ -70,7 +70,15 @@ ADSubglacialFloodMaterialSI::computeQpProperties()
 
   if (_SlipperinessCoefficientVariations == "constant")
     {
-      _viscosity[_qp] = _LayerThickness / _SlipperinessCoefficient;
+        Real back_sediment_sc = 1e3;
+	Real front_sediment_sc = 5e6;
+	Real increase_rate = (front_sediment_sc - back_sediment_sc) / 250000.;
+	
+	Real increasing_sc_mmpaa = _q_point[_qp](0) * increase_rate + back_sediment_sc;
+	Real increasing_sc = (increasing_sc_mmpaa * 1e-6) / (365*24*3600);
+
+	_viscosity[_qp] = _LayerThickness / increasing_sc;
+	// _viscosity[_qp] = _LayerThickness / _SlipperinessCoefficient;
     }
   else if (_SlipperinessCoefficientVariations == "subglacialflood")
     {
