@@ -13,15 +13,15 @@
 # --------------------------------- Domain settings
 
 # ice parameters
-_youngs_modulus = 1e9 # Pa
-_poissons_ratio = 0.32
+# _youngs_modulus = 1e9 # Pa
+# _poissons_ratio = 0.32
 
 # --------------------------------- Simulation settings
 
 # Frequency domain to sweep
-min_freq = 0.01 # Hz
-max_freq = 4 # Hz
-step_freq = 0.005 # Hz
+# min_freq = 0.01 # Hz
+# max_freq = 4 # Hz
+# step_freq = 0.005 # Hz
 
 # --------------------------------- Simulation
 
@@ -32,13 +32,13 @@ step_freq = 0.005 # Hz
     dim = 3
     xmin = 0
     xmax = 5000.
-    nx = 20
+    nx = 40
     zmin = 0
     zmax = 5000.
-    nz = 20
+    nz = 40
     ymin = 0.
     ymax = 550.
-    ny = 10
+    ny = 5
   []
 
   [shaking_zone]
@@ -81,10 +81,10 @@ step_freq = 0.005 # Hz
     type = SubdomainBoundingBoxGenerator
     input = 'decoupling_zone_top'
     block_id = 8
-    # bottom_left = '950 -1 2200'
-    # top_right = '1550 101 2700'
-    bottom_left = '650 -1 1900'
-    top_right = '1850 101 3000'
+    bottom_left = '950 -1 2200'
+    top_right = '1550 101 2700'
+    # bottom_left = '650 -1 1900'
+    # top_right = '1850 101 3000'
   []
   [mesh_combined_interm]
     type = CombinerGenerator
@@ -101,181 +101,292 @@ step_freq = 0.005 # Hz
   [decoupling_bottom]
     type = SideSetsAroundSubdomainGenerator
     input = 'shaking_bottom'
-    block = '4 5 6 7 8'
+    block = '5 6 7 8'
     new_boundary = 'decoupling_bottom'
     replace = true
     normal = '0 -1 0'
   []
-  [delete_bottom]
-    type=BoundaryDeletionGenerator
-    input='decoupling_bottom'
-    boundary_names='bottom'
-  []
+  # [delete_bottom]
+  #   type=BoundaryDeletionGenerator
+  #   input='decoupling_bottom'
+  #   boundary_names='bottom'
+  # []
 
   [add_nodesets]
     type = NodeSetsFromSideSetsGenerator
-    input = delete_bottom
+    # input = delete_bottom
+    input = decoupling_bottom
   []
 
   final_generator = add_nodesets
 []
 
 [GlobalParams]
-  order = FIRST
-  family = LAGRANGE
   displacements = 'disp_x disp_y disp_z'
 []
 
-[Problem]
- type = ReferenceResidualProblem
- reference_vector = 'ref'
- extra_tag_vectors = 'ref'
- group_variables = 'disp_x disp_y disp_z'
+[Variables]
+  [disp_x]
+    order = FIRST
+    family = LAGRANGE
+  []
+  [disp_y]
+    order = FIRST
+    family = LAGRANGE
+  []
+  [disp_z]
+    order = FIRST
+    family = LAGRANGE
+  []
 []
 
-[Physics]
-  [SolidMechanics]
-    [QuasiStatic]
-      [all]
-        strain = SMALL
-        add_variables = true
-        new_system = true
-        formulation = TOTAL
-      []
-    []
+[AuxVariables]
+  [vel_x]
+  []
+  [accel_x]
+  []
+  [vel_y]
+  []
+  [accel_y]
+  []
+  [vel_z]
+  []
+  [accel_z]
+  []
+[]
+
+[Functions]
+  # [weight]
+  #   type = ParsedFunction
+  #   value = '-9.81*900*(550-z)'    # initial stress that should result from the weight force
+  # []
+  [ormsby]
+    type = OrmsbyWavelet
+    f1 = 0.5
+    f2 = 1.0
+    f3 = 5.0
+    f4 = 8.0
+    ts = 1.0
+    # scale_factor = 0.5
   []
 []
 
 [Kernels]
-    #reaction terms
-    [reaction_realy]
-        type = Reaction
-        variable = disp_y
-        rate = 0 # filled by controller
-        extra_vector_tags = 'ref'
-        block = '0'
-    []
-[]
-
-[AuxVariables]
-  [disp_mag]
+  [gravity_x]
+    type = Gravity
+    variable = disp_x
+    value= 0.
+  []
+  [gravity_y]
+    type = Gravity
+    variable = disp_y
+    value = 0.
+  []
+  [gravity_z]
+    type = Gravity
+    variable = disp_z
+    value = -9.81
+  []
+  [DynamicTensorMechanics]
+    stiffness_damping_coefficient = 0.02
+    mass_damping_coefficient = 0.02
+    displacements = 'disp_x disp_y disp_z'
+    static_initialization = true
+  []
+  [inertia_x]
+    type = InertialForce
+    variable = disp_x
+    velocity = vel_x
+    acceleration = accel_x
+    beta = 0.25
+    gamma = 0.5
+  []
+  [inertia_y]
+    type = InertialForce
+    variable = disp_y
+    velocity = vel_y
+    acceleration = accel_y
+    beta = 0.25
+    gamma = 0.5
+  []
+  [inertia_z]
+    type = InertialForce
+    variable = disp_z
+    velocity = vel_z
+    acceleration = accel_z
+    beta = 0.25
+    gamma = 0.5
   []
 []
 
 [AuxKernels]
-  [disp_mag]
-    type = ParsedAux
-    variable = disp_mag
-    coupled_variables = 'disp_z disp_x'
-    expression = 'sqrt((disp_z^2)+(disp_x^2))'
+  [accel_x]
+    type = NewmarkAccelAux
+    variable = accel_x
+    displacement = disp_x
+    velocity = vel_x
+    beta = 0.25
+    execute_on = timestep_end
+  []
+  [vel_x]
+    type = NewmarkVelAux
+    variable = vel_x
+    acceleration = accel_x
+    gamma = 0.5
+    execute_on = timestep_end
+  []
+  [accel_y]
+    type = NewmarkAccelAux
+    variable = accel_y
+    displacement = disp_y
+    velocity = vel_y
+    beta = 0.25
+    execute_on = timestep_end
+  []
+  [vel_y]
+    type = NewmarkVelAux
+    variable = vel_y
+    acceleration = accel_y
+    gamma = 0.5
+    execute_on = timestep_end
+  []
+  [accel_z]
+    type = NewmarkAccelAux
+    variable = accel_z
+    displacement = disp_z
+    velocity = vel_z
+    beta = 0.25
+    execute_on = timestep_end
+  []
+  [vel_z]
+    type = NewmarkVelAux
+    variable = vel_z
+    acceleration = accel_z
+    gamma = 0.5
+    execute_on = timestep_end
   []
 []
 
-[BCs]
+[Materials]
+  [ice_elasticity]
+    type = ComputeIsotropicElasticityTensor
+    youngs_modulus = 8.7e9 #Pa
+    poissons_ratio = 0.31
+  []
+  [strain]
+    type = ComputeIncrementalSmallStrain
+    displacements = 'disp_x disp_y disp_z'
+  []
+  [density]
+    type = GenericConstantMaterial
+    prop_names = density
+    prop_values = 900 #kg/m3
+  []
+  [stress]
+    type = ComputeFiniteStrainElasticStress
+  []
+  # [strain_from_initial_stress]
+  #   type = ComputeEigenstrainFromInitialStress
+  #   initial_stress = '0 0 0  0 0 0  0 0 weight'
+  #   eigenstrain_name = ini_stress
+  # []
+[]
 
+[BCs]
   # fixed bottom pinning points in all three dimensions
   [dirichlet_decoupling_bottom_x]
     type = DirichletBC
     variable = disp_x
     value = 0
-    boundary = 'decoupling_bottom'
+    boundary = 'decoupling_bottom bottom'
   []
   [dirichlet_decoupling_bottom_y]
     type = DirichletBC
     variable = disp_y
     value = 0
-    boundary = 'decoupling_bottom'
+    boundary = 'decoupling_bottom bottom'
   []
   [dirichlet_decoupling_bottom_z]
     type = DirichletBC
     variable = disp_z
     value = 0
-    boundary = 'decoupling_bottom'
+    boundary = 'decoupling_bottom bottom'
   []
 
-  # fixed vertical sides in all three dimensions
-  [dirichlet_side_x]
-    type = DirichletBC
-    variable = disp_x
-    value = 0
-    boundary = 'left right back front'
-  []
-  [dirichlet_side_z]
-    type = DirichletBC
-    variable = disp_z
-    value = 0
-    boundary = 'left right back front'
-  []
-  [dirichlet_side_y]
-    type = DirichletBC
+  # # fixed vertical sides in all three dimensions
+  # [dirichlet_side_x]
+  #   type = DirichletBC
+  #   variable = disp_x
+  #   value = 0
+  #   boundary = 'left right back front'
+  # []
+  # [dirichlet_side_z]
+  #   type = DirichletBC
+  #   variable = disp_z
+  #   value = 0
+  #   boundary = 'left right back front'
+  # []
+  # [dirichlet_side_y]
+  #   type = DirichletBC
+  #   variable = disp_y
+  #   value = 0
+  #   boundary = 'left right back front'
+  # []
+
+  [shake_bottom_z]
+    type = PresetAcceleration
+    acceleration = accel_y
+    velocity = vel_y
     variable = disp_y
-    value = 0
-    boundary = 'left right back front'
-  []
-
-  # vertical shaking at the surface
-  [surface_yreal]
-    type = NeumannBC
-    variable = disp_y
-    boundary = 'top'
-    value = 1
-  []
-
-[]
-
-[Materials]
-  [elastic_tensor_ice]
-    type = ComputeIsotropicElasticityTensor
-    youngs_modulus = '${_youngs_modulus}'
-    poissons_ratio = '${_poissons_ratio}'
-  []
-  [compute_stress]
-    type = ComputeLagrangianLinearElasticStress
+    beta = 0.25
+    boundary = 'shaking_bottom'
+    function = 'ormsby'
   []
 []
 
-[Postprocessors]
-  [dispMag]
-    type = AverageNodalVariableValue
-    boundary = 'top'
-    variable = disp_mag
-  []
-[]
+# [Controls]
 
-[Functions]
-  [freq2]
-    type = ParsedFunction
-    symbol_names = density
-    symbol_values = 917 # ice, kg/m3
-    expression = '-t*t*density'
-  []
-[]
+#   [inertia_switch]
+#     type = TimePeriod
+#     start_time = 0.0
+#     end_time = 0.1
+#     disable_objects = '*/inertia_x */inertia_y */inertia_z
+#                        */vel_x */vel_y */vel_z
+#                        */accel_x */accel_y */accel_z'
+#     set_sync_times = true
+#     execute_on = 'timestep_begin timestep_end'
+#   []
 
-[Controls]
-  [func_control]
-    type = RealFunctionControl
-    parameter = 'Kernels/*/rate'
-    function = 'freq2'
-    execute_on = 'initial timestep_begin'
+# []
+
+[Preconditioning]
+  [andy]
+    type = SMP
+    full = true
   []
 []
 
 [Executioner]
   type = Transient
-  solve_type=LINEAR
-  petsc_options_iname = ' -pc_type'
-  petsc_options_value = 'lu'
-  start_time = '${min_freq}'
-  end_time =  '${max_freq}'
-  nl_abs_tol = 1e-6
-  [TimeStepper]
-    type = ConstantDT
-    dt = '${step_freq}'
+  petsc_options = '-ksp_snes_ew'
+  petsc_options_iname = '-pc_type -pc_factor_mat_solver_package'
+  petsc_options_value = 'lu       superlu_dist'
+  solve_type = 'NEWTON'
+  nl_rel_tol = 1e-7
+  nl_abs_tol = 1e-12
+  dt = 0.05
+  end_time = 20.
+  timestep_tolerance = 1e-6
+  automatic_scaling = true
+  [TimeIntegrator]
+    type = NewmarkBeta
+    beta = 0.25
+    gamma = 0.5
+    inactive_tsteps = 2
   []
 []
 
 [Outputs]
-  csv=true
-  exodus=true
-  perf_graph=true
+  exodus = true  
+  perf_graph = true
 []
