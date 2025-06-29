@@ -32,10 +32,10 @@
     dim = 3
     xmin = 0
     xmax = 5000.
-    nx = 45
+    nx = 40
     zmin = 0
     zmax = 5000.
-    nz = 45
+    nz = 40
     ymin = 0.
     ymax = 550.
     ny = 5
@@ -162,11 +162,11 @@
   # []
   [ormsby]
     type = OrmsbyWavelet
-    f1 = 0.5
-    f2 = 1.0
-    f3 = 5.0
-    f4 = 8.0
-    ts = 1.0
+    f1 = 0.3   # taper-in start
+    f2 = 0.6   # start of flat passband
+    f3 = 1.1   # end of flat passband
+    f4 = 1.5   # taper-out end
+    ts = 3.
     # scale_factor = 0.5
   []
 []
@@ -180,12 +180,12 @@
   [gravity_y]
     type = Gravity
     variable = disp_y
-    value = -9.81 # 0.
+    value = 0.
   []
   [gravity_z]
     type = Gravity
     variable = disp_z
-    value = 0.
+    value = 0. # -9.81
   []
   [DynamicTensorMechanics]
     stiffness_damping_coefficient = 0.02
@@ -293,24 +293,44 @@
 []
 
 [BCs]
+  # fixed bottom in all three dimensions
+  # [dirichlet_decoupling_bottom_x]
+  #   type = DirichletBC
+  #   variable = disp_x
+  #   value = 0
+  #   boundary = 'decoupling_bottom bottom'
+  # []
+  # [dirichlet_decoupling_bottom_y]
+  #   type = DirichletBC
+  #   variable = disp_y
+  #   value = 0
+  #   boundary = 'decoupling_bottom bottom'
+  # []
+  # [dirichlet_decoupling_bottom_z]
+  #   type = DirichletBC
+  #   variable = disp_z
+  #   value = 0
+  #   boundary = 'decoupling_bottom bottom'
+  # []
+
   # fixed bottom pinning points in all three dimensions
   [dirichlet_decoupling_bottom_x]
     type = DirichletBC
     variable = disp_x
     value = 0
-    boundary = 'decoupling_bottom bottom'
+    boundary = 'decoupling_bottom'
   []
   [dirichlet_decoupling_bottom_y]
     type = DirichletBC
     variable = disp_y
     value = 0
-    boundary = 'decoupling_bottom bottom'
+    boundary = 'decoupling_bottom'
   []
   [dirichlet_decoupling_bottom_z]
     type = DirichletBC
     variable = disp_z
     value = 0
-    boundary = 'decoupling_bottom bottom'
+    boundary = 'decoupling_bottom'
   []
 
   # # fixed vertical sides in all three dimensions
@@ -332,8 +352,8 @@
   #   value = 0
   #   boundary = 'left right back front'
   # []
-  
-  [shake_bottom_y]
+
+  [shake_bottom_z]
     type = PresetAcceleration
     acceleration = accel_y
     velocity = vel_y
@@ -344,20 +364,20 @@
   []
 []
 
-[Controls]
+# [Controls]
 
-  [inertia_switch]
-    type = TimePeriod
-    start_time = 0.0
-    end_time = 0.1
-    disable_objects = '*/inertia_x */inertia_y */inertia_z
-                       */vel_x */vel_y */vel_z
-                       */accel_x */accel_y */accel_z'
-    set_sync_times = true
-    execute_on = 'timestep_begin timestep_end'
-  []
+#   [inertia_switch]
+#     type = TimePeriod
+#     start_time = 0.0
+#     end_time = 0.1
+#     disable_objects = '*/inertia_x */inertia_y */inertia_z
+#                        */vel_x */vel_y */vel_z
+#                        */accel_x */accel_y */accel_z'
+#     set_sync_times = true
+#     execute_on = 'timestep_begin timestep_end'
+#   []
 
-[]
+# []
 
 [Preconditioning]
   [andy]
@@ -375,7 +395,7 @@
   nl_rel_tol = 1e-7
   nl_abs_tol = 1e-12
   dt = 0.05
-  end_time = 20.
+  end_time = 40.
   timestep_tolerance = 1e-6
   automatic_scaling = true
   [TimeIntegrator]
