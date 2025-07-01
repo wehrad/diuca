@@ -14,7 +14,7 @@ slipperiness_coefficient_center = '${fparse (slipperiness_coefficient_center_mmp
 nb_years = 0.008
 _dt = '${fparse nb_years * 3600 * 24 * 365}'
 
-inlet_mph = 0.32 # 0.4 # mh-1
+inlet_mph = 0.32 # 0.4 # mh-1 # slower doesn't help
 inlet_mps = ${fparse
              inlet_mph / 3600
             } # ms-1
@@ -133,8 +133,13 @@ rampup_rate = 5e6 # 1e6 # 5e5 # 1e5
     type = ParsedFunction
     # expression = 'inlet_mps * sin((2*pi / 20000) * y)' # * (z / 433.2)'
     expression = 'inlet_mps'
+    # expression = '(((f0 * y^10 + f1 * y^9 + f2 * y^8 + f3 * y^7 + f4 * y^6 + f5 * y^5 + f6 * y^4 + f7 * y^3 + f8 * y^2 + f9 * y + f10) / 3) + 0.02) / 3600'
     symbol_names = 'inlet_mps'
     symbol_values = '${inlet_mps}'
+    # symbol_names = 'f0 f1 f2 f3 f4 f5 f6 f7 f8 f9 f10'
+    # symbol_values = '3.15098842e-38 -2.27201938e-33  7.68216888e-29 -1.45500836e-24
+    #     1.61004382e-20 -1.03844445e-16  3.73975638e-13 -6.87965221e-10
+    #     5.87484523e-07 -1.69968105e-04  5.89693944e-02'
   []
 []
 
