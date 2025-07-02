@@ -19,8 +19,8 @@ inlet_mps = ${fparse
              inlet_mph / 3600
             } # ms-1
 
-initial_viscosity = 8e9 # Pas
-rampup_rate = 5e6 # 5e6 # 1e6 # 5e5 # 1e5
+# initial_viscosity = 8e9 # Pas
+# rampup_rate = 5e6 # 1e6 # 5e5 # 1e5
 
 # ------------------------
 
@@ -119,22 +119,22 @@ rampup_rate = 5e6 # 5e6 # 1e6 # 5e5 # 1e5
 []
 
 [Functions]
-  [viscosity_rampup]
-    type = ParsedFunction
-    expression = 'initial_viscosity + t * rampup_rate'
-    # expression = 'A * t^2 + B*t'
-    # expression = 'initial_II_eps_min'
-    # symbol_names = 'A B'
-    # symbol_values = '4.71333237962635 3567351.59817352'
-    symbol_names = 'initial_viscosity rampup_rate'
-    symbol_values = '${initial_viscosity} ${rampup_rate}'
-  []
   # [viscosity_rampup]
-  #   type = PiecewiseLinear
-  #   xy_data = '0. 8e9
-  #              1009152.  5e12
-  #              2018304.  1e14'
+  #   type = ParsedFunction
+    
+  #   # expression = '1e10 * exp(3.e-6*t)'
+  #   expression = '1e13 - (1e13-1e9) * exp(-5e-7 * t)'
+  #   # expression = 'initial_viscosity + t * rampup_rate'
+
+  #   # symbol_names = 'initial_viscosity rampup_rate'
+  #   # symbol_values = '${initial_viscosity} ${rampup_rate}'
   # []
+
+  [viscosity_rampup]
+    type = PiecewiseLinear
+    xy_data = '252288. 1e10
+               5045760. 1e14'
+  []
   [influx]
     type = ParsedFunction
     # expression = 'inlet_mps * sin((2*pi / 20000) * y)' # * (z / 433.2)'
@@ -479,7 +479,7 @@ rampup_rate = 5e6 # 5e6 # 1e6 # 5e5 # 1e5
 
 
 [Preconditioning]
-  active = ''
+  active = 'FSP'
   [FSP]
     type = FSP
     # It is the starting point of splitting
