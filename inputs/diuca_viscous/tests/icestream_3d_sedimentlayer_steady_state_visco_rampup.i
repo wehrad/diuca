@@ -19,8 +19,8 @@ inlet_mps = ${fparse
              inlet_mph / 3600
             } # ms-1
 
-initial_viscosity = 8e9 # Pas
-rampup_rate = 5e6 # 5e6 # 1e6 # 5e5 # 1e5
+# initial_viscosity = 8e9 # Pas
+# rampup_rate = 5e6 # 5e6 # 1e6 # 5e5 # 1e5
 
 # ------------------------
 
@@ -119,22 +119,27 @@ rampup_rate = 5e6 # 5e6 # 1e6 # 5e5 # 1e5
 []
 
 [Functions]
-  [viscosity_rampup]
-    type = ParsedFunction
-    expression = 'initial_viscosity + t * rampup_rate'
-    # expression = 'A * t^2 + B*t'
-    # expression = 'initial_II_eps_min'
-    # symbol_names = 'A B'
-    # symbol_values = '4.71333237962635 3567351.59817352'
-    symbol_names = 'initial_viscosity rampup_rate'
-    symbol_values = '${initial_viscosity} ${rampup_rate}'
-  []
   # [viscosity_rampup]
-  #   type = PiecewiseLinear
-  #   xy_data = '0. 8e9
-  #              1009152.  5e12
-  #              2018304.  1e14'
+  #   type = ParsedFunction
+  #   expression = 'initial_viscosity + t * rampup_rate'
+  #   # expression = 'A * t^2 + B*t'
+  #   # expression = 'initial_II_eps_min'
+  #   # symbol_names = 'A B'
+  #   # symbol_values = '4.71333237962635 3567351.59817352'
+  #   symbol_names = 'initial_viscosity rampup_rate'
+  #   symbol_values = '${initial_viscosity} ${rampup_rate}'
   # []
+  [viscosity_rampup]
+    type = PiecewiseLinear
+    # xy_data = '252288. 1.5e12
+    #            2522880.  2e13' # 1.2e12 1e13
+
+    xy_data = '252288. 1.5e12
+               1261440. 9.72e12
+               2522880. 5e13
+               3279744. 1e14
+               4288896. 2e14'
+  []
   [influx]
     type = ParsedFunction
     # expression = 'inlet_mps * sin((2*pi / 20000) * y)' # * (z / 433.2)'
@@ -558,7 +563,7 @@ rampup_rate = 5e6 # 5e6 # 1e6 # 5e5 # 1e5
   # nl_rel_tol = 1e-05
   # nl_abs_tol = 1e-05
 
-  nl_max_its = 100
+  nl_max_its = 30
 
   nl_forced_its = 3
 
