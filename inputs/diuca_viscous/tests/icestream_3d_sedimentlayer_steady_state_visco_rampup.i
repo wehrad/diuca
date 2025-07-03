@@ -14,7 +14,7 @@ slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (
 nb_years = 0.008
 _dt = '${fparse nb_years * 3600 * 24 * 365}'
 
-inlet_mph = 0.32 # 0.4 # mh-1 # slower doesn't help
+inlet_mph = 0.32 # # 0.32 0.4 # mh-1 # slower doesn't help
 inlet_mps = ${fparse
              inlet_mph / 3600
             } # ms-1
@@ -138,9 +138,6 @@ inlet_mps = ${fparse
   # []
   [viscosity_rampup]
     type = PiecewiseLinear
-    # xy_data = '252288. 1.5e12
-    #            2522880.  2e13' # 1.2e12 1e13
-
     xy_data = '252288. 1.5e12
                1261440. 9.72e12
                2522880. 5e13

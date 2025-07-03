@@ -52,6 +52,7 @@ ADSedimentMaterialSI::computeQpProperties()
   // Real increasing_sc = (increasing_sc_mmpaa * 1e-6) / (365*24*3600);
 
   // _viscosity[_qp] = _LayerThickness / increasing_sc;
+  
   _viscosity[_qp] = _LayerThickness / _SlipperinessCoefficient;
   
   // Constant density

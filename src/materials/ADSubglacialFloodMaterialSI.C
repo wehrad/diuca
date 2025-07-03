@@ -72,8 +72,6 @@ ADSubglacialFloodMaterialSI::computeQpProperties()
     {
 
       Real L=25000;
-      // Real back_viscosity = 1e11;
-      // Real front_viscosity = 5e8; // 3e8; // 3e8;
 
       Real back_viscosity = 1e11;
       Real front_viscosity = 1e9;
