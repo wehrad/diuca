@@ -3,11 +3,11 @@
 # sediment rheology
 # sliding_law = "GudmundssonRaymond"
 sediment_layer_thickness = 50.
-slipperiness_coefficient_mmpaa = 1e3
+slipperiness_coefficient_mmpaa = 1e2
 slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (365*24*3600)}' # 
 
-slipperiness_coefficient_center_mmpaa = 1e5
-slipperiness_coefficient_center = '${fparse (slipperiness_coefficient_center_mmpaa * 1e-6) / (365*24*3600)}' # 
+# slipperiness_coefficient_center_mmpaa = 1e5 # 1e5
+# slipperiness_coefficient_center = '${fparse (slipperiness_coefficient_center_mmpaa * 1e-6) / (365*24*3600)}' # 
 
 # ------------------------ simulation settings
 
@@ -449,7 +449,7 @@ inlet_mps = ${fparse
   [floodedsediment]
     type = ADSubglacialFloodMaterialSI
     block = '254'
-    SlipperinessCoefficient = ${slipperiness_coefficient_center}
+    # SlipperinessCoefficient = ${slipperiness_coefficient_center}
     LayerThickness = ${sediment_layer_thickness}
     output_properties = 'mu_floodedsediment rho_floodedsediment'
     outputs = "out"

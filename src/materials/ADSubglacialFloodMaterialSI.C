@@ -70,17 +70,23 @@ ADSubglacialFloodMaterialSI::computeQpProperties()
 
   if (_SlipperinessCoefficientVariations == "constant")
     {
-        Real back_sediment_sc = 1e3;
-	Real front_sediment_sc = 5e6;
-	Real increase_rate = (front_sediment_sc - back_sediment_sc) / 250000.;
-	
-	Real increasing_sc_mmpaa = _q_point[_qp](0) * increase_rate + back_sediment_sc;
-	Real increasing_sc = (increasing_sc_mmpaa * 1e-6) / (365*24*3600);
 
-	_viscosity[_qp] = _LayerThickness / increasing_sc;
-	// _viscosity[_qp] = _LayerThickness / _SlipperinessCoefficient;
+      Real L=25000;
+      // Real back_viscosity = 1e11;
+      // Real front_viscosity = 5e8; // 3e8; // 3e8;
+
+      Real back_viscosity = 1e11;
+      Real front_viscosity = 1e9;
+      
+      Real viscosity_rate = (back_viscosity - front_viscosity) / L;
+
+      Real increasing_C = _LayerThickness / (back_viscosity - viscosity_rate * _q_point[_qp](0));
+
+      _viscosity[_qp] = _LayerThickness / increasing_C;
+
+      // _viscosity[_qp] = _LayerThickness / _SlipperinessCoefficient;
     }
-  else if (_SlipperinessCoefficientVariations == "subglacialflood")
+  else if (_SlipperinessCoefficientVariations == "subglacilflood")
     {
       Real x_relative = _q_point[_qp](0) - _FloodStartPosition;
       Real flood_dt = x_relative / _FloodSpeed;
