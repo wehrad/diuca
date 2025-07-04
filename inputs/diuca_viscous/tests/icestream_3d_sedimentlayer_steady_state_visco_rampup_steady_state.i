@@ -109,7 +109,7 @@ inlet_mps = ${fparse
     # input = final_mesh
     restricted_subdomains="0"
     block_id = 254
-    block_name = flood
+    block_name = maintrunk
 
     bottom_left = '-1000 4300 -1e4'
     top_right = '26000  5700 1e4'
@@ -393,7 +393,7 @@ inlet_mps = ${fparse
     boundary = 'back'
     function_x = influx
     function_y = 0.
-    function_z = 0.
+    function_z = 0. # -2.6e-6 # 0. # TODO: give the surface slope speed?
   []
   
   [front_pressure]
@@ -594,7 +594,7 @@ inlet_mps = ${fparse
   console = true
   [out]
     type = Exodus
-    # execute_on = 'FINAL'
+    execute_on = 'FINAL'
   []
 []
 

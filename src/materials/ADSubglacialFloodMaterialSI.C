@@ -22,7 +22,7 @@ ADSubglacialFloodMaterialSI::validParams()
   params.addParam<std::string>("SlipperinessCoefficientVariations", "constant", "Spatiotemporal variations in basal slipperiness");
   params.declareControllable("SlipperinessCoefficientVariations");
 
-    params.addParam<Real>("FloodStartPosition", 10000, "X-axis position where the flood starts");
+  params.addParam<Real>("FloodStartPosition", 9000., "X-axis position where the flood starts"); // 25000 - 16000=9000
   params.declareControllable("FloodStartPosition");
   params.addParam<Real>("FloodAmplitude", 1e-10, "Amplitude of variations in slipperiness coefficient");
   params.declareControllable("FloodAmplitude");
@@ -68,32 +68,42 @@ void
 ADSubglacialFloodMaterialSI::computeQpProperties()
 {
 
-  if (_SlipperinessCoefficientVariations == "constant")
+
+  Real L=25000;
+
+  Real back_viscosity = 1e11;
+  Real front_viscosity = 1e9;
+  
+  // Real viscosity_rate = (back_viscosity - front_viscosity) / L;
+  // Real increasing_C = _LayerThickness / (back_viscosity - viscosity_rate * _q_point[_qp](0));
+  // _viscosity[_qp] = _LayerThickness / increasing_C;
+  
+  Real _eta = back_viscosity - (back_viscosity - front_viscosity) * std::pow(_q_point[_qp](0) / L, 1.0); // 1.5
+  _viscosity[_qp] = _eta;
+  
+  // _viscosity[_qp] = _LayerThickness / _SlipperinessCoefficient;
+  
+  if (_SlipperinessCoefficientVariations == "subglacialflood")
     {
 
-      Real L=25000;
+      if (_q_point[_qp](0) > _FloodStartPosition)
+	{
+	
+	Real x_relative = _q_point[_qp](0) - _FloodStartPosition;
+	Real flood_dt = x_relative / _FloodSpeed;
+	Real flood_t = _t - flood_dt;
+	
+	// Real _FloodViscosity = _eta - _eta * _FloodAmplitude * std::exp((-(std::pow(flood_t - _FloodPeakTime, 2))) / (2 * std::pow(_FloodSpreadTime, 2)));
+	Real _FloodViscosity = _eta - _FloodAmplitude * std::exp((-(std::pow(flood_t - _FloodPeakTime, 2))) / (2 * std::pow(_FloodSpreadTime, 2)));
 
-      Real back_viscosity = 1e11;
-      Real front_viscosity = 1e9;
+	_viscosity[_qp] = _FloodViscosity;
+	
+      }
       
-      Real viscosity_rate = (back_viscosity - front_viscosity) / L;
-
-      Real increasing_C = _LayerThickness / (back_viscosity - viscosity_rate * _q_point[_qp](0));
-
-      _viscosity[_qp] = _LayerThickness / increasing_C;
-
-      // _viscosity[_qp] = _LayerThickness / _SlipperinessCoefficient;
-    }
-  else if (_SlipperinessCoefficientVariations == "subglacilflood")
-    {
-      Real x_relative = _q_point[_qp](0) - _FloodStartPosition;
-      Real flood_dt = x_relative / _FloodSpeed;
-      Real flood_t = _t - flood_dt;
-
       // The subglacial flood is defined as a Gaussian with a shift as a function of X
-      Real _FloodSlipperinessCoefficient = _FloodAmplitude * std::exp((-(std::pow(flood_t - _FloodPeakTime, 2))) / (2 * std::pow(_FloodSpreadTime, 2))) + _SlipperinessCoefficient;
-	    
-      _viscosity[_qp] = _LayerThickness / _FloodSlipperinessCoefficient;
+      // Real _FloodSlipperinessCoefficient = _FloodAmplitude * std::exp((-(std::pow(flood_t - _FloodPeakTime, 2))) / (2 * std::pow(_FloodSpreadTime, 2))) + _SlipperinessCoefficient;	    
+      // _viscosity[_qp] = _LayerThickness / _FloodSlipperinessCoefficient;
+      
     }
   
   // Constant density
