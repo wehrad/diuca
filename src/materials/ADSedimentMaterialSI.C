@@ -44,16 +44,25 @@ void
 ADSedimentMaterialSI::computeQpProperties()
 {
 
-  // Real back_sediment_sc = 1e3;
-  // Real front_sediment_sc = 1e4;
-  // Real increase_rate = (front_sediment_sc - back_sediment_sc) / 250000.;
+  Real L=25000;
+  Real W=10000;
 
-  // Real increasing_sc_mmpaa = _q_point[_qp](0) * increase_rate + back_sediment_sc;
-  // Real increasing_sc = (increasing_sc_mmpaa * 1e-6) / (365*24*3600);
-
-  // _viscosity[_qp] = _LayerThickness / increasing_sc;
+  Real eta_back_center=1e12;
   
-  _viscosity[_qp] = _LayerThickness / _SlipperinessCoefficient;
+  Real eta_front_center=1e10;
+
+  Real eta_sides=1.6e13;
+  Real sigma_y=1500;
+  
+  Real eta_center = eta_back_center + (eta_front_center - eta_back_center) * (_q_point[_qp](0) / L);
+
+  Real y0 = W / 2;
+  Real gaussian_damping = std::exp(-(std::pow(_q_point[_qp](1) - y0, 2)) / (2 * std::pow(sigma_y, 2)));
+
+  Real _eta = eta_sides + (eta_center - eta_sides) * gaussian_damping;
+  
+  _viscosity[_qp] = _eta;
+  // _viscosity[_qp] = _LayerThickness / _SlipperinessCoefficient;
   
   // Constant density
   _density[_qp] = _rho;
