@@ -14,10 +14,10 @@ slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (
 nb_years = 0.008
 _dt = '${fparse nb_years * 3600 * 24 * 365}'
 
-inlet_mph = 0.32 # # 0.32 0.4 # mh-1 # slower doesn't help
-inlet_mps = ${fparse
-             inlet_mph / 3600
-            } # ms-1
+# inlet_mph = 0.34 # # 0.32 0.4 # mh-1 # slower doesn't help
+# inlet_mps = ${fparse
+             # inlet_mph / 3600
+            # } # ms-1
 
 # initial_viscosity = 8e9 # Pas
 # rampup_rate = 5e6 # 5e6 # 1e6 # 5e5 # 1e5
@@ -27,14 +27,15 @@ inlet_mps = ${fparse
 [GlobalParams]
   order = FIRST
   integrate_p_by_parts = true
+  use_displaced_mesh=true
+  displacements = "disp_x disp_y disp_z"
 []
 
 [Mesh]
-
+  
   [channel]
     type = FileMeshGenerator
     file = generate_icestream_mesh_out.e
-    # file = generate_iceblock_mesh_out.e
   []
 
   # Create sediment layer by projecting glacier bed by
@@ -150,43 +151,34 @@ inlet_mps = ${fparse
     #            2522880. 5e13
     #            3279744. 1e14
     #            4288896. 2e14'
-[]
-
-  [back_influx_x]
+  []
+  [influx]
     type = ParsedFunction
-    # expression = '(vmin + (vmax-vmin) * exp(-((y-(W/2))^2) / (2*((W/5)^2))))'# * ((z+900) / 1800)'
-    # symbol_names = 'vmin vmax W'
-    # symbol_values = '3.3e-5 9.1e-5 10000'
+    expression = '(vmin + (vmax-vmin) * exp(-((y-(W/2))^2) / (2*((W/5)^2)))) * ((z+900) / 1800)'
+    symbol_names = 'vmin vmax W'
+    symbol_values = '3.3e-5 9.1e-5 10000'
 
     # expression = 'inlet_mps * sin((2*pi / 20000) * y)' # * (z / 433.2)'
-    expression = 'inlet_mps'
-    symbol_names = 'inlet_mps'
-    symbol_values = '${inlet_mps}'
+    # expression = 'inlet_mps'
+    # symbol_names = 'inlet_mps'
+    # symbol_values = '${inlet_mps}'
     
   []
-  [back_influx_y]
-    type = PiecewiseLinear
-    axis="y"
-    xy_data = '0. 1e-5
-               10000. -2.3e-5'
-  []
-
   [right_influx_y]
     type = PiecewiseLinear
     axis="x"
-    # xy_data = '0. -2.3e-5
-    #            16500. -4.2e-5
-    #            23500. -5e-6 
-    #            25000. -5e-6'
     xy_data = '0. -2.3e-5
-               25000. 0.'
+               16500. -4.2e-5
+               23500. -5e-6 
+               25000. -5e-6'
   []
-  # [right_influx_x]
-  #   type = PiecewiseLinear
-  #   axis="x"
-  #   xy_data = '0. 3.3e-5 
-  #              25000. 0.'
-  # []
+  [right_influx_x]
+    type = PiecewiseLinear
+    axis="x"
+    xy_data = '0. 3.3e-5 
+               23500. 2.5e-6 
+               25000. 2.5e-6'
+  []
 
   # [left_influx_y]
   #   type = PiecewiseLinear
@@ -207,6 +199,15 @@ inlet_mps = ${fparse
     type = RealFunctionControl
     parameter = 'Materials/ice/rampedup_viscosity'
     function = 'viscosity_rampup'
+    execute_on = 'initial timestep_begin'
+  []
+  [disp_activated]
+    type = TimePeriod
+    start_time=-100
+    end_time=2522880
+    disable_objects = 'Kernel::disp_x
+                       Kernel::disp_y
+                       Kernel::disp_z'
     execute_on = 'initial timestep_begin'
   []
 []
@@ -257,9 +258,39 @@ inlet_mps = ${fparse
     initial_condition = 1e6
     block = '1 0 255 256'
   []
+  [disp_x]
+    block = '1 0 255 256'
+    family = LAGRANGE
+    order = FIRST
+  []
+  [disp_y]
+    block = '1 0 255 256'
+    family = LAGRANGE
+    order = FIRST
+  []
+  [disp_z]
+    block = '1 0 255 256'
+    family = LAGRANGE
+    order = FIRST
+  []
 []
 
-[Kernels] 
+[Kernels]
+  [disp_x]
+    type = Diffusion
+    variable = disp_x
+    block = '1 0 255 256'
+  []
+  [disp_y]
+    type = Diffusion
+    variable = disp_y
+    block = '1 0 255 256'
+  []
+  [disp_z]
+    type = Diffusion
+    variable = disp_z
+    block = '1 0 255 256'
+  []
   [mass_ice]
     type = INSADMass
     block = '1 255'
@@ -362,6 +393,8 @@ inlet_mps = ${fparse
     variable = velocity
     boundary = 'left'
     function_y = 0
+    # function_x = left_influx_x
+    # function_y = left_influx_y
     set_z_comp = false
     set_x_comp = false
   []
@@ -371,10 +404,9 @@ inlet_mps = ${fparse
     type = ADVectorFunctionDirichletBC
     variable = velocity
     boundary = 'right'
-    # function_x = right_influx_x
+    function_x = right_influx_x
     function_y = right_influx_y
     set_z_comp = false
-    set_x_comp = false
   []
 
   [no_slip_sides_sediments]
@@ -386,21 +418,21 @@ inlet_mps = ${fparse
     function_z = 0.
   []
 
-  # [no_vertical_ice_sediment_boundary]
-  #   type = ADVectorFunctionDirichletBC
-  #   variable = velocity
-  #   boundary = 'top_sediment'
-  #   function_z = 0.
-  #   set_x_comp = false
-  #   set_y_comp = false
-  # []
+  [no_vertical_ice_sediment_boundary]
+    type = ADVectorFunctionDirichletBC
+    variable = velocity
+    boundary = 'top_sediment'
+    function_z = 0.
+    set_x_comp = false
+    set_y_comp = false
+  []
 
   [inlet]
     type = ADVectorFunctionDirichletBC
     variable = velocity
     boundary = 'back'
-    function_x = back_influx_x
-    function_y = back_influx_y
+    function_x = influx
+    function_y = 0.
     function_z = 0. # -2.6e-6 # 0. # TODO: give the surface slope speed?
   []
   
@@ -467,7 +499,6 @@ inlet_mps = ${fparse
   []
   
 []
-
 
 [Preconditioning]
   active = ''
