@@ -47,11 +47,11 @@ ADSedimentMaterialSI::computeQpProperties()
   Real L=25000;
   Real W=10000;
 
-  Real eta_back_center=5e12;
+  Real eta_back_center=1e10;
   
-  Real eta_front_center=1e12;
+  Real eta_front_center=1e10;
 
-  Real eta_sides=5e12;
+  Real eta_sides=5e11;
   Real sigma_y=1500;
   
   Real eta_center = eta_back_center + (eta_front_center - eta_back_center) * (_q_point[_qp](0) / L);

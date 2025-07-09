@@ -14,10 +14,10 @@ slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (
 nb_years = 0.008
 _dt = '${fparse nb_years * 3600 * 24 * 365}'
 
-inlet_mph = 0.32 # # 0.32 0.4 # mh-1 # slower doesn't help
-inlet_mps = ${fparse
-             inlet_mph / 3600
-            } # ms-1
+# inlet_mph = 0.32 # # 0.32 0.4 # mh-1 # slower doesn't help
+# inlet_mps = ${fparse
+             # inlet_mph / 3600
+            # } # ms-1
 
 # initial_viscosity = 8e9 # Pas
 # rampup_rate = 5e6 # 5e6 # 1e6 # 5e5 # 1e5
@@ -154,14 +154,14 @@ inlet_mps = ${fparse
 
   [back_influx_x]
     type = ParsedFunction
-    # expression = '(vmin + (vmax-vmin) * exp(-((y-(W/2))^2) / (2*((W/5)^2))))'# * ((z+900) / 1800)'
-    # symbol_names = 'vmin vmax W'
-    # symbol_values = '3.3e-5 9.1e-5 10000'
+    expression = '(vmin + (vmax-vmin) * exp(-((y-(W/2))^2) / (2*((W/5)^2))))'# * ((z+900) / 1800)'
+    symbol_names = 'vmin vmax W'
+    symbol_values = '3.3e-5 9.1e-5 10000'
 
     # expression = 'inlet_mps * sin((2*pi / 20000) * y)' # * (z / 433.2)'
-    expression = 'inlet_mps'
-    symbol_names = 'inlet_mps'
-    symbol_values = '${inlet_mps}'
+    # expression = 'inlet_mps'
+    # symbol_names = 'inlet_mps'
+    # symbol_values = '${inlet_mps}'
     
   []
   [back_influx_y]
@@ -174,12 +174,12 @@ inlet_mps = ${fparse
   [right_influx_y]
     type = PiecewiseLinear
     axis="x"
-    # xy_data = '0. -2.3e-5
-    #            16500. -4.2e-5
-    #            23500. -5e-6 
-    #            25000. -5e-6'
     xy_data = '0. -2.3e-5
-               25000. 0.'
+               16500. -4.2e-5
+               23500. -5e-6 
+               25000. -5e-6'
+    # xy_data = '0. -2.3e-5
+    #            25000. 0.'
   []
   # [right_influx_x]
   #   type = PiecewiseLinear
