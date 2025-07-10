@@ -441,7 +441,10 @@ _dt = '${fparse nb_years * 3600 * 24 * 365}'
     velocity_y = "vel_y"
     velocity_z = "vel_z"
     pressure = "p"
-    output_properties = 'mu_ice rho_ice'
+    output_properties = 'mu_ice rho_ice
+                         sig_xx_dev sig_yy_dev
+                         sig_zz_dev sig_xy_dev
+                         sig_xz_dev sig_yz_dev'
     outputs = "out"
   []
   [sediment]

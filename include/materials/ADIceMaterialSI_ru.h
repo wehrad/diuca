@@ -42,4 +42,12 @@ protected:
   /// density of the fluid (rho)
   ADMaterialProperty<Real> & _density;
 
+  // all components of the deviatoric stress tensor
+  ADMaterialProperty<Real> & _sig_xx_dev;
+  ADMaterialProperty<Real> & _sig_yy_dev;
+  ADMaterialProperty<Real> & _sig_zz_dev;
+  ADMaterialProperty<Real> & _sig_xy_dev;
+  ADMaterialProperty<Real> & _sig_xz_dev;
+  ADMaterialProperty<Real> & _sig_yz_dev;
+
 };

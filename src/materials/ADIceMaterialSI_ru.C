@@ -55,7 +55,14 @@ ADIceMaterialSI_ru::ADIceMaterialSI_ru(const InputParameters & parameters)
 
     // Ice properties created by this object
     _viscosity(declareADProperty<Real>("mu_ice")),
-    _density(declareADProperty<Real>("rho_ice"))
+    _density(declareADProperty<Real>("rho_ice")),
+
+    _sig_xx_dev(declareADProperty<Real>("sig_xx_dev")),
+    _sig_yy_dev(declareADProperty<Real>("sig_yy_dev")),
+    _sig_zz_dev(declareADProperty<Real>("sig_zz_dev")),
+    _sig_xy_dev(declareADProperty<Real>("sig_xy_dev")),
+    _sig_xz_dev(declareADProperty<Real>("sig_xz_dev")),
+    _sig_yz_dev(declareADProperty<Real>("sig_yz_dev"))   
 {
 }
 
@@ -94,5 +101,14 @@ ADIceMaterialSI_ru::computeQpProperties()
   
   // Constant density
   _density[_qp] = _rho;
+
+  // compute deviatoric streses
+  _sig_xx_dev[_qp] = 2 * _viscosity[_qp] * u_x;
+  _sig_yy_dev[_qp] = 2 * _viscosity[_qp] * v_y;
+  _sig_zz_dev[_qp] = 2 * _viscosity[_qp] * w_z;
+
+  _sig_xy_dev[_qp] = 2 * _viscosity[_qp] * eps_xy;
+  _sig_xz_dev[_qp] = 2 * _viscosity[_qp] * eps_xz;
+  _sig_yz_dev[_qp] = 2 * _viscosity[_qp] * eps_yz;
   
 }
