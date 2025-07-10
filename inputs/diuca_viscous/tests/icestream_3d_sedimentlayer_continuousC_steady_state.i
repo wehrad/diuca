@@ -175,9 +175,13 @@ _dt = '${fparse nb_years * 3600 * 24 * 365}'
     type = PiecewiseLinear
     axis="x"
     xy_data = '0. -2.3e-5
-               16500. -4.2e-5
+               16500. -3.e-5
                23500. -5e-6 
                25000. -5e-6'
+    # xy_data = '0. -2.3e-5
+    #            16500. -4.2e-5
+    #            23500. -5e-6 
+    #            25000. -5e-6'
     # xy_data = '0. -2.3e-5
     #            25000. 0.'
   []
@@ -386,14 +390,14 @@ _dt = '${fparse nb_years * 3600 * 24 * 365}'
     function_z = 0.
   []
 
-  # [no_vertical_ice_sediment_boundary]
-  #   type = ADVectorFunctionDirichletBC
-  #   variable = velocity
-  #   boundary = 'top_sediment'
-  #   function_z = 0.
-  #   set_x_comp = false
-  #   set_y_comp = false
-  # []
+  [no_vertical_ice_sediment_boundary]
+    type = ADVectorFunctionDirichletBC
+    variable = velocity
+    boundary = 'top_sediment'
+    function_z = 0.
+    set_x_comp = false
+    set_y_comp = false
+  []
 
   [inlet]
     type = ADVectorFunctionDirichletBC
