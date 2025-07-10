@@ -47,20 +47,33 @@ ADSedimentMaterialSI::computeQpProperties()
   Real L=25000;
   Real W=10000;
 
-  Real eta_back_center=5e10;
-  
-  Real eta_front_center=5e10;
+  // Real eta_back_center=5e10;
+  // Real eta_front_center=5e10;
+  // Real eta_sides=6e12;
 
-  Real eta_sides=6e12;
-  Real sigma_y=1000;
-  
+  Real eta_back_center=1e11;
+  Real eta_front_center=1e10;
+  Real eta_sides=1e13;
+
+  // Real eta_back_center=1e11;
+  // Real eta_front_center=1e10;
+  // Real eta_sides=5e12;
+
+  // pure gaussian
+  Real sigma_y=1500;
   Real eta_center = eta_back_center + (eta_front_center - eta_back_center) * (_q_point[_qp](0) / L);
-
   Real y0 = W / 2;
   Real gaussian_damping = std::exp(-(std::pow(_q_point[_qp](1) - y0, 2)) / (2 * std::pow(sigma_y, 2)));
-
   Real _eta = eta_sides + (eta_center - eta_sides) * gaussian_damping;
-  
+
+  // super gaussian
+  // Real order=4;
+  // Real y_width=1500;
+  // Real x_fraction = _q_point[_qp](0) / L;
+  // Real eta_center_x = eta_back_center + (eta_front_center - eta_back_center) * x_fraction;
+  // Real gaussian_y = exp(-(std::pow((_q_point[_qp](1) - (W/2)) / y_width, order)));
+  // Real _eta = eta_sides + (eta_center_x - eta_sides) * gaussian_y;
+ 
   _viscosity[_qp] = _eta;
   // _viscosity[_qp] = _LayerThickness / _SlipperinessCoefficient;
   

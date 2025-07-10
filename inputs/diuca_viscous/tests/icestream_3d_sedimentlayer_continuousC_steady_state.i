@@ -135,7 +135,7 @@ _dt = '${fparse nb_years * 3600 * 24 * 365}'
     xy_data = '252288. 1e12
                1261440. 5e12
                2522880. 1e13
-               3279744. 1e14
+               3279744. 9e13
                4288896. 2e14'
 
     # 0.35
@@ -583,7 +583,7 @@ _dt = '${fparse nb_years * 3600 * 24 * 365}'
   console = true
   [out]
     type = Exodus
-    # execute_on = 'FINAL'
+    execute_on = 'FINAL'
   []
 []
 
