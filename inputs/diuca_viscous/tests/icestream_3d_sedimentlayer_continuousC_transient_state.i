@@ -4,7 +4,7 @@ sediment_layer_thickness = 50.
 
 # ------------------------ simulation settings
 
-nb_years = 0.008
+nb_years = 0.0001
 _dt = '${fparse nb_years * 3600 * 24 * 365}'
 
 # ------------------------
@@ -14,140 +14,25 @@ _dt = '${fparse nb_years * 3600 * 24 * 365}'
   integrate_p_by_parts = true
 []
 
+[Problem]
+  #Note that the suffix is left off in the parameter below.
+  restart_file_base = icestream_3d_sedimentlayer_continuousC_steady_state_out_cp/LATEST  # You may also use a specific number here
+[]
+
 [Mesh]
-
-  [channel]
-    type = FileMeshGenerator
-    file = generate_icestream_mesh_out.e
-    # file = generate_iceblock_mesh_out.e
-  []
-
-  # Create sediment layer by projecting glacier bed by
-  # the sediment thickness
-  [lowerDblock_sediment]
-    type = LowerDBlockFromSidesetGenerator
-    # input = "delete_sediment_block"
-    input = "channel"
-    new_block_name = "block_0"
-    sidesets = "bottom"
-  []
-  [separateMesh_sediment]
-    type = BlockToMeshConverterGenerator
-    input = lowerDblock_sediment
-    target_blocks = "block_0"
-  []
-  [extrude_sediment]
-    type = MeshExtruderGenerator
-    input = separateMesh_sediment
-    num_layers = 1
-    extrusion_vector = '0. 0. -${sediment_layer_thickness}'
-    # bottom/top swap is (correct and) due to inverse extrusion
-    top_sideset = 'bottom_sediment'
-    bottom_sideset = 'top_sediment'
-  []
-  [stitch_sediment]
-    type = StitchedMeshGenerator
-    inputs = 'channel extrude_sediment'
-    stitch_boundaries_pairs = 'bottom top_sediment'
-    clear_stitched_boundary_ids = false
-  []
-
-  [add_frontback_leftright_sediment_sidesets]
-    type = SideSetsFromNormalsGenerator
-    # input = add_bottom_sediment_sideset
-    input = stitch_sediment
-    included_subdomains = "0"
-    normals = '0  1  0
-               0 -1  0
-               1  0  0
-              -1  0  0'
-    new_boundary = 'right_sediment left_sediment front_sediment back_sediment'
-  []
-
-  [add_nodesets]
-    type = NodeSetsFromSideSetsGenerator
-    input = add_frontback_leftright_sediment_sidesets
-  []
-
-  [final_mesh]
-    type = SubdomainBoundingBoxGenerator
-    restricted_subdomains="1"
-    input = add_nodesets
-    block_id = 255
-    block_name = deactivated
-    bottom_left = '24000 -100 -2000'
-    top_right = '26000 11000 150'
-  []
-
-  [final_mesh2]
-    type = SubdomainBoundingBoxGenerator
-    restricted_subdomains="0"
-    input = final_mesh
-    block_id = 256
-    block_name = deactivated2
-    bottom_left = '24000 -100 -2000'
-    top_right = '26000 11000 150'
-  []
-
-  [refined_mesh]
-    type = RefineBlockGenerator
-    input = "final_mesh2"
-    block = "255 256"
-    refinement = '1 2'
-    enable_neighbor_refinement = true
-    max_element_volume = 1e100
-  []
-
-  final_generator = refined_mesh
-
+  file = icestream_3d_sedimentlayer_continuousC_steady_state_out_cp/LATEST # ${initial_file}
 []
 
 [Functions]
-  # [viscosity_rampup]
-  #   type = ParsedFunction
-  #   expression = 'initial_viscosity + t * rampup_rate'
-  #   # expression = 'A * t^2 + B*t'
-  #   # expression = 'initial_II_eps_min'
-  #   # symbol_names = 'A B'
-  #   # symbol_values = '4.71333237962635 3567351.59817352'
-  #   symbol_names = 'initial_viscosity rampup_rate'
-  #   symbol_values = '${initial_viscosity} ${rampup_rate}'
-  # []
   [viscosity_rampup]
-    type = PiecewiseLinear
-
-    # 0.4
-    xy_data = '252288. 1e12
-               1261440. 5e12
-               2522880. 1e13
-               3279744. 9e13
-               4288896. 2e14'
-
-    # 0.35
-    # xy_data = '252288. 1e12
-    #            1261440. 9e12
-    #            2522880. 5e13
-    #            3279744. 1e14
-    #            4288896. 2e14'
-    # 0.32
-    # xy_data = '252288. 1.5e12
-    #            1261440. 9.72e12
-    #            2522880. 5e13
-    #            3279744. 1e14
-    #            4288896. 2e14'
+    type = ParsedFunction
+    expression = '2e14'
   []
-
   [back_influx_x]
     type = ParsedFunction
     expression = '(vmin + (vmax-vmin) * exp(-((y-(W/2))^2) / (2*((W/5)^2))))'# * ((z+900) / 1800)'
     symbol_names = 'vmin vmax W'
     symbol_values = '3.3e-5 9.1e-5 10000'
-
-    # expression = 'inlet_mps * sin((2*pi / 20000) * y)' # * (z / 433.2)'
-    # expression = 'inlet_mps'
-    # symbol_names = 'inlet_mps'
-    # symbol_values = '${inlet_mps}'
-    
   []
   [back_influx_y]
     type = PiecewiseLinear
@@ -155,7 +40,6 @@ _dt = '${fparse nb_years * 3600 * 24 * 365}'
     xy_data = '0. 1e-5
                10000. -2.3e-5'
   []
-
   [right_influx_y]
     type = PiecewiseLinear
     axis="x"
@@ -163,32 +47,7 @@ _dt = '${fparse nb_years * 3600 * 24 * 365}'
                16500. -3.e-5
                23500. -5e-6 
                25000. -5e-6'
-    # xy_data = '0. -2.3e-5
-    #            16500. -4.2e-5
-    #            23500. -5e-6 
-    #            25000. -5e-6'
-    # xy_data = '0. -2.3e-5
-    #            25000. 0.'
   []
-  # [right_influx_x]
-  #   type = PiecewiseLinear
-  #   axis="x"
-  #   xy_data = '0. 3.3e-5 
-  #              25000. 0.'
-  # []
-
-  # [left_influx_y]
-  #   type = PiecewiseLinear
-  #   axis="x"
-  #   xy_data = '0. 2e-5
-  #              25000. 0'
-  # []
-  # [left_influx_x]
-  #   type = PiecewiseLinear
-  #   axis="x"
-  #   xy_data = '0. 3.3e-5 
-  #              25000. 0.'
-  # []
 []
 
 [Controls]
@@ -203,10 +62,13 @@ _dt = '${fparse nb_years * 3600 * 24 * 365}'
 
 [AuxVariables]
   [vel_x]
+    initial_from_file_var = vel_x
   []
   [vel_y]
+    initial_from_file_var = vel_y
   []
   [vel_z]
+    initial_from_file_var = vel_z
   []
 []
 
@@ -238,13 +100,12 @@ _dt = '${fparse nb_years * 3600 * 24 * 365}'
   [velocity]
     family = LAGRANGE_VEC
     scaling = 1e-6
-    initial_condition = 1e-6
     block = '1 0 255 256'
   []
   [p]
     family = LAGRANGE
-    initial_condition = 1e6
     block = '1 0 255 256'
+    initial_from_file_var = p
   []
 []
 
@@ -340,11 +201,10 @@ _dt = '${fparse nb_years * 3600 * 24 * 365}'
     variable = velocity
     gravity = '0. 0. -9.81'
   []
-
 []
 
 [BCs]
-  
+
   # no slip at the sediment base nor on the sides
   [influx_side_left]
     type = ADVectorFunctionDirichletBC
@@ -435,8 +295,8 @@ _dt = '${fparse nb_years * 3600 * 24 * 365}'
   [sediment]
     type = ADSedimentMaterialSI
     block = '0 256'
-    # SlipperinessCoefficient = ${slipperiness_coefficient}
     LayerThickness = ${sediment_layer_thickness}
+    SubglacialFlood = true
     output_properties = 'mu_sediment rho_sediment'
     outputs = "out"
   []
@@ -457,7 +317,6 @@ _dt = '${fparse nb_years * 3600 * 24 * 365}'
     rho_name = "rho_sediment"
     mu_name = "mu_sediment"
   []
-  
 []
 
 
@@ -517,8 +376,9 @@ _dt = '${fparse nb_years * 3600 * 24 * 365}'
 
 [Executioner]
   type = Transient
-  num_steps = 50
-
+  num_steps = 60
+  start_time = 0
+  
   petsc_options_iname = '-pc_type -pc_factor_shift_type'
   petsc_options_value = 'lu       NONZERO'
   
@@ -533,13 +393,13 @@ _dt = '${fparse nb_years * 3600 * 24 * 365}'
   # nl_rel_tol = 1e-07
 
   # l_tol = 1e-6
-  l_tol = 1e-6
+  l_tol = 1e-5
 
-  nl_rel_tol = 1e-04 # in the initial SSA test
-  nl_abs_tol = 1e-04
+  # nl_rel_tol = 1e-04 # in the initial SSA test
+  # nl_abs_tol = 1e-04
 
-  # nl_rel_tol = 1e-05
-  # nl_abs_tol = 1e-05
+  nl_rel_tol = 1e-05
+  nl_abs_tol = 1e-05
 
   nl_max_its = 30
 
@@ -548,8 +408,8 @@ _dt = '${fparse nb_years * 3600 * 24 * 365}'
   line_search = none
 
   dt = '${_dt}'
-  steady_state_detection = true
-  steady_state_tolerance = 1e-10
+  # steady_state_detection = true
+  # steady_state_tolerance = 1e-10
   check_aux = true
 
   # [Adaptivity]
@@ -563,12 +423,10 @@ _dt = '${fparse nb_years * 3600 * 24 * 365}'
 []
 
 [Outputs]
-  checkpoint = true
   perf_graph = true
   console = true
   [out]
     type = Exodus
-    execute_on = 'FINAL'
   []
 []
 

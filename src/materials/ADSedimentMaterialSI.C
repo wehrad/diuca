@@ -96,7 +96,7 @@ ADSedimentMaterialSI::computeQpProperties()
 	_q_point[_qp](1) <= 5669.){
 
       Real front_FloodAmplitude = 0.;
-      Real back_FloodAmplitude = 6e10;
+      Real back_FloodAmplitude = 1e10;
       
       Real varying_FloodAmplitude = back_FloodAmplitude - (back_FloodAmplitude - front_FloodAmplitude) * std::pow(((_q_point[_qp](0) - _FloodStartPosition) / (L - _FloodStartPosition)), 0.6);
       
