@@ -34,6 +34,7 @@ protected:
 
   // subglacial flood characteristics
   const Real & _FloodStartPosition;
+  const Real & _FloodLateralSpread;
   const Real & _FloodAmplitude;
   const Real & _FloodPeakTime;
   const Real & _FloodSpreadTime;

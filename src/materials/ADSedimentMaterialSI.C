@@ -23,6 +23,8 @@ ADSedimentMaterialSI::validParams()
   params.declareControllable("SubglacialFlood");
   params.addParam<Real>("FloodStartPosition", 9000., "X-axis position where the flood starts");
   params.declareControllable("FloodStartPosition");
+  params.addParam<Real>("FloodLateralSpread", 1340., "Y-axis flood spread around center line");
+  params.declareControllable("FloodLateralSpread");
   params.addParam<Real>("FloodAmplitude", 1e-10, "Amplitude of variations in slipperiness coefficient");
   params.declareControllable("FloodAmplitude");
   params.addParam<Real>("FloodPeakTime", 3600*24, "Timing of flood peak in seconds");
@@ -51,6 +53,7 @@ ADSedimentMaterialSI::ADSedimentMaterialSI(const InputParameters & parameters)
     // Subglacial flood characteristics
     _SubglacialFlood(getParam<bool>("SubglacialFlood")),
     _FloodStartPosition(getParam<Real>("FloodStartPosition")),
+    _FloodLateralSpread(getParam<Real>("FloodLateralSpread")),
     _FloodAmplitude(getParam<Real>("FloodAmplitude")),
     _FloodPeakTime(getParam<Real>("FloodPeakTime")),
     _FloodSpreadTime(getParam<Real>("FloodSpreadTime")),
@@ -87,28 +90,31 @@ ADSedimentMaterialSI::computeQpProperties()
   Real y0 = W / 2;
   Real gaussian_damping = std::exp(-(std::pow(_q_point[_qp](1) - y0, 2)) / (2 * std::pow(sigma_y, 2)));
   Real _eta = eta_sides + (eta_center - eta_sides) * gaussian_damping;
-
-  
+      
   if (_SubglacialFlood == true){
-    
-    if (_q_point[_qp](0) >= _FloodStartPosition &&
-	_q_point[_qp](1) >= 4330. &&
-	_q_point[_qp](1) <= 5669.){
 
-      Real front_FloodAmplitude = 0.;
-      Real back_FloodAmplitude = 1e10;
-      
-      Real varying_FloodAmplitude = back_FloodAmplitude - (back_FloodAmplitude - front_FloodAmplitude) * std::pow(((_q_point[_qp](0) - _FloodStartPosition) / (L - _FloodStartPosition)), 0.6);
-      
-      Real x_relative = _q_point[_qp](0) - _FloodStartPosition;
-      Real flood_dt = x_relative / _FloodSpeed;
-      Real flood_t = _t - flood_dt;
-      
-      _eta -= varying_FloodAmplitude * std::exp((-(std::pow(flood_t - _FloodPeakTime, 2))) / (2 * std::pow(_FloodSpreadTime, 2)));
-      
+    if (_q_point[_qp](0) >= _FloodStartPosition){
+      if (_q_point[_qp](1) <= (W/2) + (_FloodLateralSpread/2)){
+	  // if (_q_point[_qp](1) >= (W/2) - (_FloodLateralSpread/2)){
+	
+	std::cout << _q_point[_qp](1) << std::endl;
+	    
+	Real front_FloodAmplitude = 0.;
+	Real back_FloodAmplitude = 5e10;
+	
+	Real varying_FloodAmplitude = back_FloodAmplitude - (back_FloodAmplitude - front_FloodAmplitude) * std::pow(((_q_point[_qp](0) - _FloodStartPosition) / (L - _FloodStartPosition)), 0.6);
+	
+	Real x_relative = _q_point[_qp](0) - _FloodStartPosition;
+	Real flood_dt = x_relative / _FloodSpeed;
+	Real flood_t = _t - flood_dt;
+	
+	_eta -= varying_FloodAmplitude * std::exp((-(std::pow(flood_t - _FloodPeakTime, 2))) / (2 * std::pow(_FloodSpreadTime, 2)));
+	    
+	  // }
+      }
     }
   }
-
+    
   _viscosity[_qp] = _eta;
   // _viscosity[_qp] = _LayerThickness / _SlipperinessCoefficient;
 
