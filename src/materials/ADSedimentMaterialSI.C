@@ -23,11 +23,11 @@ ADSedimentMaterialSI::validParams()
   params.declareControllable("SubglacialFlood");
   params.addParam<Real>("FloodStartPosition", 9000., "X-axis position where the flood starts");
   params.declareControllable("FloodStartPosition");
-  params.addParam<Real>("FloodLateralSpread", 1340., "Y-axis flood spread around center line");
+  params.addParam<Real>("FloodLateralSpread", 2000., "Y-axis flood spread around center line");
   params.declareControllable("FloodLateralSpread");
   params.addParam<Real>("FloodAmplitude", 1e-10, "Amplitude of variations in slipperiness coefficient");
   params.declareControllable("FloodAmplitude");
-  params.addParam<Real>("FloodPeakTime", 3600*24, "Timing of flood peak in seconds");
+  params.addParam<Real>("FloodPeakTime", 3600*10, "Timing of flood peak in seconds");
   params.declareControllable("FloodPeakTime");
   params.addParam<Real>("FloodSpreadTime", 3600*3, "Flood spread (as std of a gaussian)");
   params.declareControllable("FloodSpreadTime");
@@ -95,22 +95,22 @@ ADSedimentMaterialSI::computeQpProperties()
 
     if (_q_point[_qp](0) >= _FloodStartPosition){
       if (_q_point[_qp](1) <= (W/2) + (_FloodLateralSpread/2)){
-	  // if (_q_point[_qp](1) >= (W/2) - (_FloodLateralSpread/2)){
-	
-	std::cout << _q_point[_qp](1) << std::endl;
+	  if (_q_point[_qp](1) >= (W/2) - (_FloodLateralSpread/2)){
+        
+	    Real front_FloodAmplitude = 3e10;
+	    Real back_FloodAmplitude = 3e10;
 	    
-	Real front_FloodAmplitude = 0.;
-	Real back_FloodAmplitude = 5e10;
-	
-	Real varying_FloodAmplitude = back_FloodAmplitude - (back_FloodAmplitude - front_FloodAmplitude) * std::pow(((_q_point[_qp](0) - _FloodStartPosition) / (L - _FloodStartPosition)), 0.6);
-	
-	Real x_relative = _q_point[_qp](0) - _FloodStartPosition;
-	Real flood_dt = x_relative / _FloodSpeed;
-	Real flood_t = _t - flood_dt;
-	
-	_eta -= varying_FloodAmplitude * std::exp((-(std::pow(flood_t - _FloodPeakTime, 2))) / (2 * std::pow(_FloodSpreadTime, 2)));
+	    Real varying_FloodAmplitude = back_FloodAmplitude - (back_FloodAmplitude - front_FloodAmplitude) * std::pow(((_q_point[_qp](0) - _FloodStartPosition) / (L - _FloodStartPosition)), 0.6);
 	    
-	  // }
+	    Real x_relative = _q_point[_qp](0) - _FloodStartPosition;
+	    Real flood_dt = x_relative / _FloodSpeed;
+	    Real flood_t = _t - flood_dt;
+	    
+	    std::cout << _eta << " ";
+	    
+	    _eta -= varying_FloodAmplitude * std::exp((-(std::pow(flood_t - _FloodPeakTime, 2))) / (2 * std::pow(_FloodSpreadTime, 2)));
+	
+	  }
       }
     }
   }
