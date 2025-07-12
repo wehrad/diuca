@@ -23,7 +23,7 @@ ADSedimentMaterialSI::validParams()
   params.declareControllable("SubglacialFlood");
   params.addParam<Real>("FloodStartPosition", 9000., "X-axis position where the flood starts");
   params.declareControllable("FloodStartPosition");
-  params.addParam<Real>("FloodLateralSpread", 2000., "Y-axis flood spread around center line");
+  params.addParam<Real>("FloodLateralSpread", 1000., "Y-axis flood spread around center line");
   params.declareControllable("FloodLateralSpread");
   params.addParam<Real>("FloodAmplitude", 1e-10, "Amplitude of variations in slipperiness coefficient");
   params.declareControllable("FloodAmplitude");
@@ -81,32 +81,53 @@ ADSedimentMaterialSI::computeQpProperties()
   // Real eta_front_center=1e10;
   // Real eta_sides=5e12;
 
-  Real eta_back_center=1e11;
-  Real eta_front_center=1e10;
-  Real eta_sides=1e13;
+  // Real eta_back_center=1e11;
+  // Real eta_front_center=1e10;
+  // Real eta_sides=1e13;
 
-  Real sigma_y=1500;
-  Real eta_center = eta_back_center + (eta_front_center - eta_back_center) * (_q_point[_qp](0) / L);
-  Real y0 = W / 2;
-  Real gaussian_damping = std::exp(-(std::pow(_q_point[_qp](1) - y0, 2)) / (2 * std::pow(sigma_y, 2)));
-  Real _eta = eta_sides + (eta_center - eta_sides) * gaussian_damping;
+  Real eta_back_center=1e11;
+  Real eta_front_center=1e9;
+  Real eta_sides=1.5e13;
+  Real _eta;
+  
+  // Simple and sharp channel/side distinction
+  if (_q_point[_qp](1) <= (W/2) + (_FloodLateralSpread/2) &&
+      _q_point[_qp](1) >= (W/2) - (_FloodLateralSpread/2)){
+    _eta = eta_back_center + (eta_front_center - eta_back_center) * (_q_point[_qp](0) / L);
+  }
+  else{
+    _eta = eta_sides;
+  }
+  
+  // Gaussian from center to sides
+  // Real sigma_y=1500;
+  // Real eta_center = eta_back_center + (eta_front_center - eta_back_center) * (_q_point[_qp](0) / L);
+  // Real y0 = W / 2;
+  // Real gaussian_damping = std::exp(-(std::pow(_q_point[_qp](1) - y0, 2)) / (2 * std::pow(sigma_y, 2)));
+  // Real _eta = eta_sides + (eta_center - eta_sides) * gaussian_damping;
       
   if (_SubglacialFlood == true){
 
     if (_q_point[_qp](0) >= _FloodStartPosition){
       if (_q_point[_qp](1) <= (W/2) + (_FloodLateralSpread/2)){
 	  if (_q_point[_qp](1) >= (W/2) - (_FloodLateralSpread/2)){
-        
-	    Real front_FloodAmplitude = 4e10;
-	    Real back_FloodAmplitude = 4e10;
+
+	    // Real front_FloodAmplitude = 1e10;
+	    // Real back_FloodAmplitude = 6e10;
 	    
+	    // Real front_FloodAmplitude = 1e7;
+	    // Real back_FloodAmplitude = 1e11;
+
+	    Real front_FloodAmplitude = 1e7;
+	    Real back_FloodAmplitude = 1e11;
+        
 	    Real varying_FloodAmplitude = back_FloodAmplitude - (back_FloodAmplitude - front_FloodAmplitude) * std::pow(((_q_point[_qp](0) - _FloodStartPosition) / (L - _FloodStartPosition)), 0.6);
 	    
 	    Real x_relative = _q_point[_qp](0) - _FloodStartPosition;
 	    Real flood_dt = x_relative / _FloodSpeed;
 	    Real flood_t = _t - flood_dt;
 	    
-	    std::cout << _eta << " ";
+	    // std::cout << _eta << " ";
 	    
 	    _eta -= varying_FloodAmplitude * std::exp((-(std::pow(flood_t - _FloodPeakTime, 2))) / (2 * std::pow(_FloodSpreadTime, 2)));
 	

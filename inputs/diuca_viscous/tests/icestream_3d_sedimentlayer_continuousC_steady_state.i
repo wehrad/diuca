@@ -92,8 +92,8 @@ _dt = '${fparse nb_years * 3600 * 24 * 365}'
   [refined_mesh]
     type = RefineBlockGenerator
     input = "final_mesh2"
-    block = "255 256"
-    refinement = '1 2'
+    block = "255" # 256"
+    refinement = '1' # 2'
     enable_neighbor_refinement = true
     max_element_volume = 1e100
   []
