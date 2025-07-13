@@ -21,9 +21,9 @@ ADSedimentMaterialSI::validParams()
   // Required characteristics of a subglacial flood
   params.addParam<bool>("SubglacialFlood", false, "Apply a subglacial flood");
   params.declareControllable("SubglacialFlood");
-  params.addParam<Real>("FloodStartPosition", 9000., "X-axis position where the flood starts");
+  params.addParam<Real>("FloodStartPosition", 8000., "X-axis position where the flood starts");
   params.declareControllable("FloodStartPosition");
-  params.addParam<Real>("FloodLateralSpread", 1000., "Y-axis flood spread around center line");
+  params.addParam<Real>("FloodLateralSpread", 2000., "Y-axis flood spread around center line");
   params.declareControllable("FloodLateralSpread");
   params.addParam<Real>("FloodAmplitude", 1e-10, "Amplitude of variations in slipperiness coefficient");
   params.declareControllable("FloodAmplitude");
@@ -73,22 +73,51 @@ ADSedimentMaterialSI::computeQpProperties()
   Real L=25000;
   Real W=10000;
 
-  // Real eta_back_center=5e10;
+  // Bed supporting 30-50% of tau_d I think
+  // Spread 1000.
+  // Real eta_back_center=1e11;
+  // Real eta_front_center=1e10;
+  // Real eta_sides=1e12;
+  // Real _eta;
+
+  // Bed supporting more than tau_d
+  // Spread 1000.
+  // Real eta_back_center=5e11;
   // Real eta_front_center=5e10;
-  // Real eta_sides=6e12;
+  // Real eta_sides=1e12;
+  // Real _eta;
 
-  // Real eta_back_center=1e11;
-  // Real eta_front_center=1e10;
-  // Real eta_sides=5e12;
+  // Bed suppprting 50-70% of tau_d
+  // Spread 1000.
+  // Real eta_back_center=2e11;
+  // Real eta_front_center=2e10;
+  // Real eta_sides=1e12;
+  // Real _eta;
 
-  // Real eta_back_center=1e11;
-  // Real eta_front_center=1e10;
-  // Real eta_sides=1e13;
-
-  Real eta_back_center=1e11;
-  Real eta_front_center=1e9;
-  Real eta_sides=1.5e13;
+  // Bed supporting 50-80% of tau_d
+  // Spread 2000.
+  Real eta_back_center=2e11;
+  Real eta_front_center=2e10;
+  Real eta_sides=1e12;
   Real _eta;
+
+  // Bed supporting 50-80% of tau_d and doesn't make much difference
+  // except from making the main trunk slower... Maybe increase C in
+  // main trunk again?
+  // Spread 2000.
+  // Real eta_back_center=2e11;
+  // Real eta_front_center=2e10;
+  // Real eta_sides=5e11;
+  // Real _eta;
+
+  // Bed supporting 60-140% of tau_d
+  // Spread 2000.
+  // Real eta_back_center=1e11;
+  // Real eta_front_center=1e10;
+  // Real eta_sides=1e12;
+  // Real _eta;
+
+  // Try weaker shear margins
   
   // Simple and sharp channel/side distinction
   if (_q_point[_qp](1) <= (W/2) + (_FloodLateralSpread/2) &&
@@ -112,15 +141,9 @@ ADSedimentMaterialSI::computeQpProperties()
       if (_q_point[_qp](1) <= (W/2) + (_FloodLateralSpread/2)){
 	  if (_q_point[_qp](1) >= (W/2) - (_FloodLateralSpread/2)){
 
-	    // Real front_FloodAmplitude = 1e10;
-	    // Real back_FloodAmplitude = 6e10;
-	    
-	    // Real front_FloodAmplitude = 1e7;
-	    // Real back_FloodAmplitude = 1e11;
+	    Real front_FloodAmplitude = 1e10;
+	    Real back_FloodAmplitude = 1.4e11;
 
-	    Real front_FloodAmplitude = 1e7;
-	    Real back_FloodAmplitude = 1e11;
-        
 	    Real varying_FloodAmplitude = back_FloodAmplitude - (back_FloodAmplitude - front_FloodAmplitude) * std::pow(((_q_point[_qp](0) - _FloodStartPosition) / (L - _FloodStartPosition)), 0.6);
 	    
 	    Real x_relative = _q_point[_qp](0) - _FloodStartPosition;
