@@ -21,7 +21,7 @@ ADSedimentMaterialSI::validParams()
   // Required characteristics of a subglacial flood
   params.addParam<bool>("SubglacialFlood", false, "Apply a subglacial flood");
   params.declareControllable("SubglacialFlood");
-  params.addParam<Real>("FloodStartPosition", 8000., "X-axis position where the flood starts");
+  params.addParam<Real>("FloodStartPosition", 7000., "X-axis position where the flood starts");
   params.declareControllable("FloodStartPosition");
   params.addParam<Real>("FloodLateralSpread", 2000., "Y-axis flood spread around center line");
   params.declareControllable("FloodLateralSpread");
@@ -70,59 +70,29 @@ void
 ADSedimentMaterialSI::computeQpProperties()
 {
 
+  RealVectorValue centroid = _current_elem->vertex_average();
+  
   Real L=25000;
   Real W=10000;
 
-  // Bed supporting 30-50% of tau_d I think
-  // Spread 1000.
-  // Real eta_back_center=1e11;
-  // Real eta_front_center=1e10;
-  // Real eta_sides=1e12;
-  // Real _eta;
-
-  // Bed supporting more than tau_d
-  // Spread 1000.
-  // Real eta_back_center=5e11;
-  // Real eta_front_center=5e10;
-  // Real eta_sides=1e12;
-  // Real _eta;
-
-  // Bed suppprting 50-70% of tau_d
-  // Spread 1000.
-  // Real eta_back_center=2e11;
-  // Real eta_front_center=2e10;
-  // Real eta_sides=1e12;
-  // Real _eta;
-
   // Bed supporting 50-80% of tau_d
   // Spread 2000.
-  Real eta_back_center=2e11;
-  Real eta_front_center=2e10;
-  Real eta_sides=1e12;
-  Real _eta;
-
-  // Bed supporting 50-80% of tau_d and doesn't make much difference
-  // except from making the main trunk slower... Maybe increase C in
-  // main trunk again?
-  // Spread 2000.
+  // BEST SO FAR
   // Real eta_back_center=2e11;
   // Real eta_front_center=2e10;
-  // Real eta_sides=5e11;
-  // Real _eta;
-
-  // Bed supporting 60-140% of tau_d
-  // Spread 2000.
-  // Real eta_back_center=1e11;
-  // Real eta_front_center=1e10;
   // Real eta_sides=1e12;
   // Real _eta;
 
-  // Try weaker shear margins
+  // BETTER / FINAL
+  Real eta_back_center=2e11;
+  Real eta_front_center=3e10;
+  Real eta_sides=1e12;
+  Real _eta;
   
   // Simple and sharp channel/side distinction
   if (_q_point[_qp](1) <= (W/2) + (_FloodLateralSpread/2) &&
       _q_point[_qp](1) >= (W/2) - (_FloodLateralSpread/2)){
-    _eta = eta_back_center + (eta_front_center - eta_back_center) * (_q_point[_qp](0) / L);
+    _eta = eta_back_center + (eta_front_center - eta_back_center) * (centroid(0) / L);
   }
   else{
     _eta = eta_sides;
@@ -139,22 +109,32 @@ ADSedimentMaterialSI::computeQpProperties()
 
     if (_q_point[_qp](0) >= _FloodStartPosition){
       if (_q_point[_qp](1) <= (W/2) + (_FloodLateralSpread/2)){
-	  if (_q_point[_qp](1) >= (W/2) - (_FloodLateralSpread/2)){
+	if (_q_point[_qp](1) >= (W/2) - (_FloodLateralSpread/2)){
 
-	    Real front_FloodAmplitude = 1e10;
-	    Real back_FloodAmplitude = 1.4e11;
+	  // Real x_relative = _q_point[_qp](0) - _FloodStartPosition;
+	  Real x_relative = centroid(0) - _FloodStartPosition;
+	  Real flood_dt = x_relative / _FloodSpeed;
+	  Real flood_t = _t - flood_dt;
 
-	    Real varying_FloodAmplitude = back_FloodAmplitude - (back_FloodAmplitude - front_FloodAmplitude) * std::pow(((_q_point[_qp](0) - _FloodStartPosition) / (L - _FloodStartPosition)), 0.6);
-	    
-	    Real x_relative = _q_point[_qp](0) - _FloodStartPosition;
-	    Real flood_dt = x_relative / _FloodSpeed;
-	    Real flood_t = _t - flood_dt;
-	    
-	    // std::cout << _eta << " ";
-	    
-	    _eta -= varying_FloodAmplitude * std::exp((-(std::pow(flood_t - _FloodPeakTime, 2))) / (2 * std::pow(_FloodSpreadTime, 2)));
-	
-	  }
+	  // 9000 start: best so far.
+	  // Real a = 1.0465369502609009e19;
+	  // Real b = -1.991623066870517;
+
+	  // 7000 start
+	  // Real a = 4.1938096222036243e+17;
+	  // Real b = -1.6718579455805134;
+	  // Real _FloodVaryingAmplitude = a * std::pow(centroid(0), b);
+	  
+	  Real a = -0.02608;
+	  Real b = 1723;
+	  Real c = -4.025e+07;
+	  Real d = 3.526e+11;
+	  
+	  Real _FloodVaryingAmplitude = a * std::pow(centroid(0), 3) + b * std::pow(centroid(0), 2) + c * centroid(0) + d;
+	  
+	  _eta -= _FloodVaryingAmplitude * std::exp((-(std::pow(flood_t - _FloodPeakTime, 2))) / (2 * std::pow(_FloodSpreadTime, 2)));
+	  
+	}
       }
     }
   }
