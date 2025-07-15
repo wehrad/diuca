@@ -9,53 +9,39 @@ gravity_z = '${fparse - cos(bed_slope / 180 * pi) * 9.81}'
 
 #  geometry of the ice shelf
 length = 100.
-width = 1000.
+width = 100.
 thickness = 100.
 
-# dt associated with rest time associated with the
-# geometry (in seconds)
-# ice has a high viscosity and hence response times
-# of years
-nb_years = 0.01 # 0.1
+nb_years = 0.008
 _dt = '${fparse nb_years * 3600 * 24 * 365}'
-
-# inlet_mph = 0.01 # mh-1
-# inlet_mps = ${fparse
-#              inlet_mph / 3600
-#             } # ms-1
-
-# initial_II_eps_min = 1e-22 constant
-# initial_II_eps_min = 1e-07 decay = 2e-6 was the safest
-# initial_II_eps_min = 1e-07 decay = 1e-5 aggressive
-
-initial_II_eps_min = 1e-07
 
 # ------------------------
 
+[GlobalParams]
+  order = FIRST
+  integrate_p_by_parts = true
+[]
+
 [Functions]
-  # [ocean_pressure]
-  #   type = ParsedFunction
-  #   expression = 'if(z < 0, 1e5 -1028 * 9.81 * z, 1e5)' # -1e5 * 9.81 * z)'
-  # []
   [viscosity_rampup]
-    type = ParsedFunction
-    expression = 'initial_II_eps_min * exp(-(t-_dt) * 5e-6)' # 3e-6 # 2e-6
-    # expression = 'initial_II_eps_min'
-    symbol_names = '_dt initial_II_eps_min'
-    symbol_values = '${_dt} ${initial_II_eps_min}'
+    type = PiecewiseLinear
+    xy_data = '252288. 1.5e12
+               1261440. 9.72e12
+               2522880. 5e13
+               3279744. 1e14
+               5550336. 1e15
+               6054912. 2e15
+               6307200. 3e15
+               6559488. 6e15
+               6811776. 1e16
+               7064064. 2e16'
   []
-  # [influx]
-  #   type = ParsedFunction
-  #   expression = 'inlet_mps * sin((2*pi / 20000) * y)'
-  #   symbol_names = 'inlet_mps'
-  #   symbol_values = '${inlet_mps}'
-  # []
 []
 
 [Controls]
-  [II_eps_min_control]
+  [viscosity_rampup_control]
     type = RealFunctionControl
-    parameter = 'Materials/ice/II_eps_min'
+    parameter = 'Materials/ice/rampedup_viscosity'
     function = 'viscosity_rampup'
     execute_on = 'initial timestep_begin'
   []
@@ -71,23 +57,11 @@ initial_II_eps_min = 1e-07
     ymax = '${length}'
     zmin = 0
     zmax = '${thickness}'
-    nx = 60
-    ny = 4
-    nz = 4
+    nx = 150
+    ny = 3
+    nz = 2
     elem_type = HEX8
   []
-  # [pin_pressure_node]
-  #   type = BoundingBoxNodeSetGenerator
-  #   input = 'base_mesh'
-  #   bottom_left = '-0.0001 -0.00001 0'
-  #   top_right = '0.000001 0.000001 0'
-  #   new_boundary = 'pressure_pin_node'
-  # []
-[]
-
-[GlobalParams]
-  order = FIRST
-  integrate_p_by_parts = true
 []
 
 [AuxVariables]
@@ -190,23 +164,6 @@ initial_II_eps_min = 1e-07
       variable = 'p'
     []
   []
-
-  # we need to pin the pressure to remove the singular value
-  #[pin_pressure]
-  #  type = DirichletBC
-  #  variable = p
-  #  boundary = 'pressure_pin_node'
-  #  value = 1e5
-  #[]
-
-  # [inlet]
-  #   type = ADVectorFunctionDirichletBC
-  #   variable = velocity
-  #   boundary = 'left'
-  #   # function_x = "${inlet_mps}"
-  #   function_x=0
-  #   # function_y = 0.
-  # []
   [no_lateral_sliding]
     type = ADVectorFunctionDirichletBC
     variable = velocity
@@ -216,7 +173,6 @@ initial_II_eps_min = 1e-07
     function_z = 0.
     # set_x_comp = False
   []
-
   [no_basal_penetration]
     type = ADVectorFunctionDirichletBC
     variable = velocity
@@ -225,30 +181,19 @@ initial_II_eps_min = 1e-07
     set_x_comp = False
     set_y_comp = False
   []
-
-  # [oulet]
-  #   type = ADFunctionDirichletBC
-  #   variable = p
-  #   boundary = 'right'
-  #   function = ocean_pressure
-  # []
-  # [freesurface]
-  #   type = INSADMomentumNoBCBC
-  #   variable = velocity
-  #   pressure = p
-  #   boundary = 'top'
-  # []
-  
 []
 
 [Materials]
   [ice]
-    type = ADIceMaterialSI
+    type = ADIceMaterialSI_ru
     velocity_x = "vel_x"
     velocity_y = "vel_y"
     velocity_z = "vel_z"
     pressure = "p"
-    output_properties = "rho_ice mu_ice"
+    output_properties = 'mu_ice rho_ice
+                         sig_xx_dev sig_yy_dev
+                         sig_zz_dev sig_xy_dev
+                         sig_xz_dev sig_yz_dev'
     outputs = "out"
   []
   [ins_mat]
@@ -317,7 +262,7 @@ initial_II_eps_min = 1e-07
 
 [Executioner]
   type = Transient
-  num_steps = 100 # 100
+  num_steps = 28
 
   petsc_options_iname = '-pc_type -pc_factor_shift_type'
   petsc_options_value = 'lu       NONZERO'
