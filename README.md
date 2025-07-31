@@ -1,11 +1,11 @@
 # Diuca: Glacier physics modelling with the MOOSE framework
 
-- [Why diuca?](#whydiuca)
-- [Installation](#installation)
-
 diuca is a [MOOSE](https://mooseframework.inl.gov/) application to
 simulate the viscous and elastic deformation of ice in various
 conditions.
+
+- [Why diuca?](#whydiuca)
+- [Installation](#installation)
 
 diuca currently includes:
 
@@ -26,10 +26,10 @@ also known as glacier finch as it nests in ice cavities of glaciers
 [Lazo et al,
 2025](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5366418)).
 
-![Screenshot](./assets/BBC_earth_diuca_finch.jpg)
 A recent [BBC Earth video](https://youtu.be/lTKsjZN-Aec) reveals for the
 first time the life of a family of diuca finch at Quelccaya Glacier in
 Peru.
+![Screenshot](assets/BBC_earth_diuca_finch.jpg)
 
 ## Installation
 
