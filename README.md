@@ -15,11 +15,11 @@ diuca currently includes:
 
 ## Why diuca?
 
-To follow MOOSE convention of naming new applications with animal
-names, diuca was named after the [White-winged Diuca Finch (Idiopsar
+To follow the MOOSE convention of naming new applications after
+animals, Diuca was named after the [White-winged Diuca Finch (Idiopsar
 speculifer)](https://www.peruaves.org/thraupidae/white-winged-diuca-finch-diuca-speculifera/),
-also known as glacier finch as it nests in ice cavities of glaciers
-([Johnson,
+also known as the glacier finch for its unique nesting behavior in
+glacier cavities ([Johnson,
 1967](https://academic.oup.com/auk/article-abstract/85/3/524/5198113?redirectedFrom=fulltext),
 [Hardy & Hardy,
 2008](https://bioone.org/journals/The-Wilson-Journal-of-Ornithology/volume-120/issue-3/06-165.1/White-winged-Diuca-Finch-span-classgenus-speciesDiuca-speculifera-span-Nesting/10.1676/06-165.1.short),
