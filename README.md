@@ -1,3 +1,4 @@
+![https://www.repostatus.org/badges/latest/wip.svg](https://www.repostatus.org/badges/latest/wip.svg)
 # Diuca: Glacier physics modelling with the MOOSE framework
 
 Diuca is a [MOOSE](https://mooseframework.inl.gov/) application to
