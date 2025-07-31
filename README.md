@@ -1,6 +1,8 @@
 ![https://www.repostatus.org/badges/latest/wip.svg](https://www.repostatus.org/badges/latest/wip.svg)
 ![https://img.shields.io/badge/License-LGPL_v2.1-blue.svg](https://img.shields.io/badge/License-LGPL_v2.1-blue.svg)
 [![Continuous integration](https://github.com/wehrad/diuca/workflows/CI/badge.svg)](https://github.com/wehrad/diuca/actions)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://pre-commit.com/)
+
 
 # Diuca: Glacier physics modelling with the MOOSE framework
 

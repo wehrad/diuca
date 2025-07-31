@@ -27,5 +27,4 @@ public:
 protected:
   // stress to be applied
   const Real & _water_density;
-
 };

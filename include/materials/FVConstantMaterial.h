@@ -16,9 +16,7 @@ public:
   FVConstantMaterial(const InputParameters & parameters);
 
 protected:
-
   // Material density
   const Real & _rho;
   const Real & _mu;
-
 };

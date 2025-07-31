@@ -39,7 +39,7 @@ protected:
   const Real & _FloodPeakTime;
   const Real & _FloodSpreadTime;
   const Real & _FloodSpeed;
-  
+
   /// viscosity of the fluid (mu)
   ADMaterialProperty<Real> & _viscosity;
   /// density of the fluid (rho)

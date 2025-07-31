@@ -26,13 +26,12 @@ public:
   void gatherRCData(const FaceInfo &) override final;
 
 protected:
-
   /// The dimension of the simulation
   // const unsigned int _dim;
 
   /// index x|y|z
   const unsigned int _axis_index;
-  
+
   /// x-related stresses
   const Moose::Functor<ADRealVectorValue> & _sig_x;
 
@@ -41,5 +40,4 @@ protected:
 
   /// z-related stresses
   const Moose::Functor<ADRealVectorValue> & _sig_z;
-
 };

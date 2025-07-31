@@ -26,11 +26,10 @@ public:
   IceDamage(const InputParameters & parameters);
 
   // virtual void initQpStatefulProperties() override;
-  
+
 protected:
-  
   virtual void updateQpDamageIndex() override;
-  
+
   // Damage law parameters
   const Real & _r;
   const Real & _B;
@@ -40,5 +39,4 @@ protected:
   /// Current stress
   // const MaterialProperty<double> & _von_mises;
   const MaterialProperty<RankTwoTensor> & _stress;
-
 };

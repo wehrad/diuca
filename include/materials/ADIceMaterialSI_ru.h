@@ -34,7 +34,7 @@ protected:
 
   // Finite strain rate parameter
   const Real & _rampedup_viscosity;
-  
+
   const ADVariableValue & _pressure;
 
   /// viscosity of the fluid (mu)
@@ -49,5 +49,4 @@ protected:
   ADMaterialProperty<Real> & _sig_xy_dev;
   ADMaterialProperty<Real> & _sig_xz_dev;
   ADMaterialProperty<Real> & _sig_yz_dev;
-
 };

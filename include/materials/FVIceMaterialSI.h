@@ -32,8 +32,7 @@ protected:
 
   // pressure
   const Moose::Functor<ADReal> & _pressure;
-  
+
   // Finite strain rate parameter
   const Real & _II_eps_min;
-
 };
