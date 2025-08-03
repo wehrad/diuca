@@ -15,16 +15,16 @@
 /**
  * A class that imparts a stress on the momentum equation
  */
-class INSFVStressMomentumFluxBC : public INSFVFreeSurfaceBC
+class INSFVHydrostaticPressureBC : public INSFVFreeSurfaceBC
 {
 public:
   static InputParameters validParams();
-  INSFVStressMomentumFluxBC(const InputParameters & params);
+  INSFVHydrostaticPressureBC(const InputParameters & params);
 
   using INSFVFluxBC::gatherRCData;
   void gatherRCData(const FaceInfo & fi) override;
 
 protected:
   // stress to be applied
-  const Real & _sig;
+  const Real & _water_density;
 };

@@ -3,22 +3,17 @@
 # slope.
 
 # The front geometry is first created in the XY geometry before it's extructed along the glacier length, and nodes transformed to include the sinusoid.
-
-length = 25000.
+length = 20000.
 width = 10000.
 
-channel_depth = -800.
-
-channel_width_spread = 1200.
-side_elevation = -100. # 0.0
-peak_position = 5000.
+channel_depth = -800. # -1200.
 surface_slope = 0.032 # 0.025 # bedmachine: 0.032
 front_elevation = 100.
+side_elevation = -800.
 
-
-nb_elements_alongflow = 50
-nb_elements_acrossflow = 30
-nb_elements_depth = 7 
+nb_elements_alongflow = 10 #30 
+nb_elements_acrossflow = 10 # 15
+nb_elements_depth = 5
 
 [Mesh]
 
@@ -27,9 +22,9 @@ nb_elements_depth = 7
   [pcg1]
     type = ParsedCurveGenerator
     x_formula = 't'
-    y_formula = '(channel_depth * exp((-((t - peak_position) ^ 2)) / (2 * channel_width_spread^2))) + side_elevation'
-    constant_names = 'channel_depth peak_position channel_width_spread side_elevation'
-    constant_expressions = '${channel_depth} ${peak_position} ${channel_width_spread} ${side_elevation}'
+    y_formula = 'channel_depth'
+    constant_names = 'channel_depth'
+    constant_expressions = '${channel_depth}'
     section_bounding_t_values = '0 ${width}'
     nums_segments = '${nb_elements_acrossflow}'
   []
@@ -62,9 +57,7 @@ nb_elements_depth = 7
   [add_sinusoidal]
     type = ParsedNodeTransformGenerator
     input = make3D
-    # x_function = "x + (300*sin((2*pi/10000)*z))"
     x_function = "x"
-    # y_function = 'if(y > side_elevation, y + (((length - z) * surface_slope) * ((y - side_elevation) / front_elevation)), y)'
     y_function = 'if(y > 0., (y + (((length - z) * surface_slope))) * (y / front_elevation), y)'
     z_function = "z"
     constant_names = 'pi side_elevation surface_slope length front_elevation'
@@ -113,13 +106,12 @@ nb_elements_depth = 7
     type = NodeSetsFromSideSetsGenerator
     input = add_leftright_frontback_sidesets
   []
-  
+
   # [order_conversion]
   #   type = ElementOrderConversionGenerator
   #   input = add_nodesets
   #   conversion_type = SECOND_ORDER
   # []
-
 []
 
 [Executioner]

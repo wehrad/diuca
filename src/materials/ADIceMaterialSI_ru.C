@@ -1,10 +1,10 @@
-#include "ADIceMaterialSI.h"
+#include "ADIceMaterialSI_ru.h"
 #include "MooseMesh.h"
 
-registerMooseObject("diucaApp", ADIceMaterialSI);
+registerMooseObject("diucaApp", ADIceMaterialSI_ru);
 
 InputParameters
-ADIceMaterialSI::validParams()
+ADIceMaterialSI_ru::validParams()
 {
   InputParameters params = ADMaterial::validParams();
 
@@ -23,13 +23,13 @@ ADIceMaterialSI::validParams()
   params.addParam<ADReal>("density", 917., "Ice density"); // kgm-3
   
   // Minimum strain rate parameter
-  params.addParam<Real>("II_eps_min", 1e-25, "Finite strain rate parameter"); // s-1
-  params.declareControllable("II_eps_min"); // s-1
+  params.addParam<Real>("rampedup_viscosity", 1e-25, "Finite strain rate parameter"); // Pas
+  params.declareControllable("rampedup_viscosity"); // Pas
   
   return params;
 }
 
-ADIceMaterialSI::ADIceMaterialSI(const InputParameters & parameters)
+ADIceMaterialSI_ru::ADIceMaterialSI_ru(const InputParameters & parameters)
   : ADMaterial(parameters),
 
     // Mesh dimension
@@ -48,19 +48,26 @@ ADIceMaterialSI::ADIceMaterialSI(const InputParameters & parameters)
     _grad_velocity_z(_mesh_dimension == 3 ? adCoupledGradient("velocity_z") : _ad_grad_zero),
 
     // Finite strain rate parameter
-    _II_eps_min(getParam<Real>("II_eps_min")),
+    _rampedup_viscosity(getParam<Real>("rampedup_viscosity")),
 
     // Mean stress
     _pressure(adCoupledValue("pressure")),
 
     // Ice properties created by this object
     _viscosity(declareADProperty<Real>("mu_ice")),
-    _density(declareADProperty<Real>("rho_ice"))
+    _density(declareADProperty<Real>("rho_ice")),
+
+    _sig_xx_dev(declareADProperty<Real>("sig_xx_dev")),
+    _sig_yy_dev(declareADProperty<Real>("sig_yy_dev")),
+    _sig_zz_dev(declareADProperty<Real>("sig_zz_dev")),
+    _sig_xy_dev(declareADProperty<Real>("sig_xy_dev")),
+    _sig_xz_dev(declareADProperty<Real>("sig_xz_dev")),
+    _sig_yz_dev(declareADProperty<Real>("sig_yz_dev"))   
 {
 }
 
 void
-ADIceMaterialSI::computeQpProperties()
+ADIceMaterialSI_ru::computeQpProperties()
 {
 
   // Wrap term with Glen's fluidity parameter for clarity
@@ -87,15 +94,21 @@ ADIceMaterialSI::computeQpProperties()
   ADReal II_eps = 0.5 * (u_x * u_x + v_y * v_y + w_z * w_z +
                          2. * (eps_xy * eps_xy + eps_xz * eps_xz + eps_yz * eps_yz));
 
-  // Prevent Floating point errors (observed on Linux) by forcing non-null II_eps
-  if (II_eps < _II_eps_min)
-    II_eps = _II_eps_min;
-
   // Compute viscosity
   _viscosity[_qp] = (0.5 * ApGlen * std::pow(II_eps, -(1. - 1. / _nGlen) / 2.)); // Pas
   _viscosity[_qp] = std::max(_viscosity[_qp], 3.153600e09);
+  _viscosity[_qp] = std::min(_viscosity[_qp], _rampedup_viscosity);
   
   // Constant density
   _density[_qp] = _rho;
 
+  // compute deviatoric streses
+  _sig_xx_dev[_qp] = 2 * _viscosity[_qp] * u_x;
+  _sig_yy_dev[_qp] = 2 * _viscosity[_qp] * v_y;
+  _sig_zz_dev[_qp] = 2 * _viscosity[_qp] * w_z;
+
+  _sig_xy_dev[_qp] = 2 * _viscosity[_qp] * eps_xy;
+  _sig_xz_dev[_qp] = 2 * _viscosity[_qp] * eps_xz;
+  _sig_yz_dev[_qp] = 2 * _viscosity[_qp] * eps_yz;
+  
 }

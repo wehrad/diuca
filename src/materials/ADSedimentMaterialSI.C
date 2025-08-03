@@ -8,37 +8,31 @@ ADSedimentMaterialSI::validParams()
 {
   InputParameters params = ADMaterial::validParams();
 
-  // Friction coefficient (DruckerPrager model)
-  // params.addParam<Real>("FrictionCoefficient", 1.0, "Sediment friction coefficient");
-  // params.declareControllable("FrictionCoefficient");
-
-  // Friction coefficient (Slip model)
-  params.addParam<Real>("SlipperinessCoefficient", 1.0, "Sediment slipperiness coefficient");
-  params.declareControllable("SlipperinessCoefficient");
+  params.addParam<Real>("density", 917., "Sediment density"); // kgm-3
 
   // Sediment layer thickness (Slip model)
   params.addParam<Real>("LayerThickness", 1.0, "Sediment layer thickness"); // m
   params.declareControllable("LayerThickness");
 
-  // Get velocity gradients to compute viscosity based on the effective strain rate
-  // params.addRequiredCoupledVar("velocity_x", "Velocity in x dimension");
-  // params.addCoupledVar("velocity_y", "Velocity in y dimension");
-  // params.addCoupledVar("velocity_z", "Velocity in z dimension");
+  // Friction coefficient (Slip model)
+  params.addParam<Real>("SlipperinessCoefficient", 1.0, "Sediment slipperiness coefficient");
+  params.declareControllable("SlipperinessCoefficient");
 
-  // Mean pressure
-  // params.addRequiredCoupledVar("pressure", "Mean stress");
-
-  // Sediment density (https://tc.copernicus.org/articles/14/261/2020/)
-  params.addParam<Real>("density", 1850., "Sediment density"); // kgm-3
-  params.declareControllable("density"); // kgm-3
-
-  // Convergence parameters
-  params.addParam<Real>("II_eps_min", 1e-25, "Finite strain rate parameter"); // s-1
-  params.declareControllable("II_eps_min"); // s-1
-
-  // Model to simulate sediments
-  // params.addParam<std::string>("sliding_law", "GudmundssonRaymond", "Model to simulate sediment deformation (DruckerPrager or GudmundssonRaymond)");
-  // params.declareControllable("sliding_law");
+  // Required characteristics of a subglacial flood
+  params.addParam<bool>("SubglacialFlood", false, "Apply a subglacial flood");
+  params.declareControllable("SubglacialFlood");
+  params.addParam<Real>("FloodStartPosition", 7000., "X-axis position where the flood starts");
+  params.declareControllable("FloodStartPosition");
+  params.addParam<Real>("FloodLateralSpread", 2000., "Y-axis flood spread around center line");
+  params.declareControllable("FloodLateralSpread");
+  params.addParam<Real>("FloodAmplitude", 1e-10, "Amplitude of variations in slipperiness coefficient");
+  params.declareControllable("FloodAmplitude");
+  params.addParam<Real>("FloodPeakTime", 3600*10, "Timing of flood peak in seconds");
+  params.declareControllable("FloodPeakTime");
+  params.addParam<Real>("FloodSpreadTime", 3600*3, "Flood spread (as std of a gaussian)");
+  params.declareControllable("FloodSpreadTime");
+  params.addParam<Real>("FloodSpeed", 0.83, "Propagation speed of the flood peak in m.s-1");
+  params.declareControllable("FloodSpeed");
 
   return params;
 }
@@ -52,32 +46,23 @@ ADSedimentMaterialSI::ADSedimentMaterialSI(const InputParameters & parameters)
     // Sediment density
     _rho(getParam<Real>("density")),
 
-    // Velocity gradients
-    // _grad_velocity_x(adCoupledGradient("velocity_x")),
-    // _grad_velocity_y(_mesh_dimension >= 2 ? adCoupledGradient("velocity_y") : _ad_grad_zero),
-    // _grad_velocity_z(_mesh_dimension == 3 ? adCoupledGradient("velocity_z") : _ad_grad_zero),
-
-    // Friction coefficient (DruckerPrager model)
-    // _FrictionCoefficient(getParam<Real>("FrictionCoefficient")),
-
-    // Slipperiness coefficient (GudmundssonRaymond model)
-    _SlipperinessCoefficient(getParam<Real>("SlipperinessCoefficient")),
-
-    // Sediment layer thickness (GudmundssonRaymond model)
+    // Sediment layer characteristics
     _LayerThickness(getParam<Real>("LayerThickness")),
+    _SlipperinessCoefficient(getParam<Real>("SlipperinessCoefficient")),
+    
+    // Subglacial flood characteristics
+    _SubglacialFlood(getParam<bool>("SubglacialFlood")),
+    _FloodStartPosition(getParam<Real>("FloodStartPosition")),
+    _FloodLateralSpread(getParam<Real>("FloodLateralSpread")),
+    _FloodAmplitude(getParam<Real>("FloodAmplitude")),
+    _FloodPeakTime(getParam<Real>("FloodPeakTime")),
+    _FloodSpreadTime(getParam<Real>("FloodSpreadTime")),
+    _FloodSpeed(getParam<Real>("FloodSpeed")),
 
-    // Model to simulate sediments
-    // _sliding_law(getParam<std::string>("sliding_law")),
+    // Sediment properties created by this object
+    _viscosity(declareADProperty<Real>("mu_sediment")),
+    _density(declareADProperty<Real>("rho_sediment"))
 
-    // Finite strain rate parameter
-    _II_eps_min(getParam<Real>("II_eps_min")),
-
-    // Mean stress
-    // _pressure(adCoupledValue("pressure")),
-
-    // Ice properties created by this object
-    _density(declareADProperty<Real>("rho_sediment")),
-    _viscosity(declareADProperty<Real>("mu_sediment"))
 {
 }
 
@@ -85,64 +70,79 @@ void
 ADSedimentMaterialSI::computeQpProperties()
 {
 
-  // Constant density
-  _density[_qp] = _rho;
-
-  // if (_sliding_law == "GudmundssonRaymond")
-  //   {
+  RealVectorValue centroid = _current_elem->vertex_average();
   
-  // _viscosity[_qp] = _LayerThickness / _SlipperinessCoefficient;
-  _viscosity[_qp] = 1e10;
+  Real L=25000;
+  Real W=10000;
+
+  // Bed supporting 50-80% of tau_d
+  // Spread 2000.
+  // BEST SO FAR
+  // Real eta_back_center=2e11;
+  // Real eta_front_center=2e10;
+  // Real eta_sides=1e12;
+  // Real _eta;
+
+  // BETTER / FINAL
+  Real eta_back_center=2e11;
+  Real eta_front_center=3e10;
+  Real eta_sides=1e12;
+  Real _eta;
   
-      // ADReal viscosity = 1e10;
-      // std::cout << "SEDIMENT  " << _viscosity[_qp] << "  " << _pressure[_qp] << std::endl;
-    // }
-
-  // std::cout << "SEDIMENT  " << _viscosity[_qp] << "  " << _pressure[_qp] << std::endl;
-  // Viscosity at previous timestep
-  // ADReal eta = _viscosity[_qp];
+  // Simple and sharp channel/side distinction
+  if (_q_point[_qp](1) <= (W/2) + (_FloodLateralSpread/2) &&
+      _q_point[_qp](1) >= (W/2) - (_FloodLateralSpread/2)){
+    _eta = eta_back_center + (eta_front_center - eta_back_center) * (centroid(0) / L);
+  }
+  else{
+    _eta = eta_sides;
+  }
   
-  // if (_sliding_law == "DruckerPrager")
-  //   {
-  //     // Get current velocity gradients at quadrature point
-  //     ADReal u_x = _grad_velocity_x[_qp](0);
-  //     ADReal u_y = _grad_velocity_x[_qp](1);
-  //     ADReal u_z = _grad_velocity_x[_qp](2);
-
-  //     ADReal v_x = _grad_velocity_y[_qp](0);
-  //     ADReal v_y = _grad_velocity_y[_qp](1);
-  //     ADReal v_z = _grad_velocity_y[_qp](2);
-  //     ADReal w_x = _grad_velocity_z[_qp](0);
-  //     ADReal w_y = _grad_velocity_z[_qp](1);
-  //     ADReal w_z = _grad_velocity_z[_qp](2);
-
-  //     ADReal eps_xy = 0.5 * (u_y + v_x);
-  //     ADReal eps_xz = 0.5 * (u_z + w_x);
-  //     ADReal eps_yz = 0.5 * (v_z + w_y);
-
-  //     // Get pressure
-  //     ADReal sig_m = _pressure[_qp];
-
-  //     // Compute stresses
-  //     ADReal sxx = 2 * eta * u_x + sig_m;
-  //     ADReal syy = 2 * eta * v_y + sig_m;
-  //     ADReal szz = 2 * eta * w_z + sig_m;
-
-  //     ADReal sxy = eta * (u_y + v_x);
-  //     ADReal sxz = eta * (u_z + w_x);
-  //     ADReal syz = eta * (v_z + w_y);
-
-  //     // Compute deviatoric stresses
-  //     ADReal sxx_dev = 2 * eta * u_x;
-  //     ADReal syy_dev = 2 * eta * v_y;
-  //     ADReal szz_dev = 2 * eta * w_z;
-
-  //     // von Mises stress (second invariant)
-  //     ADReal sig_e = std::sqrt(3. / 2. * (sxx_dev * sxx_dev + syy_dev * syy_dev + 2 * sxy * sxy));
+  // Gaussian from center to sides
+  // Real sigma_y=1500;
+  // Real eta_center = eta_back_center + (eta_front_center - eta_back_center) * (_q_point[_qp](0) / L);
+  // Real y0 = W / 2;
+  // Real gaussian_damping = std::exp(-(std::pow(_q_point[_qp](1) - y0, 2)) / (2 * std::pow(sigma_y, 2)));
+  // Real _eta = eta_sides + (eta_center - eta_sides) * gaussian_damping;
       
-  //     // Compute viscosity
-  //     _viscosity[_qp] = (_FrictionCoefficient * sig_m) / std::abs(sig_e);
-  //     // _viscosity[_qp] = 3.;
-  //   }
+  if (_SubglacialFlood == true){
+
+    if (_q_point[_qp](0) >= _FloodStartPosition){
+      if (_q_point[_qp](1) <= (W/2) + (_FloodLateralSpread/2)){
+	if (_q_point[_qp](1) >= (W/2) - (_FloodLateralSpread/2)){
+
+	  // Real x_relative = _q_point[_qp](0) - _FloodStartPosition;
+	  Real x_relative = centroid(0) - _FloodStartPosition;
+	  Real flood_dt = x_relative / _FloodSpeed;
+	  Real flood_t = _t - flood_dt;
+
+	  // 9000 start: best so far.
+	  // Real a = 1.0465369502609009e19;
+	  // Real b = -1.991623066870517;
+
+	  // 7000 start
+	  // Real a = 4.1938096222036243e+17;
+	  // Real b = -1.6718579455805134;
+	  // Real _FloodVaryingAmplitude = a * std::pow(centroid(0), b);
+	  
+	  Real a = -0.02608;
+	  Real b = 1723;
+	  Real c = -4.025e+07;
+	  Real d = 3.526e+11;
+	  
+	  Real _FloodVaryingAmplitude = a * std::pow(centroid(0), 3) + b * std::pow(centroid(0), 2) + c * centroid(0) + d;
+	  
+	  _eta -= _FloodVaryingAmplitude * std::exp((-(std::pow(flood_t - _FloodPeakTime, 2))) / (2 * std::pow(_FloodSpreadTime, 2)));
+	  
+	}
+      }
+    }
+  }
+    
+  _viscosity[_qp] = _eta;
+  // _viscosity[_qp] = _LayerThickness / _SlipperinessCoefficient;
+
+  // Constant density (not used for the linear sliding law here)
+  _density[_qp] = _rho;
 
 }

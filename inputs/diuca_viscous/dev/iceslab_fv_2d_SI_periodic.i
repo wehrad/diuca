@@ -1,28 +1,75 @@
-# ------------------------ simulation settings
+# ------------------------
 
-nb_years = 0.075
-mult = 0.5
-_dt = '${fparse nb_years * 3600 * 24 * 365 * mult}'
+# slope of the bottom boundary (in degrees)
+bed_slope = 10.
+
+# change coordinate system to add a slope
+gravity_x = '${fparse sin(bed_slope / 180 * pi) * 9.81 }'
+gravity_y = '${fparse - cos(bed_slope / 180 * pi) * 9.81}'
+
+#  geometry of the ice slab
+# length = 1000.
+# thickness = 100.
+
+length = 10000.
+thickness = 100.
+
+# dt associated with rest time associated with the
+# geometry (in seconds)
+# ice has a high viscosity and hence response times
+# of years
+nb_years = 0.01
+_dt = '${fparse nb_years * 3600 * 24 * 365}'
+
+# inlet_mph = 0.1 # mh-1
+# inlet_mps = '${fparse inlet_mph / 3600}' # ms-1
+
+# ------------------------
 
 # Numerical scheme parameters
 velocity_interp_method = 'rc'
-advected_interp_method = 'upwind'
+advected_interp_method = 'upwind' #upwind
 
 # velocity scaling
-vel_scaling = 1e-6
+vel_scaling = 1e-7 
 
 # Material properties
 rho = 'rho_ice'
 mu = 'mu_ice'
 
 # Initial finite strain rate for viscosity rampup
-initial_II_eps_min = 1e-07
+initial_II_eps_min = 1e-07 # 1e-07
 
 # ------------------------
 
-[Problem]
-  type = FEProblem
+[Functions]
+  [pressure_pin]
+    type = ParsedFunction
+    expression = '917*9.81*sin(100-y)'
+  []
+  [viscosity_rampup]
+    type = ParsedFunction
+    expression = 'initial_II_eps_min * exp(-(t-_dt) * 5e-6)'
+    symbol_names = '_dt initial_II_eps_min'
+    symbol_values = '${_dt} ${initial_II_eps_min}'
+  []
+  # [transform_x]
+  #   type = ParsedFunction
+  #   expression = 'x - length'
+  #   symbol_names = 'length'
+  #   symbol_values = '${length}'
+  # []
 []
+
+[Controls]
+  [II_eps_min_control]
+    type = RealFunctionControl
+    parameter = 'FunctorMaterials/ice/II_eps_min'
+    function = 'viscosity_rampup'
+    execute_on = 'initial timestep_begin'
+  []
+[]
+
 [GlobalParams]
   rhie_chow_user_object = 'rc'
 []
@@ -37,22 +84,34 @@ initial_II_eps_min = 1e-07
 []
 
 [Mesh]
-  type = GeneratedMesh
-  dim = 2
-  xmin = 0
-  xmax = 0.333
-  ymin = 0
-  ymax = 1
-  nx = 1
-  ny = 3
-  elem_type = QUAD9
+  [base_mesh]
+    type = GeneratedMeshGenerator
+    dim = 2
+    xmin = 0
+    xmax = '${length}'
+    ymin = 0
+    ymax = '${thickness}'
+    nx = 50
+    ny = 100
+    elem_type = QUAD9
+  []
 []
+
+[ICs]
+  [pressure_ic]
+    type = FunctionIC
+    variable = 'pressure'
+    function = pressure_pin
+  []
+[]
+  
 
 [Variables]
   [vel_x]
     type = INSFVVelocityVariable
     two_term_boundary_expansion = true
     scaling = ${vel_scaling}
+    initial_condition=1e-7
   []
   [vel_y]
     type = INSFVVelocityVariable
@@ -62,6 +121,7 @@ initial_II_eps_min = 1e-07
   [pressure]
     type = INSFVPressureVariable
     two_term_boundary_expansion = true
+    # scaling = ${vel_scaling}
   []
 []
 
@@ -100,14 +160,14 @@ initial_II_eps_min = 1e-07
     pressure = pressure
     momentum_component = 'x'
   []
-  # [u_gravity]
-  #   type = INSFVMomentumGravity
-  #   variable = vel_x
-  #   rho = ${rho}
-  #   momentum_component = 'x'
-  #   gravity = '0 -9.81 0'
-  # []
- 
+  [u_gravity]
+    type = INSFVMomentumGravity
+    variable = vel_x
+    momentum_component = 'x'
+    rho = ${rho}
+    gravity = '${gravity_x} ${gravity_y} 0.'
+  []
+
   [v_time]
     type = INSFVMomentumTimeDerivative
     variable = vel_y
@@ -134,94 +194,120 @@ initial_II_eps_min = 1e-07
     pressure = pressure
     momentum_component = 'y'
   []
-  # [v_buoyant]
-  #   type = INSFVMomentumGravity
-  #   variable = vel_y
-  #   rho = ${rho}
-  #   momentum_component = 'y'
-  #   gravity = '0 -9.81 0'
-  # []
+  [v_gravity]
+    type = INSFVMomentumGravity
+    variable = vel_y
+    momentum_component = 'y'
+    rho = ${rho}
+    gravity = '${gravity_x} ${gravity_y} 0.'
+  []
 
 []
 
 [FVBCs]
+  # [periodic_vel_x]
+  #   type = FVADFunctorDirichletBC
+  #   variable = vel_x
+  #   boundary = 'right'
+  #   functor = transformed_vel_x
+  # []
+  # [periodic_vel_y]
+  #   type = FVADFunctorDirichletBC
+  #   variable = vel_y
+  #   boundary = 'right'
+  #   functor = transformed_vel_y
+  # []
+  # [periodic_pressure]
+  #   type = FVADFunctorDirichletBC
+  #   variable = pressure
+  #   boundary = 'right'
+  #   functor = transformed_pressure
+  # []
   
-  [compression_bottom_yy]
-    type = INSFVStressMomentumFluxBC
-    variable = vel_y
-    momentum_component='y'
+  [noslip_x]
+    type = INSFVNoSlipWallBC
+    variable = vel_x
     boundary = 'bottom'
-    value = 1e6
+    function = 0.
   []
-  [compression_bottom_xx]
-    type = INSFVStressMomentumFluxBC
-    variable = vel_x
-    momentum_component='x'
-    boundary = 'bottom'
-    value = 0.
-  []
-  [compression_bottom_xy]
-    type = INSFVStressMomentumFluxBC
-    variable = vel_x
-    momentum_component='y'
-    boundary = 'bottom'
-    value = 0.
-  []
-  
-  [compression_top_yy]
-    type = INSFVStressMomentumFluxBC
-    variable = vel_y
-    momentum_component='y'
-    boundary = 'top'
-    value = -1e6
-  []
-  [compression_top_xx]
-    type = INSFVStressMomentumFluxBC
-    variable = vel_x
-    momentum_component='x'
-    boundary = 'top'
-    value = 0.
-  []
-  [compression_top_xy]
-    type = INSFVStressMomentumFluxBC
-    variable = vel_x
-    momentum_component='y'
-    boundary = 'top'
-    value = 0.
-  []
-  
-[]
 
+  [noslip_y]
+    type = INSFVNoSlipWallBC
+    variable = vel_y
+    boundary = 'bottom' # bottom
+    function = 0
+  []
+
+  [freeslip_x]
+    type = INSFVNaturalFreeSlipBC
+    variable = vel_x
+    boundary = 'top'
+    momentum_component = 'x'
+  []
+  [freeslip_y]
+    type = INSFVNaturalFreeSlipBC
+    variable = vel_y
+    boundary = 'top'
+    momentum_component = 'y'
+  []
+
+  # [influx_vel_x]
+  #   type = FVDirichletBC
+  #   variable = vel_x
+  #   boundary = 'left'
+  #   value = 1e-6
+  # []
+  [outlet_p]
+    type = INSFVOutletPressureBC
+    variable = pressure
+    boundary = 'right'
+    functor = pressure_pin
+  []
+  [inlet_p]
+    type = INSFVOutletPressureBC
+    variable = pressure
+    boundary = 'left'
+    functor = pressure_pin
+  []
+
+[]
 
 [Functions]
-  [viscosity_rampup]
+  [ocean_pressure]
     type = ParsedFunction
-    expression = 'initial_II_eps_min * exp(-(t-_dt) * 1e-6)'
-    symbol_names = '_dt initial_II_eps_min'
-    symbol_values = '${_dt} ${initial_II_eps_min}'
-  []
-[]
-
-[Controls]
-  [II_eps_min_control]
-    type = RealFunctionControl
-    parameter = 'FunctorMaterials/ice/II_eps_min'
-    function = 'viscosity_rampup'
-    execute_on = 'initial timestep_begin'
+    expression = '-1028 * 9.81 * ( (y * cos(bed_slope / 180 * pi)) + (x * sin(bed_slope / 180 * pi)))'
+    symbol_names = 'bed_slope'
+    symbol_values = '${bed_slope}'
   []
 []
 
 [FunctorMaterials]
   [ice]
     type = FVIceMaterialSI
-    block = '0'
     velocity_x = "vel_x"
     velocity_y = "vel_y"
     pressure = "pressure"
     output_properties = 'mu_ice rho_ice eps_xx eps_yy sig_xx sig_yy eps_xy sig_xy'
     outputs = "out"
   []
-
+  # [translate_vel_x]
+  #   type = ADFunctorTransformFunctorMaterial
+  #   prop_names = 'transformed_vel_x'
+  #   prop_values = 'vel_x'
+  #   x_functor = 'transform_x'
+  # []
+  # [translate_vel_y]
+  #   type = ADFunctorTransformFunctorMaterial
+  #   prop_names = 'transformed_vel_y'
+  #   prop_values = 'vel_y'
+  #   x_functor = 'transform_x'
+  # []
+  # [translate_pressure]
+  #   type = ADFunctorTransformFunctorMaterial
+  #   prop_names = 'transformed_pressure'
+  #   prop_values = 'pressure'
+  #   x_functor = 'transform_x'
+  # []
 []
 
 [Preconditioning]
@@ -296,10 +382,10 @@ initial_II_eps_min = 1e-07
   # nl_rel_tol = 1e-07
 
   # nl_abs_tol = 2e-06
-  nl_abs_tol = 2e-05
+  nl_abs_tol = 1e-07
 
   # l_tol = 1e-6
-  l_tol = 1e-5
+  l_tol = 1e-07
 
   nl_max_its = 100
   nl_forced_its = 3

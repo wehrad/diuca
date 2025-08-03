@@ -4,14 +4,14 @@
 bed_slope = 10.
 
 # change coordinate system to add a slope
-gravity_x = '${fparse sin(bed_slope / 180 * pi) * 9.81 }'
+gravity_x = '${fparse sin(bed_slope / 180 * pi) * 9.81}'
 gravity_y = '${fparse - cos(bed_slope / 180 * pi) * 9.81}'
 
 #  geometry of the ice slab
 # length = 1000.
 # thickness = 100.
 
-length = 500.
+length = 1000.
 thickness = 100.
 
 # dt associated with rest time associated with the
@@ -31,29 +31,27 @@ velocity_interp_method = 'rc'
 advected_interp_method = 'upwind' #upwind
 
 # velocity scaling
-vel_scaling = 1e-7 
+vel_scaling = 1e-07
 
 # Material properties
 rho = 'rho_ice'
 mu = 'mu_ice'
 
 # Initial finite strain rate for viscosity rampup
-initial_II_eps_min = 1e-07 # 1e-07
+initial_II_eps_min = 1e-15
 
 # ------------------------
 
 [Functions]
+  [pressure_pin]
+    type = ParsedFunction
+    expression = '917*9.81*sin(100-y)' # 1e5' # ''
+  []
   [viscosity_rampup]
     type = ParsedFunction
     expression = 'initial_II_eps_min * exp(-(t-_dt) * 5e-6)'
     symbol_names = '_dt initial_II_eps_min'
     symbol_values = '${_dt} ${initial_II_eps_min}'
-  []
-  [transform_x]
-    type = ParsedFunction
-    expression = 'x - length'
-    symbol_names = 'length'
-    symbol_values = '${length}'
   []
 []
 
@@ -87,8 +85,8 @@ initial_II_eps_min = 1e-07 # 1e-07
     xmax = '${length}'
     ymin = 0
     ymax = '${thickness}'
-    nx = 50
-    ny = 20
+    nx = 80 # 60
+    ny = 60 # 60
     elem_type = QUAD9
   []
 []
@@ -191,26 +189,22 @@ initial_II_eps_min = 1e-07 # 1e-07
 
 []
 
+
 [FVBCs]
-  [periodic_vel_x]
-    type = FVADFunctorDirichletBC
+
+  [free_slip_x]
+    type = INSFVNaturalFreeSlipBC
     variable = vel_x
-    boundary = 'right'
-    functor = transformed_vel_x
+    momentum_component = 'x'
+    boundary = 'top'
   []
-  [periodic_vel_y]
-    type = FVADFunctorDirichletBC
+  [free_slip_y]
+    type = INSFVNaturalFreeSlipBC
     variable = vel_y
-    boundary = 'right'
-    functor = transformed_vel_y
+    momentum_component = 'y'
+    boundary = 'top'
   []
-  [periodic_pressure]
-    type = FVADFunctorDirichletBC
-    variable = pressure
-    boundary = 'right'
-    functor = transformed_pressure
-  []
-  
+
   [noslip_x]
     type = INSFVNoSlipWallBC
     variable = vel_x
@@ -238,21 +232,17 @@ initial_II_eps_min = 1e-07 # 1e-07
   #   momentum_component = 'y'
   # []
 
-  # [outlet_p]
-  #   type = INSFVOutletPressureBC
-  #   variable = pressure
-  #   boundary = 'right'
-  #   functor = ocean_pressure
-  # []
-
-[]
-
-[Functions]
-  [ocean_pressure]
-    type = ParsedFunction
-    expression = '-1028 * 9.81 * ( (y * cos(bed_slope / 180 * pi)) + (x * sin(bed_slope / 180 * pi)))'
-    symbol_names = 'bed_slope'
-    symbol_values = '${bed_slope}'
+  [outlet_p]
+    type = INSFVOutletPressureBC
+    variable = pressure
+    boundary = 'right'
+    functor = pressure_pin
+  []
+  [inlet_p]
+    type = INSFVOutletPressureBC
+    variable = pressure
+    boundary = 'left'
+    functor = pressure_pin
   []
 []
 
@@ -265,28 +255,10 @@ initial_II_eps_min = 1e-07 # 1e-07
     output_properties = 'mu_ice rho_ice eps_xx eps_yy sig_xx sig_yy eps_xy sig_xy'
     outputs = "out"
   []
-  [translate_vel_x]
-    type = ADFunctorTransformFunctorMaterial
-    prop_names = 'transformed_vel_x'
-    prop_values = 'vel_x'
-    x_functor = 'transform_x'
-  []
-  [translate_vel_y]
-    type = ADFunctorTransformFunctorMaterial
-    prop_names = 'transformed_vel_y'
-    prop_values = 'vel_y'
-    x_functor = 'transform_x'
-  []
-  [translate_pressure]
-    type = ADFunctorTransformFunctorMaterial
-    prop_names = 'transformed_pressure'
-    prop_values = 'pressure'
-    x_functor = 'transform_x'
-  []
 []
 
 [Preconditioning]
-  active = ''
+  active = 'FSP'
   [FSP]
     type = FSP
     # It is the starting point of splitting
@@ -352,19 +324,19 @@ initial_II_eps_min = 1e-07 # 1e-07
   # petsc_options = '-pc_type fieldsplit -pc_fieldsplit_type schur -pc_fieldsplit_detect_saddle_point'
   # petsc_options = '--ksp_monitor'
 
-  # nl_rel_tol = 1e-08
-  # nl_abs_tol = 1e-13
-  # nl_rel_tol = 1e-07
-
-  # nl_abs_tol = 2e-06
   nl_abs_tol = 2e-05
-
-  # l_tol = 1e-6
   l_tol = 1e-4
 
   nl_max_its = 100
   nl_forced_its = 3
   line_search = none
+
+  # l_tol = 1e-6
+  # nl_rel_tol = 1e-05
+  # nl_abs_tol = 1e-05
+
+  steady_state_detection = true
+  steady_state_tolerance = 1e-10
 
   dt = '${_dt}'
   # steady_state_detection = true

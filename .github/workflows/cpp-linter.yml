@@ -1,29 +1,26 @@
-name: cpp-linter
+name: C++ Linter and Formatter Check
+
 on:
   push:
-    path: '*/*/*'
-
+  pull_request:
 
 jobs:
   cpp-linter:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      # ... optionally setup build env to create a compilation database
-
-      - uses: cpp-linter/cpp-linter-action@v2
+      - name: Run C++ linter (clang-format check + clang-tidy)
+        uses: cpp-linter/cpp-linter-action@v2
         id: linter
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          style: ''  # disable clang-format checks. 
+          style: file
+          tidy-checks: ''
 
-
-          tidy-checks: '' # Use .clang-tidy config file. 
-
-
-
-      - name: Fail fast?!
-        if: steps.linter.outputs.clang-tidy-checks-failed > 0
+      - name: Fail if lint or format errors found
+        if: steps.linter.outputs.checks-failed != '0'
         run: exit 1

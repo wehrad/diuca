@@ -14,23 +14,12 @@
 # sediment rheology
 sliding_law = "GudmundssonRaymond"
 sediment_layer_thickness = 50.
-slipperiness_coefficient_mmpaa = 3e3 # 3e4 # 3e3 # 9.512937595129376e-11
-slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (365*24*3600)}' # 
-
-# Ryser et al 2014 seems to use sediment viscosities between 5e14 and 1e13 Pas
-
-# slipperiness_coefficient = 0.5e-06
-# slipperiness_coefficient = 1e-07
+slipperiness_coefficient_mmpaa = 3e3
+slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (365*24*3600)}'
 
 # ------------------------ simulation settings
 
-# dt associated with rest time associated with the
-# geometry (in seconds)
-# ice has a high viscosity and hence response times
-# of years
 nb_years = 0.075
-# mult = 1
-# mult = 0.5
 mult = 0.5
 _dt = '${fparse nb_years * 3600 * 24 * 365 * mult}'
 
@@ -48,26 +37,12 @@ vel_scaling = 1e-6
 rho = 'rho_combined'
 mu = 'mu_combined'
 
-# Mercernier et al 2018 uses 1.9e-13
-# initial_II_eps_min = 1e-07
-initial_II_eps_min = 1.53914e-19
-
-initial_file = 'icestream_fv_3d_SI_ru_slip_steady_out.e'
-
-# mpiexec -n 6 ./diuca-opt 
-# steady state:
-# II_eps_min = 1.53914e-19
-# t_noactive = 93s
-# t_SMP = 94s
-# t_FSP = 61s
+initial_II_eps_min = 1e-07
 
 # ------------------------
 
 [Problem]
   type = FEProblem
-  # near_null_space_dimension = 1
-  # null_space_dimension = 1
-  # transpose_null_space_dimension = 1
 []
 [GlobalParams]
   rhie_chow_user_object = 'rc'
@@ -81,41 +56,108 @@ initial_file = 'icestream_fv_3d_SI_ru_slip_steady_out.e'
     w = vel_z
     pressure = pressure
   []
+  # [pin_pressure]
+  #   type = NSPressurePin
+  #   variable = pressure
+  #   pin_type = point-value
+  #   phi0 = 0.
+  #   point = '0 0 433.2'
+  # []
 []
 
 [Mesh]
+
   [channel]
     type = FileMeshGenerator
-    file = ${initial_file}
-    use_for_exodus_restart = true
-    
+    file = ../../../meshes/mesh_icestream_sed.e
   []
+
+  [delete_sediment_block]
+    type = BlockDeletionGenerator
+    input = channel
+    block = '3'
+  []
+
+  # Create sediment layer by projecting glacier bed by
+  # the sediment thickness
+  [lowerDblock_sediment]
+    type = LowerDBlockFromSidesetGenerator
+    input = "delete_sediment_block"
+    new_block_name = "block_0"
+    sidesets = "bottom"
+  []
+  [separateMesh_sediment]
+    type = BlockToMeshConverterGenerator
+    input = lowerDblock_sediment
+    target_blocks = "block_0"
+  []
+  [extrude_sediment]
+    type = MeshExtruderGenerator
+    input = separateMesh_sediment
+    num_layers = 1
+    extrusion_vector = '0. 0. -${sediment_layer_thickness}'
+    # bottom/top swap is (correct and) due to inverse extrusion
+    top_sideset = 'top_sediment'
+    bottom_sideset = 'bottom_sediment'
+  []
+  [stitch_sediment]
+    type = StitchedMeshGenerator
+    inputs = 'delete_sediment_block extrude_sediment'
+    stitch_boundaries_pairs = 'bottom bottom_sediment'
+  []
+
+  [add_sediment_lateral_sides]
+    type = ParsedGenerateSideset
+    combinatorial_geometry = 'y > 9999.99 | y < 0.01'
+    included_subdomains = 0
+    new_sideset_name = 'left_right_sediment'
+    input = 'stitch_sediment'
+    replace = True
+  []
+
+  [add_sediment_upstream_side]
+    type = ParsedGenerateSideset
+    combinatorial_geometry = 'x < 0.01'
+    included_subdomains = 0
+    new_sideset_name = 'upstream_sediment'
+    input = 'add_sediment_lateral_sides'
+    replace = True
+  []
+  [add_sediment_downstream_side]
+    type = ParsedGenerateSideset
+    combinatorial_geometry = 'x > 19599.99'
+    included_subdomains = 0
+    new_sideset_name = 'downstream_sediment'
+    input = 'add_sediment_upstream_side'
+    replace = True
+  []
+
+  [add_nodesets]
+    type = NodeSetsFromSideSetsGenerator
+    input = 'add_sediment_downstream_side'
+  []
+
 []
 
 [Variables]
   [vel_x]
     type = INSFVVelocityVariable
     two_term_boundary_expansion = true
-    initial_from_file_var = vel_x
     scaling = ${vel_scaling }
   []
   [vel_y]
     type = INSFVVelocityVariable
     two_term_boundary_expansion = true
-    initial_from_file_var = vel_y
     scaling = ${vel_scaling}
   []
   [vel_z]
     type = INSFVVelocityVariable
     two_term_boundary_expansion = true
-    initial_from_file_var = vel_z
     scaling = ${vel_scaling}
   []
   [pressure]
     type = INSFVPressureVariable
     two_term_boundary_expansion = true
-    initial_from_file_var = pressure
-    # scaling = ${vel_scaling}
   []
 []
 
@@ -126,6 +168,7 @@ initial_file = 'icestream_fv_3d_SI_ru_slip_steady_out.e'
     advected_interp_method = ${advected_interp_method}
     velocity_interp_method = ${velocity_interp_method}
     rho = ${rho}
+    boundaries_to_force = 'downstream'
   []
 
   [u_time]
@@ -141,12 +184,14 @@ initial_file = 'icestream_fv_3d_SI_ru_slip_steady_out.e'
     velocity_interp_method = ${velocity_interp_method}
     rho = ${rho}
     momentum_component = 'x'
+    boundaries_to_force = 'downstream'
   []
   [u_viscosity]
     type = INSFVMomentumDiffusion
     variable = vel_x
     mu = ${mu}
     momentum_component = 'x'
+    boundaries_to_force = 'downstream'
   []
   [u_pressure]
     type = INSFVMomentumPressure
@@ -175,12 +220,14 @@ initial_file = 'icestream_fv_3d_SI_ru_slip_steady_out.e'
     velocity_interp_method = ${velocity_interp_method}
     rho = ${rho}
     momentum_component = 'y'
+    boundaries_to_force = 'downstream'
   []
   [v_viscosity]
     type = INSFVMomentumDiffusion
     variable = vel_y
     mu = ${mu}
     momentum_component = 'y'
+    boundaries_to_force = 'downstream'
   []
   [v_pressure]
     type = INSFVMomentumPressure
@@ -209,12 +256,14 @@ initial_file = 'icestream_fv_3d_SI_ru_slip_steady_out.e'
     velocity_interp_method = ${velocity_interp_method}
     rho = ${rho}
     momentum_component = 'z'
+    boundaries_to_force = 'downstream'
   []
   [w_viscosity]
     type = INSFVMomentumDiffusion
     variable = vel_z
     mu = ${mu}
     momentum_component = 'z'
+    boundaries_to_force = 'downstream'
   []
   [w_pressure]
     type = INSFVMomentumPressure
@@ -233,13 +282,6 @@ initial_file = 'icestream_fv_3d_SI_ru_slip_steady_out.e'
 
 [FVBCs]
 
-  # ice and sediment influx
-  # [ice_inlet_x]
-  #   type = INSFVInletVelocityBC
-  #   variable = vel_x
-  #   boundary = 'upstream'
-  #   functor = ${inlet_mps}
-  # []
   [ice_inlet_x]
     type = INSFVInletVelocityBC
     variable = vel_x
@@ -263,19 +305,19 @@ initial_file = 'icestream_fv_3d_SI_ru_slip_steady_out.e'
   [no_slip_x]
     type = INSFVNoSlipWallBC
     variable = vel_x
-    boundary = 'top_sediment' # left right left_right_sediment
+    boundary = 'top_sediment left right left_right_sediment'
     function = 0
   []
   [no_slip_y]
     type = INSFVNoSlipWallBC
     variable = vel_y
-    boundary = 'top_sediment left right left_right_sediment'
+    boundary = 'left right left_right_sediment top_sediment'
     function = 0
   []
   [no_slip_z]
     type = INSFVNoSlipWallBC
     variable = vel_z
-    boundary = 'top_sediment left right left_right_sediment'
+    boundary = 'left right left_right_sediment top_sediment'
     function = 0
   []
 
@@ -299,26 +341,20 @@ initial_file = 'icestream_fv_3d_SI_ru_slip_steady_out.e'
     boundary = 'surface'
   []
 
-  # ocean pressure at the glacier front
-  [outlet_p]
-    type = INSFVOutletPressureBC
-    variable = pressure
+  [hydrostatic_pressure]
+    type = INSFVHydrostaticPressureBC
+    variable = vel_x
+    momentum_component='x'
     boundary = 'downstream'
-    function = ocean_pressure
   []
 []
 
 # ------------------------
 
 [Functions]
-  [ocean_pressure]
-    type = ParsedFunction
-    expression = 'if(z < 0, 1e5 -1028 * 9.81 * z, 1e5)' # -1e5 * 9.81 * z)'
-  []
   [viscosity_rampup]
     type = ParsedFunction
-    # expression = 'initial_II_eps_min * exp(-(t-_dt) * 1e-6)'
-    expression = 'initial_II_eps_min'
+    expression = 'initial_II_eps_min * exp(-(t-_dt) * 1e-6)'
     symbol_names = '_dt initial_II_eps_min'
     symbol_values = '${_dt} ${initial_II_eps_min}'
   []
@@ -347,18 +383,10 @@ initial_file = 'icestream_fv_3d_SI_ru_slip_steady_out.e'
     velocity_y = "vel_y"
     velocity_z = "vel_z"
     pressure = "pressure"
-    output_properties = 'mu_ice rho_ice II_eps_min'
+    output_properties = 'mu_ice rho_ice'
     outputs = "out"
   []
   
-  # [sediment]
-  #   type = FVConstantMaterial
-  #   block = '0'
-  #   viscosity = 1e10
-  #   density = 1850.
-  #   output_properties = 'mu_material rho_material'
-  # []
-
   [sediment]
     type = FVSedimentMaterialSI
     block = '0'
@@ -388,15 +416,10 @@ initial_file = 'icestream_fv_3d_SI_ru_slip_steady_out.e'
                                eleblock2 rho_ice
                                0 rho_sediment'  #                                10  rho_ice
   []
-  # [darcy]
-  #   type = ADGenericVectorFunctorMaterial
-  #   prop_names = 'Darcy_coefficient Forchheimer_coefficient'
-  #   prop_values = '1e20 1e20 1e20 1e20 1e20 1e20'
-  # []
 []
 
 [Preconditioning]
-  active = 'FSP'
+  active = ''
   [FSP]
     type = FSP
     # It is the starting point of splitting
@@ -451,7 +474,7 @@ initial_file = 'icestream_fv_3d_SI_ru_slip_steady_out.e'
 
 [Executioner]
   type = Transient
-  num_steps = 24
+  num_steps = 100
 
   # petsc_options_iname = '-pc_type -pc_factor_shift'
   # petsc_options_value = 'lu       NONZERO'
