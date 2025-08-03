@@ -35,7 +35,7 @@ glacier cavities ([Johnson,
 A recent [BBC Earth video](https://youtu.be/lTKsjZN-Aec) reveals for the
 first time the life of a family of Diuca finch at Quelccaya Glacier in
 Peru.
-![Screenshot](https://github.com/wehrad/diuca/blob/PR_flood/assets/BBC_earth_diuca_finch.jpg)
+![Screenshot](https://github.com/wehrad/diuca/blob/main/assets/BBC_earth_diuca_finch.jpg)
 
 ## Installation
 
