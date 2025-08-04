@@ -1,3 +1,5 @@
+// Modified version of MASTODON's Ormsby Wavelet
+// to allow for multiple and recurrent wavelets 
 /*************************************************/
 /*           DO NOT MODIFY THIS HEADER           */
 /*                                               */
@@ -17,17 +19,17 @@
 #include "Function.h"
 #include "FunctionInterface.h"
 
-class OrmsbyWavelet;
+class MultiOrmsbyWavelet;
 
 /**
  * Class for an Ormsby Wavelet function
  */
-class OrmsbyWavelet : public Function
+class MultiOrmsbyWavelet : public Function
 {
 public:
   static InputParameters validParams();
 
-  OrmsbyWavelet(const InputParameters & parameters);
+  MultiOrmsbyWavelet(const InputParameters & parameters);
 
   virtual Real value(Real t, const Point & p) const override;
 

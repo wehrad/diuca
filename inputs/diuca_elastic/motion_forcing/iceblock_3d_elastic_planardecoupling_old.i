@@ -155,18 +155,28 @@
   []
 []
 
+# f1 = 0.15   # taper-in starts
+# f2 = 0.25   # flat band begins
+# f3 = 1.0    # flat band ends
+# f4 = 1.2    # taper-out ends
+
 [Functions]
   # [weight]
   #   type = ParsedFunction
   #   value = '-9.81*900*(550-z)'    # initial stress that should result from the weight force
   # []
   [ormsby]
-    type = OrmsbyWavelet
-    f1 = 0.3   # taper-in start
-    f2 = 0.6   # start of flat passband
-    f3 = 1.1   # end of flat passband
-    f4 = 1.5   # taper-out end
-    ts = 3.
+    type = MultiOrmsbyWavelet
+    # f1 = 0.3   # taper-in start
+    # f2 = 0.6   # start of flat passband
+    # f3 = 1.1   # end of flat passband
+    # f4 = 1.5   # taper-out end
+    f1 = 0.15   # taper-in starts
+    f2 = 0.25   # flat band begins
+    f3 = 1.0    # flat band ends
+    f4 = 1.2    # taper-out ends
+    ts = 10.
+    nb = 3.
     # scale_factor = 0.5
   []
 []
@@ -270,7 +280,7 @@
 [Materials]
   [ice_elasticity]
     type = ComputeIsotropicElasticityTensor
-    youngs_modulus = 8.7e9 #Pa
+    youngs_modulus = 5e9 # 6e9 # 7e9 # 8e9 # 5e9 # 8.7e9 #Pa
     poissons_ratio = 0.31
   []
   [strain]
@@ -280,7 +290,7 @@
   [density]
     type = GenericConstantMaterial
     prop_names = density
-    prop_values = 900 #kg/m3
+    prop_values = 917 #kg/m3
   []
   [stress]
     type = ComputeFiniteStrainElasticStress
@@ -333,25 +343,25 @@
     boundary = 'decoupling_bottom'
   []
 
-  # # fixed vertical sides in all three dimensions
-  # [dirichlet_side_x]
-  #   type = DirichletBC
-  #   variable = disp_x
-  #   value = 0
-  #   boundary = 'left right back front'
-  # []
-  # [dirichlet_side_z]
-  #   type = DirichletBC
-  #   variable = disp_z
-  #   value = 0
-  #   boundary = 'left right back front'
-  # []
-  # [dirichlet_side_y]
-  #   type = DirichletBC
-  #   variable = disp_y
-  #   value = 0
-  #   boundary = 'left right back front'
-  # []
+  # fixed vertical sides in all three dimensions
+  [dirichlet_side_x]
+    type = DirichletBC
+    variable = disp_x
+    value = 0
+    boundary = 'left right back front'
+  []
+  [dirichlet_side_z]
+    type = DirichletBC
+    variable = disp_z
+    value = 0
+    boundary = 'left right back front'
+  []
+  [dirichlet_side_y]
+    type = DirichletBC
+    variable = disp_y
+    value = 0
+    boundary = 'left right back front'
+  []
 
   [shake_bottom_z]
     type = PresetAcceleration
