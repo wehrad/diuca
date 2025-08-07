@@ -1,71 +1,33 @@
-# a large glacier flowing towards the ocean (hydrostatic pressure at
-# the glacier front, i.e. downstream boundary) in the influence of the
-# driving stress (surface slope), over a flat bed.
-# The mesh includes a sediment block which is the last layer of
-# elements before the bottom boundary (where zero velocity is
-# applied): the viscosity of the sediment layer is modulating basal
-# sliding through a friction coefficient.
-# An influx of ice is applied at the top of the domain (upstream
-# boundary) to take into account the ice coming from the inner part of
-# the ice sheet.
-
 # ------------------------ domain settings
 
-# sediment rheology
-# sliding_law = "GudmundssonRaymond"
 sediment_layer_thickness = 50.
-slipperiness_coefficient_mmpaa = 3e9 # 3e4 # 3e3 # 9.512937595129376e-11
-slipperiness_coefficient = '${fparse (slipperiness_coefficient_mmpaa * 1e-6) / (365*24*3600)}' # 
 
 # ------------------------ simulation settings
 
-
-# dt associated with rest time associated with the
-# geometry (in seconds)
-# ice has a high viscosity and hence response times
-# of years
-# nb_years = 0.075
-# # mult = 1
-# # mult = 0.5
-# mult = 0.5
-# _dt = '${fparse nb_years * 3600 * 24 * 365 * mult}'
-nb_years = 0.01 # 0.1
+nb_years = 0.008
 _dt = '${fparse nb_years * 3600 * 24 * 365}'
-
-inlet_mph = 0.75 # 0.01 # mh-1
-inlet_mps = ${fparse
-             inlet_mph / 3600
-            } # ms-1
-
-initial_II_eps_min = 1e-07
 
 # ------------------------
 
 [GlobalParams]
   order = FIRST
-  # https://github.com/idaholab/moose/discussions/26157
-  # integrate_p_by_parts = true
-  integrate_p_by_parts = false
+  integrate_p_by_parts = true
 []
 
 [Mesh]
 
   [channel]
     type = FileMeshGenerator
-    file = ../../../meshes/mesh_icestream_sed.e
-  []
-
-  [delete_sediment_block]
-    type = BlockDeletionGenerator
-    input = channel
-    block = '3'
+    file = generate_icestream_mesh_out.e
+    # file = generate_iceblock_mesh_out.e
   []
 
   # Create sediment layer by projecting glacier bed by
   # the sediment thickness
   [lowerDblock_sediment]
     type = LowerDBlockFromSidesetGenerator
-    input = "delete_sediment_block"
+    # input = "delete_sediment_block"
+    input = "channel"
     new_block_name = "block_0"
     sidesets = "bottom"
   []
@@ -80,96 +42,159 @@ initial_II_eps_min = 1e-07
     num_layers = 1
     extrusion_vector = '0. 0. -${sediment_layer_thickness}'
     # bottom/top swap is (correct and) due to inverse extrusion
-    top_sideset = 'top_sediment'
-    bottom_sideset = 'bottom_sediment'
+    top_sideset = 'bottom_sediment'
+    bottom_sideset = 'top_sediment'
   []
   [stitch_sediment]
     type = StitchedMeshGenerator
-    inputs = 'delete_sediment_block extrude_sediment'
-    stitch_boundaries_pairs = 'bottom bottom_sediment'
+    inputs = 'channel extrude_sediment'
+    stitch_boundaries_pairs = 'bottom top_sediment'
+    clear_stitched_boundary_ids = false
   []
 
-  [add_sediment_lateral_sides]
-    type = ParsedGenerateSideset
-    combinatorial_geometry = 'y > 9999.99 | y < 0.01'
-    included_subdomains = 0
-    new_sideset_name = 'left_right_sediment'
-    input = 'stitch_sediment'
-    replace = True
-  []
-
-  [add_sediment_upstream_side]
-    type = ParsedGenerateSideset
-    combinatorial_geometry = 'x < 0.01'
-    included_subdomains = 0
-    new_sideset_name = 'upstream_sediment'
-    input = 'add_sediment_lateral_sides'
-    replace = True
-  []
-  [add_sediment_downstream_side]
-    type = ParsedGenerateSideset
-    combinatorial_geometry = 'x > 19599.99'
-    included_subdomains = 0
-    new_sideset_name = 'downstream_sediment'
-    input = 'add_sediment_upstream_side'
-    replace = True
+  [add_frontback_leftright_sediment_sidesets]
+    type = SideSetsFromNormalsGenerator
+    # input = add_bottom_sediment_sideset
+    input = stitch_sediment
+    included_subdomains = "0"
+    normals = '0  1  0
+               0 -1  0
+               1  0  0
+              -1  0  0'
+    new_boundary = 'right_sediment left_sediment front_sediment back_sediment'
   []
 
   [add_nodesets]
     type = NodeSetsFromSideSetsGenerator
-    input = 'add_sediment_downstream_side'
+    input = add_frontback_leftright_sediment_sidesets
   []
 
   [final_mesh]
     type = SubdomainBoundingBoxGenerator
-    restricted_subdomains="eleblock1 eleblock2"
+    restricted_subdomains="1"
     input = add_nodesets
     block_id = 255
     block_name = deactivated
-    bottom_left = '18500 -100 -100'
-    top_right = '22000 11000 150'
+    bottom_left = '24000 -100 -2000'
+    top_right = '26000 11000 150'
+  []
+
+  [final_mesh2]
+    type = SubdomainBoundingBoxGenerator
+    restricted_subdomains="0"
+    input = final_mesh
+    block_id = 256
+    block_name = deactivated2
+    bottom_left = '24000 -100 -2000'
+    top_right = '26000 11000 150'
   []
 
   [refined_mesh]
     type = RefineBlockGenerator
-    input = "final_mesh"
-    block = "255"
-    refinement = '1'
+    input = "final_mesh2"
+    block = "255" # 256"
+    refinement = '1' # 2'
     enable_neighbor_refinement = true
     max_element_volume = 1e100
   []
 
   final_generator = refined_mesh
 
-
 []
 
 [Functions]
-  [ocean_pressure]
-    type = ParsedFunction
-    expression = 'if(z < 0, -1028 * 9.81 * z, 1e5)' # -1e5 * 9.81 * z)'
-    # expression = '917 * 9.81 * (100 - z)' # -1e5 * 9.81 * z)'
-  []
+  # [viscosity_rampup]
+  #   type = ParsedFunction
+  #   expression = 'initial_viscosity + t * rampup_rate'
+  #   # expression = 'A * t^2 + B*t'
+  #   # expression = 'initial_II_eps_min'
+  #   # symbol_names = 'A B'
+  #   # symbol_values = '4.71333237962635 3567351.59817352'
+  #   symbol_names = 'initial_viscosity rampup_rate'
+  #   symbol_values = '${initial_viscosity} ${rampup_rate}'
+  # []
   [viscosity_rampup]
-    type = ParsedFunction
-    expression = 'initial_II_eps_min * exp(-(t-_dt) * 5e-6)' # 3e-6 # 2e-6
-    # expression = 'initial_II_eps_min'
-    symbol_names = '_dt initial_II_eps_min'
-    symbol_values = '${_dt} ${initial_II_eps_min}'
+    type = PiecewiseLinear
+
+    # 0.4
+    xy_data = '252288. 1e12
+               1261440. 5e12
+               2522880. 1e13
+               3279744. 9e13
+               4288896. 2e14'
+
+    # 0.35
+    # xy_data = '252288. 1e12
+    #            1261440. 9e12
+    #            2522880. 5e13
+    #            3279744. 1e14
+    #            4288896. 2e14'
+    # 0.32
+    # xy_data = '252288. 1.5e12
+    #            1261440. 9.72e12
+    #            2522880. 5e13
+    #            3279744. 1e14
+    #            4288896. 2e14'
   []
-  [influx]
+
+  [back_influx_x]
     type = ParsedFunction
-    expression = 'inlet_mps * sin((2*pi / 20000) * y)' # * (z / 433.2)'
-    # expression = 'inlet_mps' # * (z / 433.2)'
-    symbol_names = 'inlet_mps'
-    symbol_values = '${inlet_mps}'
+    expression = '(vmin + (vmax-vmin) * exp(-((y-(W/2))^2) / (2*((W/5)^2))))'# * ((z+900) / 1800)'
+    symbol_names = 'vmin vmax W'
+    symbol_values = '3.3e-5 9.1e-5 10000'
+
+    # expression = 'inlet_mps * sin((2*pi / 20000) * y)' # * (z / 433.2)'
+    # expression = 'inlet_mps'
+    # symbol_names = 'inlet_mps'
+    # symbol_values = '${inlet_mps}'
+    
   []
+  [back_influx_y]
+    type = PiecewiseLinear
+    axis="y"
+    xy_data = '0. 1e-5
+               10000. -2.3e-5'
+  []
+
+  [right_influx_y]
+    type = PiecewiseLinear
+    axis="x"
+    xy_data = '0. -2.3e-5
+               16500. -3.e-5
+               23500. -5e-6 
+               25000. -5e-6'
+    # xy_data = '0. -2.3e-5
+    #            16500. -4.2e-5
+    #            23500. -5e-6 
+    #            25000. -5e-6'
+    # xy_data = '0. -2.3e-5
+    #            25000. 0.'
+  []
+  # [right_influx_x]
+  #   type = PiecewiseLinear
+  #   axis="x"
+  #   xy_data = '0. 3.3e-5 
+  #              25000. 0.'
+  # []
+
+  # [left_influx_y]
+  #   type = PiecewiseLinear
+  #   axis="x"
+  #   xy_data = '0. 2e-5
+  #              25000. 0'
+  # []
+  # [left_influx_x]
+  #   type = PiecewiseLinear
+  #   axis="x"
+  #   xy_data = '0. 3.3e-5 
+  #              25000. 0.'
+  # []
 []
 
 [Controls]
-  [II_eps_min_control]
+  [viscosity_rampup_control]
     type = RealFunctionControl
-    parameter = 'Materials/ice/II_eps_min'
+    parameter = 'Materials/ice/rampedup_viscosity'
     function = 'viscosity_rampup'
     execute_on = 'initial timestep_begin'
   []
@@ -191,202 +216,226 @@ initial_II_eps_min = 1e-07
     variable = vel_x
     vector_variable = velocity
     component = 'x'
-    block = 'eleblock1 eleblock2 0 255'
+    block = '1 0 255 256'
   []
   [vel_y]
     type = VectorVariableComponentAux
     variable = vel_y
     vector_variable = velocity
     component = 'y'
-    block = 'eleblock1 eleblock2 0 255'
+    block = '1 0 255 256'
   []
   [vel_z]
     type = VectorVariableComponentAux
     variable = vel_z
     vector_variable = velocity
     component = 'z'
-    block = 'eleblock1 eleblock2 0 255'
+    block = '1 0 255 256'
   []
 []
 
 [Variables]
   [velocity]
     family = LAGRANGE_VEC
-    # order = SECOND
     scaling = 1e-6
-    # scaling = 1e6
-    # initial_condition = 1e-6
-    block = 'eleblock1 eleblock2 0 255'
+    initial_condition = 1e-6
+    block = '1 0 255 256'
   []
   [p]
-    # scaling = 1e6
     family = LAGRANGE
-    # scaling = 1e-6
-    # initial_condition = 1e6
-    block = 'eleblock1 eleblock2 0 255'
+    initial_condition = 1e6
+    block = '1 0 255 256'
   []
 []
 
-[Kernels]
+[Kernels] 
   [mass_ice]
     type = INSADMass
-    block = 'eleblock1 eleblock2 255'
+    block = '1 255'
     variable = p
   []
   [mass_stab_ice_ice]
     type = INSADMassPSPG
-    block = 'eleblock1 eleblock2 255'
+    block = '1 255'
     variable = p
     rho_name = "rho_ice"
   []
   [momentum_time_ice]
     type = INSADMomentumTimeDerivative
-    block = 'eleblock1 eleblock2 255'
+    block = '1 255'
     variable = velocity
   []
   [momentum_advection_ice]
     type = INSADMomentumAdvection
-    block = 'eleblock1 eleblock2 255'
+    block = '1 255'
     variable = velocity
   []
   [momentum_viscous_ice]
     type = INSADMomentumViscous
-    block = 'eleblock1 eleblock2 255'
+    block = '1 255'
     variable = velocity
     mu_name = "mu_ice"
   []
   [momentum_pressure_ice]
     type = INSADMomentumPressure
-    block = 'eleblock1 eleblock2 255'
+    block = '1 255'
     variable = velocity
     pressure = p
   []
   [momentum_supg_ice]
     type = INSADMomentumSUPG
-    block = 'eleblock1 eleblock2 255'
+    block = '1 255'
     variable = velocity
     velocity = velocity
   []
   [gravity_ice]
     type = INSADGravityForce
-    block = 'eleblock1 eleblock2 255'
+    block = '1 255'
     variable = velocity
     gravity = '0. 0. -9.81'
   []
 
   [mass_sediment]
     type = INSADMass
-    block = '0'
+    block = '0 256'
     variable = p
   []
   [mass_stab_sediment_sediment]
     type = INSADMassPSPG
-    block = '0'
+    block = '0 256'
     variable = p
     rho_name = "rho_sediment"
   []
   [momentum_time_sediment]
     type = INSADMomentumTimeDerivative
-    block = '0'
+    block = '0 256'
     variable = velocity
   []
   [momentum_advection_sediment]
     type = INSADMomentumAdvection
-    block = '0'
+    block = '0 256'
     variable = velocity
   []
   [momentum_viscous_sediment]
     type = INSADMomentumViscous
-    block = '0'
+    block = '0 256'
     variable = velocity
     mu_name = "mu_sediment"
   []
   [momentum_pressure_sediment]
     type = INSADMomentumPressure
-    block = '0'
+    block = '0 256'
     variable = velocity
     pressure = p
   []
   [momentum_supg_sediment]
     type = INSADMomentumSUPG
-    block = '0'
+    block = '0 256'
     variable = velocity
     velocity = velocity
   []
   [gravity_sediment]
     type = INSADGravityForce
-    block = '0'
+    block = '0 256'
     variable = velocity
     gravity = '0. 0. -9.81'
   []
+
 []
 
 [BCs]
-
-  # we need to pin the pressure to remove the singular value
-  # [pin_pressure]
-  #  type = DirichletBC
-  #  variable = p
-  #  boundary = 'pressure_pin_node'
-  #  value = 1e5
-  # []
   
-    # no slip at the sediment base nor on the sides
-  [no_slip_sides]
+  # no slip at the sediment base nor on the sides
+  [influx_side_left]
     type = ADVectorFunctionDirichletBC
     variable = velocity
-    boundary = 'left right left_right_sediment top_sediment'
+    boundary = 'left'
+    function_y = 0
+    set_z_comp = false
+    set_x_comp = false
+  []
+
+  # no slip at the sediment base nor on the sides
+  [slip_side_right]
+    type = ADVectorFunctionDirichletBC
+    variable = velocity
+    boundary = 'right'
+    # function_x = right_influx_x
+    function_y = right_influx_y
+    set_z_comp = false
+    set_x_comp = false
+  []
+
+  [no_slip_sides_sediments]
+    type = ADVectorFunctionDirichletBC
+    variable = velocity
+    boundary = 'bottom_sediment'
     function_x = 0.
     function_y = 0.
     function_z = 0.
   []
 
+  [no_vertical_ice_sediment_boundary]
+    type = ADVectorFunctionDirichletBC
+    variable = velocity
+    boundary = 'top_sediment'
+    function_z = 0.
+    set_x_comp = false
+    set_y_comp = false
+  []
+
   [inlet]
     type = ADVectorFunctionDirichletBC
     variable = velocity
-    boundary = 'upstream' # upstream_sediment not much diff. either
-    function_x = influx
-    function_y = 0.
-    function_z = 0.
+    boundary = 'back'
+    function_x = back_influx_x
+    function_y = back_influx_y
+    function_z = 0. # -2.6e-6 # 0. # TODO: give the surface slope speed?
   []
   
-  [oulet]
-    type = ADFunctionDirichletBC
-    variable = p
-    boundary = 'downstream' # downstream_sediment doesn't make much of a diff.
-    function = ocean_pressure
+  [front_pressure]
+    type = INSADHydrostaticPressureBC
+    boundary = 'front'
+    variable = velocity
+    pressure = p
+    mu_name = "mu_ice"
   []
 
-  # [freesurface]
-  #   type = INSADMomentumNoBCBC
-  #   variable = velocity
-  #   pressure = p
-  #   boundary = 'top'
-  # []
-
+  [front_sediment_pressure]
+    type = INSADHydrostaticPressureBC
+    boundary = 'front_sediment'
+    variable = velocity
+    pressure = p
+    mu_name = "mu_sediment"
+  []
+  
+  [freesurface]
+    type = INSADMomentumNoBCBC
+    variable = velocity
+    pressure = p
+    boundary = 'surface'
+    mu_name = "mu_ice"
+  []
 []
 
 [Materials]
   [ice]
-    type = ADIceMaterialSI
-    block = 'eleblock1 eleblock2 255'
+    type = ADIceMaterialSI_ru
+    block = '1 255'
     velocity_x = "vel_x"
     velocity_y = "vel_y"
     velocity_z = "vel_z"
     pressure = "p"
-    output_properties = 'mu_ice rho_ice'
+    output_properties = 'mu_ice rho_ice
+                         sig_xx_dev sig_yy_dev
+                         sig_zz_dev sig_xy_dev
+                         sig_xz_dev sig_yz_dev'
     outputs = "out"
   []
   [sediment]
-    type = ADSedimentMaterialSI2
-    block = '0'
-    # velocity_x = "vel_x"
-    # velocity_y = "vel_y"
-    # velocity_z = "vel_z"
-    # pressure = "p"
-    # density  = 1850.
-    # sliding_law = ${sliding_law}
-    SlipperinessCoefficient = ${slipperiness_coefficient}
+    type = ADSedimentMaterialSI
+    block = '0 256'
+    # SlipperinessCoefficient = ${slipperiness_coefficient}
     LayerThickness = ${sediment_layer_thickness}
     output_properties = 'mu_sediment rho_sediment'
     outputs = "out"
@@ -394,7 +443,7 @@ initial_II_eps_min = 1e-07
 
   [ins_mat_ice]
     type = INSADTauMaterial
-    block = 'eleblock1 eleblock2 255'
+    block = '1 255'
     velocity = velocity
     pressure = p
     rho_name = "rho_ice"
@@ -402,7 +451,7 @@ initial_II_eps_min = 1e-07
   []
   [ins_mat_sediment]
     type = INSADTauMaterial
-    block = '0'
+    block = '0 256'
     velocity = velocity
     pressure = p
     rho_name = "rho_sediment"
@@ -413,7 +462,7 @@ initial_II_eps_min = 1e-07
 
 
 [Preconditioning]
-  active = 'FSP'
+  active = ''
   [FSP]
     type = FSP
     # It is the starting point of splitting
@@ -468,7 +517,7 @@ initial_II_eps_min = 1e-07
 
 [Executioner]
   type = Transient
-  num_steps = 28
+  num_steps = 50
 
   petsc_options_iname = '-pc_type -pc_factor_shift_type'
   petsc_options_value = 'lu       NONZERO'
@@ -486,14 +535,16 @@ initial_II_eps_min = 1e-07
   # l_tol = 1e-6
   l_tol = 1e-6
 
-  # nl_rel_tol = 1e-04 in the initial SSA test
-  # nl_abs_tol = 1e-04
+  nl_rel_tol = 1e-04 # in the initial SSA test
+  nl_abs_tol = 1e-04
 
-  nl_rel_tol = 1e-05
-  nl_abs_tol = 1e-05
+  # nl_rel_tol = 1e-05
+  # nl_abs_tol = 1e-05
 
-  nl_max_its = 100
+  nl_max_its = 5
+
   nl_forced_its = 3
+
   line_search = none
 
   dt = '${_dt}'
@@ -512,13 +563,16 @@ initial_II_eps_min = 1e-07
 []
 
 [Outputs]
+  checkpoint = true
+  perf_graph = true
   console = true
   [out]
     type = Exodus
+    execute_on = 'FINAL'
   []
 []
 
-[Debug]
-  show_var_residual_norms = true
-  show_material_props = true
-[]
+# [Debug]
+#   show_var_residual_norms = true
+#   show_material_props = true
+# []
