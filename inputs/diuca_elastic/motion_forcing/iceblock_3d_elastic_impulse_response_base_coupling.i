@@ -32,10 +32,10 @@
     dim = 3
     xmin = 0
     xmax = 5000.
-    nx = 45
+    nx = 40
     zmin = 0
     zmax = 5000.
-    nz = 45
+    nz = 40
     ymin = 0.
     ymax = 550.
     ny = 5
@@ -45,19 +45,22 @@
     type = SubdomainBoundingBoxGenerator
     input = 'block'
     block_id = 4
+    bottom_left = '2200 430 2200'
+    top_right = '2700 551 2700'
+  []
+  [decoupling_zone_middle]
+    type = SubdomainBoundingBoxGenerator
+    input = 'shaking_zone'
+    block_id = 9
     bottom_left = '2200 -1 2200'
     top_right = '2700 101 2700'
-    # bottom_left = '1900 -1 1900'
-    # top_right = '3000 101 3000'
   []
   [decoupling_zone_left]
     type = SubdomainBoundingBoxGenerator
-    input = 'shaking_zone'
+    input = 'decoupling_zone_middle'
     block_id = 5
     bottom_left = '2200 -1 950'
     top_right = '2700 101 1550'
-    # bottom_left = '1900 -1 650'
-    # top_right = '3000 101 1850'
   []
   [decoupling_zone_right]
     type = SubdomainBoundingBoxGenerator
@@ -65,8 +68,6 @@
     block_id = 6
     bottom_left = '2200 -1 3450'
     top_right = '2700 101 4050'
-    # bottom_left = '1900 -1 3150'
-    # top_right = '3000 101 4350'
   []
   [decoupling_zone_top]
     type = SubdomainBoundingBoxGenerator
@@ -74,8 +75,6 @@
     block_id = 7
     bottom_left = '3450 -1 2200'
     top_right = '4050 101 2700'
-    # bottom_left = '3150 -1 1900'
-    # top_right = '4350 101 3000'
   []
   [decoupling_zone_bottom]
     type = SubdomainBoundingBoxGenerator
@@ -83,8 +82,6 @@
     block_id = 8
     bottom_left = '950 -1 2200'
     top_right = '1550 101 2700'
-    # bottom_left = '650 -1 1900'
-    # top_right = '1850 101 3000'
   []
   [mesh_combined_interm]
     type = CombinerGenerator
@@ -96,25 +93,19 @@
     block = '4'
     new_boundary = 'shaking_bottom'
     replace = true
-    normal = '0 -1 0'
+    normal = '0 1 0'
   []
   [decoupling_bottom]
     type = SideSetsAroundSubdomainGenerator
     input = 'shaking_bottom'
-    block = '5 6 7 8'
+    block = '5 6 7 8 9'
     new_boundary = 'decoupling_bottom'
     replace = true
     normal = '0 -1 0'
   []
-  # [delete_bottom]
-  #   type=BoundaryDeletionGenerator
-  #   input='decoupling_bottom'
-  #   boundary_names='bottom'
-  # []
 
   [add_nodesets]
     type = NodeSetsFromSideSetsGenerator
-    # input = delete_bottom
     input = decoupling_bottom
   []
 
@@ -155,19 +146,28 @@
   []
 []
 
+# f1 = 0.15   # taper-in starts
+# f2 = 0.25   # flat band begins
+# f3 = 1.0    # flat band ends
+# f4 = 1.2    # taper-out ends
+
 [Functions]
   # [weight]
   #   type = ParsedFunction
   #   value = '-9.81*900*(550-z)'    # initial stress that should result from the weight force
   # []
   [ormsby]
-    type = OrmsbyWavelet
-    f1 = 0.5
-    f2 = 1.0
-    f3 = 5.0
-    f4 = 8.0
-    ts = 1.0
-    # scale_factor = 0.5
+    type = MultiOrmsbyWavelet
+    # f1 = 0.3   # taper-in start
+    # f2 = 0.6   # start of flat passband
+    # f3 = 1.1   # end of flat passband
+    # f4 = 1.5   # taper-out end
+    f1 = 0.15   # taper-in starts
+    f2 = 0.25   # flat band begins
+    f3 = 1.0    # flat band ends
+    f4 = 1.2    # taper-out ends
+    ts = 10.
+    nb = 3.
   []
 []
 
@@ -180,12 +180,12 @@
   [gravity_y]
     type = Gravity
     variable = disp_y
-    value = -9.81 # 0.
+    value = 0.
   []
   [gravity_z]
     type = Gravity
     variable = disp_z
-    value = 0.
+    value = 0. # -9.81
   []
   [DynamicTensorMechanics]
     stiffness_damping_coefficient = 0.02
@@ -270,7 +270,7 @@
 [Materials]
   [ice_elasticity]
     type = ComputeIsotropicElasticityTensor
-    youngs_modulus = 8.7e9 #Pa
+    youngs_modulus = 5e9 # Pa
     poissons_ratio = 0.31
   []
   [strain]
@@ -280,7 +280,7 @@
   [density]
     type = GenericConstantMaterial
     prop_names = density
-    prop_values = 900 #kg/m3
+    prop_values = 917 #kg/m3
   []
   [stress]
     type = ComputeFiniteStrainElasticStress
@@ -293,47 +293,67 @@
 []
 
 [BCs]
+  # fixed bottom in all three dimensions
+  # [dirichlet_decoupling_bottom_x]
+  #   type = DirichletBC
+  #   variable = disp_x
+  #   value = 0
+  #   boundary = 'decoupling_bottom bottom'
+  # []
+  # [dirichlet_decoupling_bottom_y]
+  #   type = DirichletBC
+  #   variable = disp_y
+  #   value = 0
+  #   boundary = 'decoupling_bottom bottom'
+  # []
+  # [dirichlet_decoupling_bottom_z]
+  #   type = DirichletBC
+  #   variable = disp_z
+  #   value = 0
+  #   boundary = 'decoupling_bottom bottom'
+  # []
+
   # fixed bottom pinning points in all three dimensions
   [dirichlet_decoupling_bottom_x]
     type = DirichletBC
     variable = disp_x
     value = 0
-    boundary = 'decoupling_bottom bottom'
+    boundary = 'decoupling_bottom'
   []
   [dirichlet_decoupling_bottom_y]
     type = DirichletBC
     variable = disp_y
     value = 0
-    boundary = 'decoupling_bottom bottom'
+    boundary = 'decoupling_bottom'
   []
   [dirichlet_decoupling_bottom_z]
     type = DirichletBC
     variable = disp_z
     value = 0
-    boundary = 'decoupling_bottom bottom'
+    boundary = 'decoupling_bottom'
   []
 
-  # # fixed vertical sides in all three dimensions
-  # [dirichlet_side_x]
-  #   type = DirichletBC
-  #   variable = disp_x
-  #   value = 0
-  #   boundary = 'left right back front'
-  # []
-  # [dirichlet_side_z]
-  #   type = DirichletBC
-  #   variable = disp_z
-  #   value = 0
-  #   boundary = 'left right back front'
-  # []
-  # [dirichlet_side_y]
-  #   type = DirichletBC
-  #   variable = disp_y
-  #   value = 0
-  #   boundary = 'left right back front'
-  # []
-  
-  [shake_bottom_y]
+  # fixed vertical sides in all three dimensions
+  [dirichlet_side_x]
+    type = DirichletBC
+    variable = disp_x
+    value = 0
+    boundary = 'left right back front'
+  []
+  [dirichlet_side_z]
+    type = DirichletBC
+    variable = disp_z
+    value = 0
+    boundary = 'left right back front'
+  []
+  [dirichlet_side_y]
+    type = DirichletBC
+    variable = disp_y
+    value = 0
+    boundary = 'left right back front'
+  []
+
+  [shake_bottom_z]
     type = PresetAcceleration
     acceleration = accel_y
     velocity = vel_y
@@ -344,20 +364,20 @@
   []
 []
 
-[Controls]
+# [Controls]
 
-  [inertia_switch]
-    type = TimePeriod
-    start_time = 0.0
-    end_time = 0.1
-    disable_objects = '*/inertia_x */inertia_y */inertia_z
-                       */vel_x */vel_y */vel_z
-                       */accel_x */accel_y */accel_z'
-    set_sync_times = true
-    execute_on = 'timestep_begin timestep_end'
-  []
+#   [inertia_switch]
+#     type = TimePeriod
+#     start_time = 0.0
+#     end_time = 0.1
+#     disable_objects = '*/inertia_x */inertia_y */inertia_z
+#                        */vel_x */vel_y */vel_z
+#                        */accel_x */accel_y */accel_z'
+#     set_sync_times = true
+#     execute_on = 'timestep_begin timestep_end'
+#   []
 
-[]
+# []
 
 [Preconditioning]
   [andy]
@@ -375,7 +395,7 @@
   nl_rel_tol = 1e-7
   nl_abs_tol = 1e-12
   dt = 0.05
-  end_time = 20.
+  end_time = 40.
   timestep_tolerance = 1e-6
   automatic_scaling = true
   [TimeIntegrator]
